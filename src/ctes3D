@@ -1,0 +1,57 @@
+      integer numerop
+      integer mgalx,mgalz,my
+      integer mx,mz
+      integer mgalx1,mgalz1 
+      integer mx1,my1,mz1
+      integer mgx
+      integer nz,nz1,nz2
+      integer mgalzp,myp
+      integer mzp,mgalz1p
+      integer nxymax
+      integer nspec
+      integer jspecy
+      integer blockingik2ki,blockingki2ik
+
+      parameter(numerop=36)
+      parameter(blockingik2ki=64)        !!! divisor of mgalz !!!
+      parameter(blockingki2ik=64)       !!! divisor of mgalz !!!
+
+!      parameter(mgalx=1024,mgalz=1024,my=384)
+!      parameter(mgalx=1024,mgalz=1024,my=251)
+      parameter(mgalx=768,mgalz=768,my=232)
+!      parameter(mgalx=512,mgalz=512,my=272)
+!      parameter(mgalx=256,mgalz=256,my=172)
+
+
+      parameter(mx =2*(mgalx/3), mz = 2*(mgalz/3)-1)
+      parameter(mgalx1=mgalx-1,mgalz1=mgalz-1)
+      parameter(mx1=mx/2-1 ,my1=my-1, mz1=mz-1)
+      parameter(mgx=mgalx/2)
+      parameter(nz=(mz-1)/2,nz1=nz,nz2=mgalz-nz)
+      parameter(mgalzp=mgalz/numerop+1,myp=my/numerop+1)
+      parameter(mzp = mz/numerop+1,mgalz1p=mgalzp-1)
+      parameter(nxymax=max(my*mzp,myp*mz))
+!
+!     ----------  planes for spectra ------------------
+      parameter(nspec=12)   
+      dimension jspecy(nspec)
+! wall units(re720):10, 20, 30, 50, 75,100,150,200,300,400,500,600+720
+!       data jspecy/  8, 13, 17, 23, 29, 35, 45, 53, 67, 79, 91, 102/
+
+!       data jspecy/  8, 17, 29, 45, 60, 80,102,130,180,230,290,350/
+! wall units(re720):50, 75,100,133,166,200,250,300,350,400,500,600 + 720
+!      data jspecy/ 23, 29, 35, 41, 47, 53, 60, 67, 73, 79, 91,102/
+
+! wall units (re630): 3, 6, 15, 32, 52, 76,122,165,251,335,425,512  + 630
+!       data jspecy/   6, 9, 16, 25, 32, 39, 51, 60, 76, 89,103,115/
+
+! wall units (reTau=180): 0, 7.5, 15, 31, 60, 90, 121
+!      data jspecy /       1, 13, 19, 30, 44, 56, 67/
+
+! wall units (reTau=555): 8, 18, 28, 44, 59, 80, 99, 130, 179, 228, 288, 351
+      data jspecy / 8, 14, 19, 25, 30, 36, 41, 48, 58, 67, 77, 87 /
+
+! ------------  how record length is measured for direct access
+      integer iwd
+!       parameter (iwd=1)    !! measured in 4*byte words      
+      parameter (iwd=4)    !! measured in bytes

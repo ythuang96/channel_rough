@@ -1,0 +1,15 @@
+# do not track compiled source files
+*.o
+*.mod
+channel
+*.pyc
+# do not track simulation data
+runs/
+# do not track restart files
+launch/4pi_2pi_256_172_256_2.010
+# do not track design primitives / sketches of source files
+sketeches/
+# do not track png and pdf files (generated figures etc.)
+*.png
+*.pdf
+

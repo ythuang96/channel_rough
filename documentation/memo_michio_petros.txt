@@ -1,0 +1,58 @@
+A file called "ctes3D" and makefile were missing in the original file you sent me before, so added.
+
+**********************************
+**** HOW TO COMPILE ON BRUTUS ****
+**********************************
+Once you're logged in to Brutus, type
+
+> module load intel
+> module load open_mpi
+
+to load Intel compiler and openMPI. To make sure these are successfully, type
+
+> module list
+
+which shows all modules that are loaded. You should get the following five items
+
+1) modules
+2) icc/10.1.018(default:10)
+3) ifc/10.1.018(default:10)
+4) intel/10.1.018(default:10)
+5) open_mpi/1.4.5(default:1.4)
+
+If you want them to be automatically loaded, you can edit a file .bash_profle in the home directly and add a line
+
+module load intel open_mpi
+
+at the end of the file. They will be loaded every time you are logged in.
+
+Now move to directory :
+> cd /cluster/home03/mavt/inouem/ROUGHv7
+
+> make ROUGHv7
+
+in the directly you upload all the code and input files.
+
+
+
+******************************
+**** HOW TO RUN ON BRUTUS ****
+******************************
+
+To run the code, a command like
+
+> bsub -oo ROUGHv7.txt -W 00:30 -n 16 mpirun ./ROUGHv7
+
+will work. A little explanation,
+
+-oo ROUGHv7.txt
+
+The output text will be saved as ROUGHv7.txt once the run is completed. With the option -oo, it overwrites a file with the same name (if exists).
+
+-W 00:30
+
+A wall time 30 minutes.  
+
+-n 16
+
+It specifies the number of cores to be 16, which should be same number as shown in the file cted3D, parameter(numerop=16).

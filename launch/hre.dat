@@ -1,0 +1,67 @@
+CC This file contains the input data to be used
+CC in the 3-D DNS code for CHANNELS (O. Flores version, rough)
+CC Structure of the present file:
+CC 1) run size & no. of processors
+CC 2) Parameters and utilities
+CC 3) File names
+CC-----------------------------------------------------------------------
+CC 2)PARAMETERS used in the code
+CC-----------------------------------------------------------------------
+CC      Re          alp         bet          -u at
+CC  Reynolds      x wave #     z wave #     the walls
+CC 1/viscosity    Lx=2*pi/alp
+CC                           Lz=2*pi/bet   (see readme)
+CC
+CC       *         *         *             *
+       3500        0.5         1.0          0.0
+CC
+CC total steps           #steps               #step
+CC
+CC (nstep=k*nimag+1)  (write a restart     (compute and
+CC                     file every nimag)   output cf every nhist)
+CC   nstep                 nimag               nhist
+CC
+CC       *         *         *
+CC        3001           500        10
+        3001           500        10
+CC       1001            1000        10
+CC
+CC  mesh type:      mesh   (don't touch this too much!!)
+CC  0:uniform     parameter:
+CC  1:tanh
+CC  2:sin           gamma
+      2             0.93
+CC
+CC  CFL
+CC   *
+    1.5
+CC
+CC  first     0/1            # steps
+CC  output    0 do nothing   between
+CC  file      1 compile      statistics
+CC  number      stat file
+CC       *         *            *
+        1           1            50
+CC
+CC  Boundary parameters
+CC
+CC  mx  mz  uampl    vampl   wampl    phase speed
+CC
+    72   72  0     0.   0.        0.
+CC
+CC-----------------------------------------------------------------------
+CC 3)FILE NAMES used in the code
+CC-----------------------------------------------------------------------
+CC file output max 100 char. (the code will add serial number)
+output_filepath_set_by_launchscript
+CC
+CC
+CC  input file max 100 char. (this is the restart file)
+CC
+input_filepath_set_by_launchscript
+CC
+CC  statistics file name max 100 char.
+CC  (the code will add file types .sta, .cf and .spe +serial)
+output_filepath_set_by_launchscript
+CC
+CC
