@@ -223,7 +223,8 @@ c========================================================================
            call write_flowfield_to_hdf_file(alp, bet, y, jb, je, 
      &         xalp, xbet, time-Deltat, Re, massu0)
          endif
-         call assess_whether_to_collect_flowfield_dt(time)
+         ! call assess_whether_to_collect_flowfield_dt(time)
+         call assess_whether_to_collect_flowfield(istep-1)
          call assess_whether_to_collect_wall_velocity(istep)
          ! --- end save flowfields
 
