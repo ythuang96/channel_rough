@@ -23,6 +23,7 @@ c/*............................................c/*
      &  write_velocity_gradient_tensor, write_velocity_fields,
      &  collectionFrequencyInTimesteps, fileNrVisualization
       use save_flowfield, only: assess_whether_to_collect_flowfield_dt,
+     &  assess_whether_to_collect_flowfield,
      &  write_flowfield_to_hdf_file, collectFlowfield,
      &  save_velocity_forcing_to_buffer, collectWallVelocity,
      &  assess_whether_to_collect_wall_velocity,
