@@ -1,0 +1,1040 @@
+Submitting job to Richardson Cluster
+Running on hosts: node[02-03]
+Running on 2 nodes.
+Running on 36 processors.
+--------------------------------------------------------------------------
+WARNING: It appears that your OpenFabrics subsystem is configured to only
+allow registering part of your physical memory.  This can cause MPI jobs to
+run with erratic performance, hang, and/or crash.
+
+This may be caused by your OpenFabrics vendor limiting the amount of
+physical memory that can be registered.  You should investigate the
+relevant Linux kernel module parameters that control how much physical
+memory can be registered, and increase them to allow registering all
+physical memory on your machine.
+
+See this Open MPI FAQ item for more information on these Linux kernel module
+parameters:
+
+    http://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
+
+  Local host:              node02.cluster
+  Registerable memory:     32768 MiB
+  Total memory:            130972 MiB
+
+Your MPI job will continue, but may be behave poorly and/or hang.
+--------------------------------------------------------------------------
+ MPI enviroment initialized ..          14
+ generating sen mesh
+ pointers:           14  jb,je,my=          99         105         232
+ pointers:           14  kb,ke,mz=         204         217         511
+ jspb          13 jspe          12 myid          14
+ going to read file ...
+ MPI enviroment initialized ..          15
+ generating sen mesh
+ pointers:           15  jb,je,my=         106         112         232
+ pointers:           15  kb,ke,mz=         218         231         511
+ jspb          13 jspe          12 myid          15
+ MPI enviroment initialized ..          16
+ generating sen mesh
+ pointers:           16  jb,je,my=         113         118         232
+ pointers:           16  kb,ke,mz=         232         245         511
+ jspb          13 jspe          13 myid          16
+ MPI enviroment initialized ..          17
+ generating sen mesh
+ pointers:           17  jb,je,my=         119         124         232
+ pointers:           17  kb,ke,mz=         246         259         511
+ jspb          14 jspe          13 myid          17
+ MPI enviroment initialized ..           0
+ MPI enviroment initialized ..           1
+ generating sen mesh
+ pointers:            1  jb,je,my=           8          14         232
+ pointers:            1  kb,ke,mz=          16          30         511
+ jspb           1 jspe           2 myid           1
+ MPI enviroment initialized ..           2
+ generating sen mesh
+ pointers:            2  jb,je,my=          15          21         232
+ pointers:            2  kb,ke,mz=          31          45         511
+ jspb           3 jspe           3 myid           2
+ MPI enviroment initialized ..           3
+ generating sen mesh
+ pointers:            3  jb,je,my=          22          28         232
+ pointers:            3  kb,ke,mz=          46          60         511
+ jspb           4 jspe           4 myid           3
+ going to read file ...
+ MPI enviroment initialized ..           4
+ generating sen mesh
+ pointers:            4  jb,je,my=          29          35         232
+ pointers:            4  kb,ke,mz=          61          75         511
+ jspb           5 jspe           5 myid           4
+ MPI enviroment initialized ..           5
+ generating sen mesh
+ pointers:            5  jb,je,my=          36          42         232
+ pointers:            5  kb,ke,mz=          76          90         511
+ jspb           6 jspe           7 myid           5
+ MPI enviroment initialized ..           6
+ generating sen mesh
+ pointers:            6  jb,je,my=          43          49         232
+ pointers:            6  kb,ke,mz=          91         105         511
+ jspb           8 jspe           8 myid           6
+ going to read file ...
+ MPI enviroment initialized ..           7
+ generating sen mesh
+ pointers:            7  jb,je,my=          50          56         232
+ pointers:            7  kb,ke,mz=         106         119         511
+ jspb           9 jspe           8 myid           7
+ MPI enviroment initialized ..           8
+ generating sen mesh
+ pointers:            8  jb,je,my=          57          63         232
+ pointers:            8  kb,ke,mz=         120         133         511
+ jspb           9 jspe           9 myid           8
+ going to read file ...
+ MPI enviroment initialized ..           9
+ generating sen mesh
+ pointers:            9  jb,je,my=          64          70         232
+ pointers:            9  kb,ke,mz=         134         147         511
+ jspb          10 jspe          10 myid           9
+ MPI enviroment initialized ..          10
+ generating sen mesh
+ pointers:           10  jb,je,my=          71          77         232
+ pointers:           10  kb,ke,mz=         148         161         511
+ jspb          11 jspe          11 myid          10
+ MPI enviroment initialized ..          11
+ generating sen mesh
+ pointers:           11  jb,je,my=          78          84         232
+ pointers:           11  kb,ke,mz=         162         175         511
+ jspb          12 jspe          11 myid          11
+ MPI enviroment initialized ..          12
+ generating sen mesh
+ pointers:           12  jb,je,my=          85          91         232
+ pointers:           12  kb,ke,mz=         176         189         511
+ jspb          12 jspe          12 myid          12
+ MPI enviroment initialized ..          13
+ generating sen mesh
+ pointers:           13  jb,je,my=          92          98         232
+ pointers:           13  kb,ke,mz=         190         203         511
+ jspb          13 jspe          12 myid          13
+ going to read file ...
+ going to read file ...
+ going to read file ...
+ going to read file ...
+ going to read file ...
+ going to read file ...
+ going to read file ...
+ going to read file ...
+ going to read file ...
+ MPI enviroment initialized ..          19
+ going to read file ...
+ going to read file ...
+ MPI enviroment initialized ..          20
+ MPI enviroment initialized ..          24
+ MPI enviroment initialized ..          25
+ MPI enviroment initialized ..          26
+ MPI enviroment initialized ..          30
+ MPI enviroment initialized ..          31
+ MPI enviroment initialized ..          33
+ MPI enviroment initialized ..          34
+ MPI enviroment initialized ..          35
+ MPI enviroment initialized ..          23
+ MPI enviroment initialized ..          27
+ MPI enviroment initialized ..          32
+ MPI enviroment initialized ..          18
+ MPI enviroment initialized ..          28
+ MPI enviroment initialized ..          29
+ MPI enviroment initialized ..          21
+ going to read file ...
+ going to read file ...
+ MPI enviroment initialized ..          22
+ generating sen mesh
+ pointers:           18  jb,je,my=         125         130         232
+ pointers:           18  kb,ke,mz=         260         273         511
+ jspb          14 jspe          13 myid          18
+ going to read file ...
+ generating sen mesh
+ pointers:           19  jb,je,my=         131         136         232
+ pointers:           19  kb,ke,mz=         274         287         511
+ jspb          14 jspe          13 myid          19
+ going to read file ...
+ generating sen mesh
+ pointers:           20  jb,je,my=         137         142         232
+ pointers:           20  kb,ke,mz=         288         301         511
+ jspb          14 jspe          13 myid          20
+ going to read file ...
+ generating sen mesh
+ pointers:           21  jb,je,my=         143         148         232
+ pointers:           21  kb,ke,mz=         302         315         511
+ jspb          14 jspe          14 myid          21
+ going to read file ...
+ generating sen mesh
+ pointers:           22  jb,je,my=         149         154         232
+ pointers:           22  kb,ke,mz=         316         329         511
+ jspb          15 jspe          14 myid          22
+ going to read file ...
+ generating sen mesh
+ pointers:           23  jb,je,my=         155         160         232
+ pointers:           23  kb,ke,mz=         330         343         511
+ jspb          15 jspe          15 myid          23
+ going to read file ...
+ generating sen mesh
+ pointers:           24  jb,je,my=         161         166         232
+ pointers:           24  kb,ke,mz=         344         357         511
+ jspb          16 jspe          16 myid          24
+ going to read file ...
+ generating sen mesh
+ pointers:           25  jb,je,my=         167         172         232
+ pointers:           25  kb,ke,mz=         358         371         511
+ jspb          17 jspe          16 myid          25
+ going to read file ...
+ generating sen mesh
+ pointers:           26  jb,je,my=         173         178         232
+ pointers:           26  kb,ke,mz=         372         385         511
+ jspb          17 jspe          17 myid          26
+ going to read file ...
+ generating sen mesh
+ pointers:           27  jb,je,my=         179         184         232
+ pointers:           27  kb,ke,mz=         386         399         511
+ jspb          18 jspe          17 myid          27
+ going to read file ...
+ generating sen mesh
+ pointers:           28  jb,je,my=         185         190         232
+ pointers:           28  kb,ke,mz=         400         413         511
+ jspb          18 jspe          18 myid          28
+ going to read file ...
+ generating sen mesh
+ pointers:           29  jb,je,my=         191         196         232
+ pointers:           29  kb,ke,mz=         414         427         511
+ jspb          19 jspe          19 myid          29
+ going to read file ...
+ generating sen mesh
+ pointers:           30  jb,je,my=         197         202         232
+ pointers:           30  kb,ke,mz=         428         441         511
+ jspb          20 jspe          20 myid          30
+ going to read file ...
+ generating sen mesh
+ pointers:           31  jb,je,my=         203         208         232
+ pointers:           31  kb,ke,mz=         442         455         511
+ jspb          21 jspe          22 myid          31
+ going to read file ...
+ generating sen mesh
+ pointers:           32  jb,je,my=         209         214         232
+ pointers:           32  kb,ke,mz=         456         469         511
+ jspb          23 jspe          23 myid          32
+ going to read file ...
+ generating sen mesh
+ pointers:           33  jb,je,my=         215         220         232
+ pointers:           33  kb,ke,mz=         470         483         511
+ jspb          24 jspe          24 myid          33
+ going to read file ...
+ generating sen mesh
+ pointers:           34  jb,je,my=         221         226         232
+ pointers:           34  kb,ke,mz=         484         497         511
+ jspb          25 jspe          25 myid          34
+ going to read file ...
+ generating sen mesh
+ pointers:            0  jb,je,my=           1           7         232
+ pointers:            0  kb,ke,mz=           1          15         511
+ generating sen mesh
+ pointers:           35  jb,je,my=         227         232         232
+ pointers:           35  kb,ke,mz=         498         511         511
+ jspb           1 jspe           0 myid           0
+   Re = 3500.00 channel
+  alp =   0.500   bet = 1.000
+
+ mgalx =  768 mgalz =  768    my =  232
+    mx =  512    mz =  511
+
+   nstep =   501  nimag =   500  nhist =   10
+     CFL =0.1500E+01
+
+ vwall   0.000   0.000   0.000 vspeed   0.000
+ mxwall  72 mzwall  72
+
+reading from:  /scratch/yh/channel_rough_data/runs/roughness_kx0_kz3_9/roughness_kx0_kz3_9.006                     
+
+  write in :  /scratch/yh/channel_rough_data/runs/roughness_kx0_kz3_10/roughness_kx0_kz3_10                       
+ jspb          26 jspe          25 myid          35
+ going to read file ...
+ going to read file ...
+ infile opened
+
+ reading input file ...
+ time=   0.00000000       3500.00000      0.500000000       1.00000000       0.00000000             512         232         511
+ mesh:  -3.27443398E+22           0
+
+ master reads its data
+ master reads proc no           1  data and send them
+ master reads proc no           2  data and send them
+ proc no.           1 receives data from master
+ master reads proc no           3  data and send them
+ proc no.           2 receives data from master
+ master reads proc no           4  data and send them
+ proc no.           3 receives data from master
+ master reads proc no           5  data and send them
+ proc no.           4 receives data from master
+ master reads proc no           6  data and send them
+ proc no.           5 receives data from master
+ master reads proc no           7  data and send them
+ proc no.           6 receives data from master
+ master reads proc no           8  data and send them
+ proc no.           7 receives data from master
+ master reads proc no           9  data and send them
+ proc no.           8 receives data from master
+ master reads proc no          10  data and send them
+ proc no.           9 receives data from master
+ master reads proc no          11  data and send them
+ proc no.          10 receives data from master
+ master reads proc no          12  data and send them
+ proc no.          11 receives data from master
+ master reads proc no          13  data and send them
+ proc no.          12 receives data from master
+ master reads proc no          14  data and send them
+ proc no.          13 receives data from master
+ master reads proc no          15  data and send them
+ proc no.          14 receives data from master
+ master reads proc no          16  data and send them
+ proc no.          15 receives data from master
+ master reads proc no          17  data and send them
+ proc no.          16 receives data from master
+ master reads proc no          18  data and send them
+ proc no.          17 receives data from master
+ master reads proc no          19  data and send them
+ proc no.          18 receives data from master
+ master reads proc no          20  data and send them
+ proc no.          19 receives data from master
+ master reads proc no          21  data and send them
+ proc no.          20 receives data from master
+ master reads proc no          22  data and send them
+ proc no.          21 receives data from master
+ master reads proc no          23  data and send them
+ proc no.          22 receives data from master
+ master reads proc no          24  data and send them
+ proc no.          23 receives data from master
+ master reads proc no          25  data and send them
+ proc no.          24 receives data from master
+ master reads proc no          26  data and send them
+ proc no.          25 receives data from master
+ master reads proc no          27  data and send them
+ proc no.          26 receives data from master
+ master reads proc no          28  data and send them
+ proc no.          27 receives data from master
+ master reads proc no          29  data and send them
+ proc no.          28 receives data from master
+ master reads proc no          30  data and send them
+ proc no.          29 receives data from master
+ master reads proc no          31  data and send them
+ proc no.          30 receives data from master
+ master reads proc no          32  data and send them
+ proc no.          31 receives data from master
+ master reads proc no          33  data and send them
+ proc no.          32 receives data from master
+ master reads proc no          34  data and send them
+ proc no.          33 receives data from master
+ master reads proc no          35  data and send them
+ proc no.          34 receives data from master
+ proc no.          35 receives data from master
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ ... file read
+ sampling frequency flow field in timesteps:   50
+ sampling period: 0.0899
+ Initialize wall roughness. Parameters
+ x wavenumber =   0.00
+ z wavenumber (pos) =   3.00
+ z wavenumber (neg) =  -3.00
+ |u_wall| =   0.05
+ |v_wall| =  -0.05
+ /scratch/yh/channel_rough_data/runs/roughness_kx0_kz3_10/roughness_kx0_kz3_10.001.cf                    
+ initial boundary conditions
+ i =            0
+ abs(k) =            3
+ vwallBottom =  ( -5.00000007E-02,  0.00000000    )
+ vWallTop =  (  5.00000007E-02, -0.00000000    )
+[node02.cluster:17129] 35 more processes have sent help message help-mpi-btl-openib.txt / reg mem limit low
+[node02.cluster:17129] Set MCA parameter "orte_base_help_aggregate" to 0 to see all help / error messages
+ initial boundary conditions
+ i =            0
+ abs(k) =            3
+ vwallBottom =  ( -5.00000007E-02,  0.00000000    )
+ vWallTop =  (  5.00000007E-02, -0.00000000    )
+ mass flux:  0.89876365661619995        0.0000000000000000     
+    1  0.000000D+00  0.103684D+03  0.105895D+03  0.654224D+03  0.161308D-02  0.599336D+01  0.000000D+00 -0.499935D-02  0.499986D-02
+      1             5.26310             0.24850             5.51161
+      2             4.84629             0.18032             5.02663
+      3             4.82814             0.17442             5.00257
+      4             4.89138             0.18823             5.07963
+      5             4.90347             0.17809             5.08158
+      6             4.95662             0.19957             5.15620
+      7             4.90199             0.19980             5.10181
+      8             4.90391             0.19917             5.10310
+      9             4.88037             0.19768             5.07806
+     10             4.86305             0.20547             5.06853
+   11  0.161308D-01  0.103689D+03  0.105865D+03  0.654144D+03  0.147928D-02  0.599350D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+     11             4.76138             0.21691             4.97830
+     12             4.68869             0.20146             4.89016
+     13             4.64085             0.21343             4.85430
+     14             4.62574             0.21280             4.83856
+     15             4.64358             0.21461             4.85820
+     16             4.62634             0.22432             4.85067
+     17             4.64000             0.20096             4.84097
+     18             4.62942             0.21108             4.84052
+     19             4.61557             0.22025             4.83583
+     20             4.62801             0.22431             4.85233
+   21  0.309236D-01  0.103694D+03  0.105837D+03  0.654112D+03  0.162310D-02  0.599319D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+     21             4.62042             0.22790             4.84832
+     22             4.61120             0.22096             4.83217
+     23             4.63364             0.20275             4.83641
+     24             4.62583             0.22064             4.84648
+     25             4.60039             0.23278             4.83319
+     26             4.62103             0.22795             4.84899
+     27             4.62046             0.21686             4.83733
+     28             4.60805             0.21949             4.82755
+     29             4.61715             0.24351             4.86067
+     30             4.63291             0.22929             4.86221
+   31  0.471546D-01  0.103699D+03  0.105807D+03  0.654079D+03  0.156459D-02  0.599280D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+     31             4.65711             0.20732             4.86443
+     32             4.60999             0.22424             4.83425
+     33             4.60304             0.22693             4.82999
+     34             4.62320             0.21689             4.84010
+     35             4.61969             0.23238             4.85208
+     36             4.61716             0.23063             4.84780
+     37             4.63724             0.22257             4.85982
+     38             4.63817             0.23087             4.86905
+     39             4.62012             0.22953             4.84966
+     40             4.61684             0.22437             4.84122
+   41  0.628005D-01  0.103703D+03  0.105779D+03  0.654047D+03  0.168352D-02  0.599236D+01  0.211758D-21 -0.499465D-02  0.499465D-02
+     41             4.64592             0.21916             4.86509
+     42             4.61933             0.22546             4.84481
+     43             4.62877             0.20460             4.83339
+     44             4.61180             0.22765             4.83946
+     45             4.61526             0.22656             4.84184
+     46             4.59523             0.22960             4.82485
+     47             4.59297             0.23154             4.82452
+     48             4.63449             0.21740             4.85190
+     49             4.59978             0.23071             4.83050
+     50             4.60696             0.22642             4.83339
+   51  0.796357D-01  0.103707D+03  0.105750D+03  0.654014D+03  0.168647D-02  0.599183D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+     51             4.71059             0.22420             4.93479
+     52             4.60168             0.22599             4.82768
+     53             4.60643             0.23237             4.83881
+     54             4.60404             0.22925             4.83330
+     55             4.60535             0.22387             4.82923
+     56             4.59821             0.22983             4.82804
+     57             4.59822             0.23064             4.82888
+     58             5.03390             0.30593             5.33983
+     59            10.69046             0.24055            10.93103
+     60             4.91556             0.21935             5.13492
+   61  0.965005D-01  0.103710D+03  0.105723D+03  0.653981D+03  0.165637D-02  0.599126D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+     61             4.65162             0.19920             4.85082
+     62             4.67619             0.20011             4.87631
+     63             4.69462             0.19072             4.88535
+     64             4.65140             0.22026             4.87168
+     65             4.68402             0.18896             4.87299
+     66             4.70387             0.17764             4.88152
+     67             4.66984             0.19710             4.86695
+     68             4.66698             0.18985             4.85685
+     69             4.63404             0.21059             4.84464
+     70             4.70081             0.19166             4.89248
+   71  0.113064D+00  0.103711D+03  0.105698D+03  0.653949D+03  0.168711D-02  0.599066D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+     71             4.68379             0.17763             4.86143
+     72             4.65992             0.19723             4.85717
+     73             4.64804             0.19658             4.84464
+     74             4.71686             0.20677             4.92365
+     75             4.64357             0.20792             4.85150
+     76             4.64245             0.20197             4.84444
+     77             4.62119             0.21613             4.83733
+     78             4.65508             0.19080             4.84589
+     79             4.61749             0.22205             4.83955
+     80             4.60875             0.22974             4.83850
+   81  0.129935D+00  0.103710D+03  0.105674D+03  0.653916D+03  0.167264D-02  0.599001D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+     81             4.65255             0.20310             4.85565
+     82             4.63994             0.20908             4.84903
+     83             4.62616             0.21840             4.84458
+     84             4.61757             0.22515             4.84273
+     85             4.61049             0.22595             4.83645
+     86             4.63428             0.20611             4.84040
+     87             4.61427             0.22179             4.83608
+     88             4.65387             0.27321             4.92710
+     89             4.64119             0.23063             4.87183
+     90             4.66619             0.23010             4.89631
+   91  0.146662D+00  0.103708D+03  0.105652D+03  0.653884D+03  0.165012D-02  0.598933D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+     91             4.63936             0.21849             4.85785
+     92             4.61476             0.22139             4.83617
+     93             4.60536             0.23000             4.83537
+     94             4.60780             0.22774             4.83556
+     95             4.61116             0.22622             4.83739
+     96             4.65032             0.20362             4.85396
+     97             4.62457             0.21974             4.84432
+     98             4.60388             0.22966             4.83356
+     99             4.62127             0.21686             4.83814
+    100             4.63506             0.21980             4.85488
+  101  0.163163D+00  0.103704D+03  0.105632D+03  0.653851D+03  0.171295D-02  0.598868D+01  0.211758D-21 -0.499465D-02  0.499465D-02
+    101             4.70478             0.23197             4.93675
+    102             4.61414             0.22339             4.83754
+    103             4.63033             0.22537             4.85572
+    104             4.61652             0.22728             4.84382
+    105             4.61092             0.22613             4.83706
+    106             4.61164             0.22537             4.83702
+    107             4.66079             0.19861             4.85941
+    108             4.62262             0.22322             4.84585
+    109             4.60925             0.23062             4.83987
+    110             4.62895             0.21450             4.84346
+  111  0.180292D+00  0.103698D+03  0.105612D+03  0.653817D+03  0.165738D-02  0.598808D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    111             4.62368             0.22828             4.85197
+    112             5.08250             0.28853             5.37104
+    113            11.01586             0.24623            11.26210
+    114             4.69461             0.19941             4.89404
+    115             4.67059             0.21827             4.88887
+    116             4.71983             0.19022             4.91006
+    117             4.73269             0.19077             4.92347
+    118             4.74982             0.17834             4.92818
+    119             4.74823             0.18544             4.93369
+    120             4.69963             0.17400             4.87364
+  121  0.196866D+00  0.103690D+03  0.105595D+03  0.653784D+03  0.176545D-02  0.598764D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    121             4.70782             0.20141             4.90923
+    122             4.68581             0.19851             4.88433
+    123             4.74714             0.17647             4.92362
+    124             4.67998             0.20361             4.88360
+    125             4.66920             0.20424             4.87345
+    126             4.69152             0.20434             4.89588
+    127             4.66866             0.19661             4.86528
+    128             4.64032             0.20267             4.84300
+    129             4.65891             0.21593             4.87485
+    130             4.64745             0.22941             4.87687
+  131  0.214521D+00  0.103681D+03  0.105577D+03  0.653747D+03  0.168510D-02  0.598740D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    131             4.66163             0.19967             4.86131
+    132             4.64794             0.22287             4.87082
+    133             4.63902             0.21748             4.85651
+    134             4.64246             0.20910             4.85156
+    135             4.64888             0.22728             4.87617
+    136             4.64677             0.23129             4.87807
+    137             4.67550             0.21143             4.88695
+    138             4.61097             0.21710             4.82809
+    139             4.63010             0.22570             4.85581
+    140             4.60402             0.22501             4.82905
+  141  0.231372D+00  0.103670D+03  0.105561D+03  0.653711D+03  0.180472D-02  0.598739D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    141             4.64091             0.21801             4.85893
+    142             4.63867             0.20448             4.84315
+    143             4.63986             0.20287             4.84274
+    144             4.61416             0.22058             4.83475
+    145             4.64436             0.21333             4.85770
+    146             4.62661             0.22175             4.84837
+    147             4.60749             0.22014             4.82764
+    148             4.83763             0.23706             5.07471
+    149             4.90868             0.23795             5.14666
+    150             4.63280             0.22929             4.86211
+  151  0.249419D+00  0.103656D+03  0.105545D+03  0.653672D+03  0.173494D-02  0.598758D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    151             4.74729             0.21716             4.96445
+    152             4.62761             0.22767             4.85530
+    153             4.59870             0.23311             4.83182
+    154             4.62661             0.20710             4.83372
+    155             4.60294             0.22829             4.83125
+    156             4.62077             0.20486             4.82564
+    157             4.64460             0.21952             4.86414
+    158             4.60853             0.22457             4.83311
+    159             4.63647             0.22171             4.85819
+    160             4.60894             0.22347             4.83243
+  161  0.266768D+00  0.103642D+03  0.105531D+03  0.653634D+03  0.184997D-02  0.598793D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    161             4.73027             0.16321             4.89349
+    162             4.68270             0.16604             4.84876
+    163             4.63882             0.20959             4.84842
+    164             5.04569             0.33950             5.38520
+    165            11.34125             0.27950            11.62076
+    166             4.76011             0.18369             4.94381
+    167             4.70612             0.20942             4.91555
+    168             4.72115             0.21100             4.93216
+    169             4.75974             0.17598             4.93573
+    170             4.80648             0.17067             4.97716
+  171  0.285268D+00  0.103624D+03  0.105517D+03  0.653592D+03  0.179175D-02  0.598840D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    171             4.77422             0.17691             4.95113
+    172             4.74274             0.18507             4.92782
+    173             4.95298             0.17277             5.12576
+    174             4.92083             0.18121             5.10205
+    175             4.83392             0.21373             5.04766
+    176             4.86488             0.19589             5.06078
+    177             4.85342             0.21603             5.06947
+    178             4.79982             0.22036             5.02019
+    179             4.61689             0.21955             4.83645
+    180             4.68538             0.20859             4.89398
+  181  0.303186D+00  0.103606D+03  0.105505D+03  0.653550D+03  0.190591D-02  0.598892D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    181             4.65535             0.19606             4.85142
+    182             4.61719             0.22491             4.84211
+    183             4.68440             0.20634             4.89075
+    184             4.59982             0.23967             4.83951
+    185             4.66746             0.23569             4.90317
+    186             4.62753             0.23205             4.85960
+    187             4.61937             0.21244             4.83182
+    188             4.63295             0.22235             4.85531
+    189             4.62753             0.21359             4.84113
+    190             4.60540             0.22647             4.83188
+  191  0.322245D+00  0.103583D+03  0.105494D+03  0.653505D+03  0.184214D-02  0.598950D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    191             4.65150             0.22471             4.87622
+    192             4.66176             0.24377             4.90554
+    193             4.61450             0.22107             4.83558
+    194             4.61269             0.22564             4.83835
+    195             4.62969             0.21923             4.84893
+    196             4.61039             0.22112             4.83152
+    197             4.60597             0.22330             4.82928
+    198             4.62286             0.21505             4.83792
+    199             4.60552             0.22516             4.83070
+    200             4.62977             0.22313             4.85291
+  201  0.340666D+00  0.103559D+03  0.105484D+03  0.653461D+03  0.195331D-02  0.599008D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    201             4.72557             0.21554             4.94112
+    202             4.60616             0.22308             4.82926
+    203             4.65203             0.21402             4.86606
+    204             4.61014             0.22290             4.83305
+    205             4.61883             0.21098             4.82982
+    206             4.60728             0.22802             4.83531
+    207             4.61070             0.23193             4.84264
+    208             4.62725             0.22954             4.85680
+    209             4.62322             0.21251             4.83574
+    210             4.61444             0.22757             4.84202
+  211  0.360199D+00  0.103532D+03  0.105477D+03  0.653414D+03  0.192562D-02  0.599072D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    211             4.62220             0.22228             4.84448
+    212             4.60196             0.23088             4.83285
+    213             5.15434             0.31244             5.46679
+    214            10.90197             0.22316            11.12515
+    215             4.89695             0.23869             5.13565
+    216             4.73552             0.18421             4.91974
+    217             4.70448             0.17815             4.88264
+    218             4.73158             0.17416             4.90575
+    219             4.68091             0.18718             4.86810
+    220             4.73376             0.18579             4.91956
+  221  0.379455D+00  0.103503D+03  0.105472D+03  0.653368D+03  0.196843D-02  0.599141D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    221             4.64786             0.21624             4.86410
+    222             4.69066             0.18778             4.87845
+    223             4.65308             0.20198             4.85508
+    224             4.62406             0.21086             4.83493
+    225             4.64215             0.21114             4.85330
+    226             4.68125             0.18994             4.87120
+    227             4.61305             0.22277             4.83583
+    228             4.63963             0.20982             4.84946
+    229             4.63916             0.21348             4.85266
+    230             4.62200             0.21539             4.83740
+  231  0.399140D+00  0.103473D+03  0.105469D+03  0.653324D+03  0.204743D-02  0.599214D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    231             4.65851             0.20871             4.86722
+    232             4.66893             0.20828             4.87722
+    233             4.62445             0.21139             4.83585
+    234             4.61646             0.22399             4.84046
+    235             4.63261             0.20712             4.83975
+    236             4.60545             0.22609             4.83155
+    237             4.61456             0.21144             4.82601
+    238             4.60969             0.22068             4.83039
+    239             4.64188             0.19825             4.84014
+    240             4.63221             0.22102             4.85325
+  241  0.419614D+00  0.103441D+03  0.105469D+03  0.653282D+03  0.201769D-02  0.599287D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    241             4.63704             0.22944             4.86649
+    242             4.61266             0.21395             4.82662
+    243             4.61702             0.22471             4.84174
+    244             4.59873             0.22678             4.82553
+    245             4.59777             0.22643             4.82422
+    246             4.60811             0.22113             4.82925
+    247             4.60508             0.22005             4.82514
+    248             4.60609             0.21884             4.82493
+    249             4.63422             0.20296             4.83719
+    250             4.60256             0.22618             4.82875
+  251  0.439791D+00  0.103410D+03  0.105472D+03  0.653244D+03  0.214161D-02  0.599350D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    251             4.71553             0.22430             4.93983
+    252             4.59346             0.22832             4.82179
+    253             4.61159             0.23010             4.84171
+    254             4.64580             0.21050             4.85631
+    255             4.62839             0.20735             4.83575
+    256             4.59613             0.22852             4.82466
+    257             4.61142             0.22246             4.83389
+    258             4.89810             0.32392             5.22202
+    259            11.06170             0.26267            11.32438
+    260             4.94378             0.17848             5.12227
+  261  0.461207D+00  0.103378D+03  0.105478D+03  0.653210D+03  0.203860D-02  0.599404D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    261             4.79433             0.16470             4.95902
+    262             4.69359             0.17805             4.87165
+    263             4.94030             0.21550             5.15581
+    264             4.78636             0.18148             4.96785
+    265             4.89261             0.20117             5.09379
+    266             4.87126             0.21142             5.08270
+    267             4.96170             0.17269             5.13440
+    268             4.91611             0.20900             5.12513
+    269             4.88640             0.21437             5.10079
+    270             4.97935             0.20883             5.18820
+  271  0.481593D+00  0.103349D+03  0.105488D+03  0.653183D+03  0.209359D-02  0.599443D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    271             4.65302             0.24446             4.89748
+    272             4.66319             0.23240             4.89562
+    273             4.64262             0.22666             4.86929
+    274             4.63316             0.21060             4.84377
+    275             4.66885             0.20462             4.87348
+    276             4.63243             0.25529             4.88773
+    277             4.61253             0.22561             4.83815
+    278             4.66433             0.20141             4.86575
+    279             4.60192             0.23232             4.83425
+    280             4.62321             0.23005             4.85327
+  281  0.502529D+00  0.103320D+03  0.105501D+03  0.653162D+03  0.208134D-02  0.599472D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    281             4.65736             0.20447             4.86182
+    282             4.61698             0.22708             4.84407
+    283             4.62034             0.21488             4.83524
+    284             4.60109             0.22278             4.82388
+    285             4.65789             0.19598             4.85389
+    286             4.61055             0.22480             4.83535
+    287             4.62187             0.22727             4.84915
+    288             4.60389             0.22733             4.83123
+    289             4.62199             0.22555             4.84755
+    290             4.60904             0.22093             4.82999
+  291  0.523342D+00  0.103292D+03  0.105516D+03  0.653145D+03  0.201200D-02  0.599494D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    291             4.63324             0.22093             4.85417
+    292             4.59800             0.22300             4.82100
+    293             4.59784             0.22616             4.82401
+    294             4.58940             0.23352             4.82293
+    295             4.62805             0.20119             4.82925
+    296             4.62477             0.21404             4.83883
+    297             4.59669             0.23095             4.82766
+    298             4.59843             0.22962             4.82806
+    299             4.64170             0.21923             4.86095
+    300             4.61236             0.22350             4.83588
+  301  0.543462D+00  0.103266D+03  0.105532D+03  0.653132D+03  0.212587D-02  0.599511D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    301             4.69469             0.23483             4.92952
+    302             4.88133             0.29939             5.18074
+    303            11.48425             0.32990            11.81416
+    304             4.60189             0.23127             4.83318
+    305             4.62449             0.22835             4.85285
+    306             4.65419             0.22346             4.87766
+    307             4.68648             0.19809             4.88458
+    308             4.70204             0.18200             4.88405
+    309             4.72539             0.18708             4.91248
+    310             4.71899             0.19083             4.90983
+  311  0.564721D+00  0.103239D+03  0.105550D+03  0.653120D+03  0.201786D-02  0.599523D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    311             4.69472             0.20721             4.90194
+    312             4.70032             0.19475             4.89508
+    313             4.69142             0.18450             4.87593
+    314             4.66233             0.19866             4.86100
+    315             4.65020             0.19672             4.84692
+    316             4.63202             0.21092             4.84295
+    317             4.64787             0.20719             4.85508
+    318             4.66711             0.19145             4.85857
+    319             4.62574             0.20307             4.82883
+    320             4.60261             0.22503             4.82765
+  321  0.584899D+00  0.103214D+03  0.105566D+03  0.653109D+03  0.204270D-02  0.599529D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    321             4.63838             0.21792             4.85630
+    322             4.64424             0.20968             4.85394
+    323             4.68863             0.18703             4.87567
+    324             4.60128             0.22493             4.82622
+    325             4.60484             0.21795             4.82280
+    326             4.60620             0.22265             4.82886
+    327             4.61055             0.22698             4.83755
+    328             4.63106             0.20135             4.83242
+    329             4.61312             0.23460             4.84773
+    330             4.62700             0.20747             4.83448
+  331  0.605326D+00  0.103190D+03  0.105582D+03  0.653097D+03  0.208612D-02  0.599529D+01  0.211758D-21 -0.499465D-02  0.499465D-02
+    331             4.65701             0.21049             4.86750
+    332             4.61311             0.21834             4.83147
+    333             4.59787             0.22814             4.82603
+    334             4.59673             0.22908             4.82582
+    335             4.59470             0.22969             4.82440
+    336             4.62929             0.21003             4.83933
+    337             4.63844             0.22120             4.85964
+    338             4.59588             0.23145             4.82735
+    339             4.59926             0.22560             4.82487
+    340             4.61795             0.21076             4.82872
+  341  0.626187D+00  0.103166D+03  0.105597D+03  0.653084D+03  0.210092D-02  0.599519D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    341             4.61466             0.21657             4.83123
+    342             4.62195             0.21178             4.83374
+    343             4.59473             0.22980             4.82454
+    344             4.62363             0.22511             4.84875
+    345             4.60347             0.22686             4.83035
+    346             5.08654             0.30017             5.38672
+    347            11.56713             0.22827            11.79541
+    348             4.97089             0.16533             5.13623
+    349             4.86511             0.18419             5.04932
+    350             4.79207             0.17890             4.97098
+  351  0.647197D+00  0.103142D+03  0.105610D+03  0.653070D+03  0.214138D-02  0.599501D+01  0.211758D-21 -0.499465D-02  0.499465D-02
+    351             4.86664             0.18714             5.05378
+    352             4.78269             0.16417             4.94687
+    353             4.91859             0.18888             5.10748
+    354             4.70230             0.19667             4.89898
+    355             4.69586             0.20076             4.89663
+    356             4.65844             0.20935             4.86780
+    357             4.66622             0.20111             4.86734
+    358             4.65181             0.19843             4.85025
+    359             4.67820             0.19782             4.87603
+    360             4.64594             0.21708             4.86304
+  361  0.668610D+00  0.103120D+03  0.105620D+03  0.653055D+03  0.216507D-02  0.599472D+01  0.211758D-21 -0.499465D-02  0.499465D-02
+    361             4.62691             0.22394             4.85085
+    362             4.68129             0.19241             4.87372
+    363             4.61305             0.22838             4.84144
+    364             4.63111             0.20557             4.83669
+    365             4.63842             0.22377             4.86220
+    366             4.61274             0.22223             4.83498
+    367             4.65107             0.19996             4.85104
+    368             4.62351             0.21578             4.83930
+    369             4.62081             0.22419             4.84502
+    370             4.60382             0.22640             4.83022
+  371  0.690261D+00  0.103100D+03  0.105627D+03  0.653036D+03  0.223090D-02  0.599436D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    371             4.62214             0.22097             4.84312
+    372             4.63832             0.21285             4.85118
+    373             4.65624             0.19976             4.85601
+    374             4.61685             0.21312             4.82998
+    375             4.60323             0.22896             4.83220
+    376             4.62270             0.22165             4.84437
+    377             4.62686             0.21525             4.84213
+    378             4.60030             0.22126             4.82157
+    379             4.59901             0.22737             4.82639
+    380             4.59788             0.22712             4.82502
+  381  0.712570D+00  0.103080D+03  0.105631D+03  0.653015D+03  0.230958D-02  0.599394D+01  0.211758D-21 -0.499465D-02  0.499465D-02
+    381             4.61832             0.21687             4.83519
+    382             4.62305             0.22287             4.84593
+    383             4.64687             0.20890             4.85578
+    384             4.59820             0.22736             4.82558
+    385             4.60443             0.22857             4.83301
+    386             4.69545             0.20597             4.90144
+    387             4.61151             0.25617             4.86769
+    388             4.99010             0.31567             5.30578
+    389            10.55018             0.24123            10.79142
+    390             4.62928             0.25109             4.88039
+  391  0.735666D+00  0.103063D+03  0.105629D+03  0.652990D+03  0.227678D-02  0.599355D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    391             4.62971             0.21855             4.84826
+    392             4.62714             0.20944             4.83659
+    393             4.67417             0.18935             4.86353
+    394             4.72442             0.16379             4.88822
+    395             4.74608             0.17355             4.91964
+    396             4.73722             0.18426             4.92149
+    397             4.72138             0.18466             4.90605
+    398             4.68707             0.19410             4.88119
+    399             4.67180             0.21139             4.88320
+    400             4.68238             0.20810             4.89049
+  401  0.758433D+00  0.103048D+03  0.105623D+03  0.652962D+03  0.242591D-02  0.599323D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    401             4.82890             0.19357             5.02248
+    402             4.64484             0.22472             4.86957
+    403             4.63450             0.20866             4.84317
+    404             4.66504             0.19877             4.86381
+    405             4.64216             0.21439             4.85656
+    406             4.62695             0.22332             4.85029
+    407             4.63781             0.21017             4.84799
+    408             4.61858             0.22271             4.84130
+    409             4.65900             0.18324             4.84225
+    410             4.64042             0.21691             4.85734
+  411  0.782692D+00  0.103035D+03  0.105613D+03  0.652931D+03  0.247009D-02  0.599297D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    411             4.61841             0.23045             4.84886
+    412             4.62860             0.22208             4.85068
+    413             4.63591             0.22037             4.85629
+    414             4.62626             0.21984             4.84611
+    415             4.63013             0.20579             4.83593
+    416             4.60819             0.22613             4.83434
+    417             4.59820             0.22853             4.82674
+    418             4.65902             0.20388             4.86291
+    419             4.61056             0.22601             4.83658
+    420             4.60550             0.23062             4.83613
+  421  0.807393D+00  0.103023D+03  0.105601D+03  0.652900D+03  0.250303D-02  0.599281D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    421             4.65185             0.22842             4.88027
+    422             4.60863             0.22735             4.83599
+    423             4.62645             0.22159             4.84805
+    424             4.62977             0.20636             4.83614
+    425             4.60621             0.23123             4.83745
+    426             4.88387             0.37622             5.26010
+    427            15.80010             0.30238            16.10248
+    428             4.94004             0.20042             5.14047
+    429             4.93094             0.18401             5.11497
+    430             4.70088             0.25788             4.95878
+  431  0.832424D+00  0.103013D+03  0.105589D+03  0.652869D+03  0.246929D-02  0.599268D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    431             4.71794             0.19455             4.91249
+    432             4.69129             0.20719             4.89850
+    433             4.71319             0.19939             4.91259
+    434             4.69111             0.19915             4.89027
+    435             4.73631             0.16066             4.89698
+    436             4.65465             0.19657             4.85122
+    437             4.65897             0.19888             4.85787
+    438             4.65746             0.26348             4.92096
+    439             4.65841             0.19912             4.85753
+    440             4.65836             0.18754             4.84591
+  441  0.857117D+00  0.103005D+03  0.105578D+03  0.652843D+03  0.240815D-02  0.599251D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    441             4.62930             0.22335             4.85265
+    442             4.61536             0.21831             4.83368
+    443             4.62692             0.21413             4.84106
+    444             4.71388             0.22171             4.93560
+    445             4.64593             0.20568             4.85163
+    446             4.62921             0.20938             4.83860
+    447             4.64133             0.22817             4.86952
+    448             4.61452             0.21364             4.82817
+    449             4.61079             0.22310             4.83390
+    450             4.61242             0.22776             4.84019
+  451  0.881198D+00  0.102997D+03  0.105568D+03  0.652820D+03  0.244095D-02  0.599226D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    451             4.74030             0.20774             4.94803
+    452             4.61045             0.21785             4.82831
+    453             4.65031             0.24179             4.89211
+    454             4.64981             0.21070             4.86052
+    455             4.62016             0.22439             4.84456
+    456             4.60302             0.22776             4.83078
+    457             4.60553             0.22202             4.82756
+    458             4.62721             0.21291             4.84013
+    459             4.61680             0.21247             4.82928
+    460             4.61821             0.22122             4.83945
+  461  0.905607D+00  0.102989D+03  0.105560D+03  0.652798D+03  0.238316D-02  0.599192D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    461             4.60773             0.23043             4.83816
+    462             4.59998             0.22973             4.82972
+    463             5.02444             0.29844             5.32289
+    464            11.37241             0.29330            11.66572
+    465             4.89811             0.21539             5.11351
+    466             4.76974             0.18332             4.95307
+    467             5.00356             0.17221             5.17579
+    468             4.85898             0.16855             5.02755
+    469             4.73477             0.18434             4.91912
+    470             4.72808             0.16693             4.89503
+  471  0.929439D+00  0.102981D+03  0.105552D+03  0.652776D+03  0.232120D-02  0.599158D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    471             4.69041             0.20023             4.89064
+    472             4.70165             0.16794             4.86960
+    473             4.65064             0.20597             4.85662
+    474             4.64803             0.19347             4.84151
+    475             4.67549             0.20768             4.88318
+    476             4.64961             0.20372             4.85335
+    477             4.64881             0.20219             4.85101
+    478             4.66303             0.20076             4.86380
+    479             4.62309             0.21942             4.84252
+    480             4.62007             0.31392             4.93401
+  481  0.952651D+00  0.102972D+03  0.105544D+03  0.652753D+03  0.241010D-02  0.599131D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    481             4.64233             0.21357             4.85590
+    482             4.69838             0.19074             4.88913
+    483             4.61064             0.22825             4.83891
+    484             4.61773             0.21217             4.82991
+    485             4.60756             0.21605             4.82362
+    486             4.61920             0.22283             4.84204
+    487             4.60050             0.22058             4.82109
+    488             4.61797             0.22518             4.84316
+    489             4.65116             0.20553             4.85670
+    490             4.61547             0.22637             4.84185
+  491  0.976752D+00  0.102961D+03  0.105535D+03  0.652728D+03  0.230024D-02  0.599113D+01  0.211758D-21 -0.499465D-02  0.499465D-02
+    491             4.66281             0.19181             4.85462
+    492             4.61195             0.27706             4.88902
+    493             4.59655             0.23258             4.82914
+    494             4.61482             0.22545             4.84028
+    495             4.62663             0.21866             4.84530
+    496             4.61877             0.21719             4.83597
+    497             4.59359             0.22571             4.81932
+    498             4.62355             0.20271             4.82628
+    499             4.59450             0.22913             4.82364
+    500             4.63133             0.22716             4.85851
+  0.999754727     (  0.00000000    ,  0.00000000    ) (  0.00000000    ,  0.00000000    )
+           1           7 in escru image/scratch/yh/channel_rough_data/runs/roughness_kx0_kz3_10/roughness_kx0_kz3_10.001                       
+ stat esc           1          10
+           8          14 in escru image
+          15          21 in escru image
+          22          28 in escru image
+          29          35 in escru image
+          36          42 in escru image
+          43          49 in escru image
+          50          56 in escru image
+          57          63 in escru image
+          64          70 in escru image
+          71          77 in escru image
+          78          84 in escru image
+          85          91 in escru image
+          92          98 in escru image
+          99         105 in escru image
+         106         112 in escru image
+         113         118 in escru image
+         119         124 in escru image
+         125         130 in escru image
+         131         136 in escru image
+         137         142 in escru image
+         143         148 in escru image
+         149         154 in escru image
+         155         160 in escru image
+         161         166 in escru image
+         167         172 in escru image
+         173         178 in escru image
+         179         184 in escru image
+         185         190 in escru image
+         191         196 in escru image
+         197         202 in escru image
+         203         208 in escru image
+         209         214 in escru image
+         215         220 in escru image
+         221         226 in escru image
+         227         232 in escru image
+ closing files
+ escribe espectro, proc           36 jj=            1
+ escribe espectro, proc           36 jj=            2
+ escribe espectro, proc           36 jj=            3
+ escribe espectro, proc           36 jj=            4
+ escribe espectro, proc           36 jj=            5
+ escribe espectro, proc           36 jj=            6
+ escribe espectro, proc           36 jj=            7
+ escribe espectro, proc           36 jj=            8
+ escribe espectro, proc           36 jj=            9
+ escribe espectro, proc           36 jj=           10
+ escribe espectro, proc           36 jj=           11
+ escribe espectro, proc           36 jj=           12
+ escribe espectro, proc           36 jj=           13
+ closing files
+ time write:   3.3997330665588379     
+  501  0.999755D+00  0.102950D+03  0.105526D+03  0.652701D+03  0.237251D-02  0.599105D+01  0.000000D+00 -0.499465D-02  0.499465D-02
+    501             8.10377             0.25288             8.35665
+ Total time:    2521.1738176345825     
+ Trans. time:    42.217383861541748     
+ Comm. time:    108.44749069213867     
+ Comm/Total:    4.3014682261727735E-002
+ Trans/Total:    1.6745130211272372E-002
+ Aver time per step:    5.0322830691309033     
+ process          16 over
+ process          18 over
+ process          19 over
+ process          20 over
+ process          21 over
+ process          22 over
+ process          23 over
+ process          24 over
+ process          25 over
+ process          26 over
+ process          27 over
+ process          28 over
+ process          29 over
+ process          30 over
+ process          31 over
+ process          32 over
+ process          33 over
+ process          34 over
+ process          35 over
+ process          13 over
+ process          12 over
+ process          11 over
+ process          17 over
+ process          14 over
+ process           9 over
+ process           8 over
+ process          10 over
+ process           7 over
+ process          15 over
+ process           4 over
+ process           3 over
+ process           1 over
+ process           2 over
+ process           5 over
+ process           6 over
+ process           0 over

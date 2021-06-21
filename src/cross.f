@@ -433,6 +433,35 @@ c     */      ACHTUNG:  This runge kutta is ok but could be better        */
 c     */                                                                  */
 c     /********************************************************************/
          
+
+
+
+c     /********************************************************************/
+c     /*      time stepper                                                */
+c     /*      take a step in time. Runge - Kutta for terms       */
+c     /*      inverse euler convective for the viscous part.            */
+c     /*                                                                  */
+c     /*       Solves  :    Gt  + Hg = 1/Re G"                            */
+c     /*                    V"t + Hv = 1/Re V""                           */
+c     /*                                                                  */
+c     /*   input:                                                         */
+c     /*     vor: vorticity according to the y (n) direction          */
+c     /*     phi: laplacian velocity according to the direction y (n)     */
+c     /*     vorwk: vor copy for the calc. of the non-linear terms.    */
+c     /*     phiwk: copy of phi for the calc. of the non-linear terms.    */
+c     /*     hg: Hg                                                       */
+c     /*     hv: Hv                                                       */
+c     /*     dvordy: working area of ​​dimension mx * nxymax               */
+c     /*     chwk: work area for chz2y                         */
+c     /*                                                                  */
+c     /*  output:                                                         */
+c     /*     vor: vorticity according to the y direction (n + 1)                   */
+c     /*     phi: laplacian velocity according to the y direction (n + 1)        */
+c     /*      hg: contains v (velocity according to y)                         */
+c     /*      hv: contains dv / dy                                         */
+c     /********************************************************************/
+
+
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     this is done only for the first step
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -454,6 +483,7 @@ c     /*   Todos necesitan el tiempo!!!!
      &       vWallTop)
 
 c     /*   calcula la v a partir de phi */
+c     /*   calculate the v from phi */
             do k=kb,ke
                k1 = icx(k-1)
                do i=0,mx1
@@ -527,7 +557,7 @@ c-----------------------dvordy      : d (vorwk) / dy -- F-F
             call deryr2(vorwk,dvordy,(mx1+1)*mmz,my,chwk)
             
 c     c c c c c c c c c c cc c c c c c c c c c c cc c c c c c c c c c c c
-c     all arrays are  sent from y-x --> x-z
+c     all arrays changed from z slices to y slices
 c     c c c c c c c c c c cc c c c c c c c c c c cc c c c c c c c c c c c
             
             call chjik2ikj(phiwk,phiwk,chwk,chwk,myid)
@@ -575,7 +605,7 @@ c     work(1):du00;  work(ipo1):dw00;  work(ipo2):u00;  work(ipo3):w00;
 
 c     c c c c c c c c c c cc c c c c c c c c c c cc c c c c c c c c c c c
 c     at this point: dvordy, rhv and rhg are the outs
-c     they must be trasformed from xy-xz before completion
+c     they must be trasformed from y slices to z slices before completion
 c     dvordy: dH1/dx + dH3/dz
 c     hg: -dH3/dx + dH1/dz
 c     hv: d^2H2/dx^2 + d^2H2/dz^2

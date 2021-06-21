@@ -285,12 +285,13 @@ c      ---------------  read from file and distribute
        
          open(iinp,file=filinp,status='unknown',form='unformatted',
      &        access='direct',recl=ntotr*iwd)
+c     Read 00 mode from restart file
          read(iinp,rec=1) xx,xx,xx,xx,xx,i,i,i,i,xx,
      &        i,i,xx,xx,xx,xx,(wk1(j),j=1,2*mye) 
       
 
 
-c     ------------- 00 modes ------------------
+c     ------ Organize 00 modes and send to all slaves--------------
          mym = min(my,mye)
          do j=1,mym
             u00(j) = wk1(2*j-1)
@@ -310,7 +311,7 @@ c     ------------- 00 modes ------------------
      &                iproc,MPI_COMM_WORLD,ierr)
          enddo
 
-c         ------------  other modes,  master node -----
+c         -----Read and organize other modes, for master node -----
          mmy2 = min(je,mye)-jb+1
          write(*,*) 'master reads its data' 
          do j=1,mmy2
@@ -318,7 +319,7 @@ c         ------------  other modes,  master node -----
             call assign(wk1,vor(1,1,j),phi(1,1,j),mx,mz,mxe,mze)
          enddo
 
-c         ------------  other modes,  distribute to slaves --
+c     --Read and organize other modes, and send to all slaves -----
          do iproc=1,numerop-1
 
             write(*,*)'master reads proc no',iproc,' data and send them' 
@@ -365,7 +366,7 @@ c         ------------  receive 00 mode ----------
 
          ntotr=2*mxe*mze
 
-c         ------------  receive other modes ----------
+c         ------------  receive other modes and organize ----------
          mmy2 = min(je,mye)-jb+1
          do j=1,mmy2
             call MPI_RECV(wk1,ntotr,MPI_REAL,master,
@@ -385,7 +386,7 @@ c         ------------  receive other modes ----------
          allocate(wWallBottom(mxe,mze))
          allocate(wWallTop(mxe,mze))
 
-      endif
+      endif ! end master and slave separation if
 
       ! all processes set velocity boundary condition
       call set_bc_from_restart_file(uWallBottom, uWallTop,
@@ -399,6 +400,7 @@ c         ------------  receive other modes ----------
       deallocate(wWallBottom)
       deallocate(wWallTop)
 
+c       so far, each processor has data in a few y planes
 c ----- before going any further, exchange cuts in y with cuts in z!
 
       call chikj2jik(vor,vor,wk1,wk1,myid)
@@ -837,16 +839,24 @@ c ---------------  modes values for FOURIER
       call genexp
 
       call pointers(jbeg,jend,kbeg,kend)
-      jb=jbeg(myid)
-      je=jend(myid)
-      kb=kbeg(myid)
-      ke=kend(myid)
+c     ===============================================
+c     This function divides the y and z grid for all
+c     the processors
+c     jbeg, kbeg are arrays with the y,z start index 
+c     for each processor
+c     jend, kend are the end index
+c     ===============================================
+      jb=jbeg(myid) ! y start index for this processor
+      je=jend(myid) ! y end index for this processor
+      kb=kbeg(myid) ! z start index for this processor
+      ke=kend(myid) ! y end index for this processor
 
       write(*,*) 'pointers: ',myid,' jb,je,my=',jb,je,my
       write(*,*) 'pointers: ',myid,' kb,ke,mz=',kb,ke,mz
 
-      mmz = ke-kb+1
+      mmz = ke-kb+1 ! number of y and z points for each processor
       mmy = je-jb+1
+
 
 c    ------------  initializes fast fourier transforms and CFDiff ----
       call cfti(mgalz)
@@ -1032,6 +1042,10 @@ c ==============================================================
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c          single jjs 4/01/01, rewritten jjs 28/01/01
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     organize the data read from the restart file and puts 
+c     into vor and phi for each y plane
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       implicit none
 
       integer   mxm,mzm,klen,kini1,kini2,i,k,k1,k2,mx,mz,mxe,mze
@@ -1068,6 +1082,9 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine sendsta(myid)
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c          single jjs 4/01/01
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     all slaves send data to master
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       include "mpif.h"
       include "ctes3D"

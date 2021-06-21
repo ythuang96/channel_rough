@@ -14,6 +14,23 @@ c/*       v: solucion en el plano fourier x fourier 	             */
 c/*    dvdy: dv/dy en el mismo plano anterior                        */
 c/*                                                                  */
 c/********************************************************************/
+
+c/********************************************************************/
+c/*                                                                  */
+c/*           resolve the problem  v'' - rK v = phi                 */
+c/*       matrix form ->    {v}*[A]={f}                      */
+c/*                                                                  */
+c/*      COMPACT FINITE DIFFERENCES           */
+c/*  input:                                                          */
+c/*     phi: vector phi.                                             */
+c/*       n: number of terms              */
+c/*      rK: independent constant.                                */
+c/*      wk: working area of ​​9 * n minimum (in real * 8 !!!)       */ 
+c/* output:                                                          */
+c/*       v: solution in the fourier x fourier plane                */
+c/*    dvdy: dv/dy in the same previous plane                        */
+c/*                                                                  */
+c/********************************************************************/
       subroutine Lapvdv(phi,v,dvdy,rK,bcb,bct)
       use matrices,only: dt21,dt22,dt12,prem1
       
