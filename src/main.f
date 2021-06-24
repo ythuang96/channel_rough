@@ -114,11 +114,11 @@ c ----------  storage for the pressure
 
 c               /*   read input data           */
 
-      write(*,*) 'going to read file ...'
+c      write(*,*) 'going to read file ...'
 
       call getfil(vor,phi,u00,w00,wk,myid)
 
-      write(*,*) '... file read'
+c      write(*,*) '... file read'
 
       ! initialize custom modules
       call initialize_save_flowfield(filstt)
@@ -313,7 +313,7 @@ c     ------ Organize 00 modes and send to all slaves--------------
 
 c         -----Read and organize other modes, for master node -----
          mmy2 = min(je,mye)-jb+1
-         write(*,*) 'master reads its data' 
+c         write(*,*) 'master reads its data' 
          do j=1,mmy2
             read(iinp,rec=j+jb) (wk1(i),i=1,ntotr)
             call assign(wk1,vor(1,1,j),phi(1,1,j),mx,mz,mxe,mze)
@@ -322,7 +322,7 @@ c         -----Read and organize other modes, for master node -----
 c     --Read and organize other modes, and send to all slaves -----
          do iproc=1,numerop-1
 
-            write(*,*)'master reads proc no',iproc,' data and send them' 
+c            write(*,*)'master reads proc no',iproc,' data and send them' 
 
             do j=jbeg(iproc),min(jend(iproc),mye)
                read(iinp,rec=j+1) (wk1(i),i=1,ntotr)
@@ -375,7 +375,7 @@ c         ------------  receive other modes and organize ----------
 
          enddo
 
-         write(*,*) 'proc no.',myid,'receives data from master'
+c         write(*,*) 'proc no.',myid,'receives data from master'
 
          ! velocity boundary conditions: slave processes
          ! allocate temporary memory

@@ -906,9 +906,9 @@ c     /* time:
          
          if (myid.eq.0) then
             totaltimer=totaltimer+MPI_WTIME()
-            write(*,'(i7,3f20.5)') istep,
-     >           MPI_WTIME()+iter_time-commtimer+comm_time,
-     >           commtimer-comm_time,MPI_WTIME()+iter_time
+c            write(*,'(i7,3f20.5)') istep,
+c     >           MPI_WTIME()+iter_time-commtimer+comm_time,
+c     >           commtimer-comm_time,MPI_WTIME()+iter_time
             comm_time = commtimer
          end if
          
