@@ -29,7 +29,7 @@ contains
         character(len=*), intent(in) :: runNameWithPath
         integer :: mpiRank, mpiError
         integer, parameter :: mpiMaster = 0
-        samplingFrequencyInTimesteps = 10
+        samplingFrequencyInTimesteps = 300
         samplingPeriod = 0.0899_sp  ! corresponds to approx tUc/h @ ReTau=660
         collectFlowfield = .false.
         collectWallVelocity = .false.

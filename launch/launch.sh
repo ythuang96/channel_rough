@@ -1,8 +1,10 @@
 #!/usr/bin/bash
 # Launch script to launch DNS code on Richardson Cluster
 
+# ------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------
 # Run Settings -----------------------------------------------------------------------------------
-runName=roughness_kx0_kz3_5  # must not exist yet in runFolder
+runName=rough_8_96C_1  # must not exist yet in runFolder
 runTime=4:00:00  # format: hh:mm (Euler), hh:mm:ss (Millikan) hh:mm:ss (Richardson)
 #jobDependency=${3:-none}  # name of run (Euler), jobid of run (Millikan) for dependency condition, optional
 mpiProcessors=96  # must be equal to nprocs in ctes3D
@@ -11,8 +13,10 @@ mpiProcessors=96  # must be equal to nprocs in ctes3D
 runFolder="/home/yh/channel_rough/runs/$runName"
 scratchFolder="/scratch/yh/channel_rough_data/runs/$runName"
 
-inputFile="/scratch/yh/channel_rough_data/runs/roughness_kx0_kz3_4/roughness_kx0_kz3_4.006"
-
+inputFile="/scratch/yh/channel_rough_data/runs/roughness_kx0_kz3_7/roughness_kx0_kz3_7.006"
+# Run Settings -----------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------
 
 
 # Strings to replace in the hre.dat file that sets the input/output file path
@@ -48,6 +52,7 @@ then
 
   echo "#SBATCH -n $mpiProcessors --tasks-per-node=24" >> job.sh
   echo "#SBATCH -t $runTime" >> job.sh
+  echo "#SBATCH --mem-per-cpu=5000" >> job.sh
 
   echo "echo \"Running on hosts: \$SLURM_NODELIST\"" >> job.sh
   echo "echo \"Running on \$SLURM_NNODES nodes.\"" >> job.sh

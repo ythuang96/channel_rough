@@ -12,7 +12,7 @@
       integer jspecy
       integer blockingik2ki,blockingki2ik
 
-      parameter(numerop=36)
+      parameter(numerop=96)
       parameter(blockingik2ki=64)        !!! divisor of mgalz !!!
       parameter(blockingki2ik=64)       !!! divisor of mgalz !!!
 
