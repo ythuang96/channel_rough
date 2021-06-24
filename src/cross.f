@@ -871,8 +871,9 @@ c     /*     write history record     */
                
                tmp=my1/2
                
- 325           format(i5,9(d14.6))
-               write(*,325) istep,time,-1.*Wz0,WzL,sqrt(reynota),Deltat,
+ 325           format(a10,i5,9(d14.6))
+               write(*,325) 'Time Step ', istep,time,-1.*Wz0,WzL,
+     .              sqrt(reynota),Deltat,
      .              u00(floor(tmp))*Re/sqrt(reynota),
      .              massw,uv0,uvL
                
