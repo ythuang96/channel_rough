@@ -1479,9 +1479,9 @@ c     /********************************************************************/
             hyy = hy(j)
             do k=1,mgalz
                do i=1,mgalx
-                  cflx = max(cflx,abs(u1r(i,k)) )
+                  cflx = max(cflx,abs(u1r(i,k))*hxalp )
                   cfly = max(cfly,abs(u2r(i,k))/hyy )
-                  cflz = max(cflz,abs(u3r(i,k)) )
+                  cflz = max(cflz,abs(u3r(i,k))*hzalp )
                enddo
             enddo
             
@@ -1593,8 +1593,6 @@ c--------------------computes Deltat
       if (icfl.eq.1.and.rkstep.eq.1) then
          
          
-         cflx = cflx*hxalp
-         cflz = cflz*hzalp
          cfl0 = max(cflx,max(cfly,cflz))
          
          call MPI_ALLREDUCE(cfl0,reigmx1,1,MPI_REAL,MPI_MAX,
