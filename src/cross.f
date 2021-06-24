@@ -1480,12 +1480,11 @@ c     /********************************************************************/
             do k=1,mgalz
                do i=1,mgalx
                   cflx = max(cflx,abs(u1r(i,k)) )
-                  cfl0 = max(cfl0,abs(u2r(i,k)) )
+                  cfly = max(cfly,abs(u2r(i,k))/hyy )
                   cflz = max(cflz,abs(u3r(i,k)) )
                enddo
             enddo
             
-            cfly = max(cfly,cfl0/hyy)
          endif
          
 c     /* rhg= H1 = v.omega_3 - w.omega_2 (F-F-P)  */
