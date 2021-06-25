@@ -3,25 +3,41 @@
 
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------
 # Run Settings -----------------------------------------------------------------------------------
 runName=rough_8_96C_1  # must not exist yet in runFolder
 runTime=4:00:00  # format: hh:mm (Euler), hh:mm:ss (Millikan) hh:mm:ss (Richardson)
 #jobDependency=${3:-none}  # name of run (Euler), jobid of run (Millikan) for dependency condition, optional
 mpiProcessors=96  # must be equal to nprocs in ctes3D
 
+inputFile="/scratch/yh/channel_rough_data/runs/roughness_kx0_kz3_7/roughness_kx0_kz3_7.006"
+
+# Run Paramters
+# Reynolds number
+Re=4000
+# total time steps, must be multiple of 500 + 1
+nstep=3001
+# CFL condition, no larger than 1.5
+CFL=1.5 
+
+# Run Settings -----------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------
+
+
 # Directory Settings
 runFolder="/home/yh/channel_rough/runs/$runName"
 scratchFolder="/scratch/yh/channel_rough_data/runs/$runName"
 
-inputFile="/scratch/yh/channel_rough_data/runs/roughness_kx0_kz3_7/roughness_kx0_kz3_7.006"
-# Run Settings -----------------------------------------------------------------------------------
-# ------------------------------------------------------------------------------------------------
-# ------------------------------------------------------------------------------------------------
-
-
 # Strings to replace in the hre.dat file that sets the input/output file path
 stringToReplace_output="output_filepath_set_by_launchscript"  # in hre.dat, the file output path
 stringToReplace_input="input_filepath_set_by_launchscript"
+stringToReplace_Re="Re_set_by_launchscript"
+stringToReplace_nstep="nstep_set_by_launchscript"
+stringToReplace_CFL="CFL_set_by_launchscript"
 
 if [[ ! -e $runFolder ]]  # only if run name does not exist yet (avoid data loss)
 then
@@ -39,7 +55,9 @@ then
   # which points to the file output directory
   sed -i "s|$stringToReplace_output|$scratchFolder/$runName|g" hre.dat
   sed -i "s|$stringToReplace_input|$inputFile|g" hre.dat
-
+  sed -i "s|$stringToReplace_Re|$Re|g" hre.dat
+  sed -i "s|$stringToReplace_nstep|$nstep|g" hre.dat
+  sed -i "s|$stringToReplace_CFL|$CFL|g" hre.dat
 
   echo "Submitting job to Richardson Cluster"
   # write a job.sh script for sbatch to submit job
@@ -61,7 +79,7 @@ then
   echo "mpirun ./channel" >> job.sh
 
   # submit job with sbatch
-  sbatch ./job.sh
+  #sbatch ./job.sh
 
 else  # don't do anything if run name already exists
   echo "Runname already exists. Exiting"

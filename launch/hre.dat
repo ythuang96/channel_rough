@@ -13,7 +13,7 @@ CC 1/viscosity    Lx=2*pi/alp
 CC                           Lz=2*pi/bet   (see readme)
 CC
 CC       *         *         *             *
-       3500        0.5         1.0          0.0
+       Re_set_by_launchscript        0.5         1.0          0.0
 CC
 CC total steps           #steps               #step
 CC
@@ -22,8 +22,7 @@ CC                     file every nimag)   output cf every nhist)
 CC   nstep                 nimag               nhist
 CC
 CC       *         *         *
-        3001           500        10
-CC       1001            1000        10
+        nstep_set_by_launchscript           500        10
 CC
 CC  mesh type:      mesh   (don't touch this too much!!)
 CC  0:uniform     parameter:
@@ -33,7 +32,7 @@ CC  2:sin           gamma
 CC
 CC  CFL
 CC   *
-    1.5
+    CFL_set_by_launchscript
 CC
 CC  first     0/1            # steps
 CC  output    0 do nothing   between
