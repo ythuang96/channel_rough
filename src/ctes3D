@@ -18,7 +18,8 @@
 
 !      parameter(mgalx=1024,mgalz=1024,my=384)
 !      parameter(mgalx=1024,mgalz=1024,my=251)
-      parameter(mgalx=768,mgalz=768,my=232)
+!      parameter(mgalx=768,mgalz=768,my=232)
+      parameter(mgalx=768,mgalz=768,my=272)
 !      parameter(mgalx=512,mgalz=512,my=272)
 !      parameter(mgalx=256,mgalz=256,my=172)
 
