@@ -6,7 +6,7 @@
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
 # Run Settings -----------------------------------------------------------------------------------
-runName=rough_8_96C_1  # must not exist yet in runFolder
+runName=smooth_init1  # must not exist yet in runFolder
 runTime=4:00:00  # format: hh:mm (Euler), hh:mm:ss (Millikan) hh:mm:ss (Richardson)
 #jobDependency=${3:-none}  # name of run (Euler), jobid of run (Millikan) for dependency condition, optional
 mpiProcessors=96  # must be equal to nprocs in ctes3D
@@ -15,7 +15,7 @@ inputFile="/scratch/yh/channel_rough_data/runs/roughness_kx0_kz3_7/roughness_kx0
 
 # Run Paramters
 # Reynolds number
-Re=4000
+Re=8000
 # total time steps, must be multiple of 500 + 1
 nstep=3001
 # CFL condition, no larger than 1.5
@@ -79,7 +79,7 @@ then
   echo "mpirun ./channel" >> job.sh
 
   # submit job with sbatch
-  #sbatch ./job.sh
+  sbatch ./job.sh
 
 else  # don't do anything if run name already exists
   echo "Runname already exists. Exiting"
