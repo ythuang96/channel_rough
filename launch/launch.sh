@@ -15,7 +15,7 @@ inputFile="/scratch/yh/channel_rough_data/runs/smooth_init9/smooth_init9.006"
 
 # Run Paramters
 # Reynolds number
-Re=113000
+Re=11300
 # total time steps, must be multiple of 500 + 1
 nstep=10001
 # time step to update CFL and write to .cf
