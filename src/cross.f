@@ -221,11 +221,14 @@ c========================================================================
            ! data collected at the previous timestep is written at the
            ! subsequent timestep. time-Deltat corresponds to the time
            ! at which the data was collected
+326        format(a18,i5,a5,(d14.6))
+           write(*,326) 'Saving Data, Step ', istep-1, 'Time ', 
+     &         time-Deltat
            call write_flowfield_to_hdf_file(alp, bet, y, jb, je, 
      &         xalp, xbet, time-Deltat, Re, massu0)
          endif
-         ! call assess_whether_to_collect_flowfield_dt(time)
-         call assess_whether_to_collect_flowfield(istep-1)
+         call assess_whether_to_collect_flowfield_dt(time)
+         ! call assess_whether_to_collect_flowfield(istep-1)
          call assess_whether_to_collect_wall_velocity(istep)
          ! --- end save flowfields
 

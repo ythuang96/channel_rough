@@ -22,7 +22,7 @@ CC                     file every nimag)   output cf every nhist)
 CC   nstep                 nimag               nhist
 CC
 CC       *         *         *
-        nstep_set_by_launchscript           500        10
+        nstep_set_by_launchscript           500        nhist_set_by_launchscript
 CC
 CC  mesh type:      mesh   (don't touch this too much!!)
 CC  0:uniform     parameter:
