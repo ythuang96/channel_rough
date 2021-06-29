@@ -221,9 +221,11 @@ c========================================================================
            ! data collected at the previous timestep is written at the
            ! subsequent timestep. time-Deltat corresponds to the time
            ! at which the data was collected
-326        format(a18,i5,a5,(d14.6))
-           write(*,326) 'Saving Data, Step ', istep-1, 'Time ', 
-     &         time-Deltat
+           if (myid .eq. 0) then
+326          format(a22,i5,a5,(d14.6))
+             write(*,326) '    Saving Data, Step ', istep-1, 'Time ', 
+     &           time-Deltat
+           endif
            call write_flowfield_to_hdf_file(alp, bet, y, jb, je, 
      &         xalp, xbet, time-Deltat, Re, massu0)
          endif
