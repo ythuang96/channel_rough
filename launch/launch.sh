@@ -6,12 +6,13 @@
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
 # Run Settings -----------------------------------------------------------------------------------
-runName=smooth_1  # must not exist yet in runFolder
-runTime=22:00:00  # format: hh:mm (Euler), hh:mm:ss (Millikan) hh:mm:ss (Richardson)
-#jobDependency=${3:-none}  # name of run (Euler), jobid of run (Millikan) for dependency condition, optional
+runName=smooth_3  # must not exist yet in runFolder
+runTime=22:00:00  # format: hh:mm:ss (Millikan/Richardson)
+jobDependency="none"  # jobid of run (Millikan/Richardson) for dependency condition
+# jobDependency is optional, put "none" if not needed
 mpiProcessors=96  # must be equal to nprocs in ctes3D
 
-inputFile="/scratch/yh/channel_rough_data/runs/smooth_init9/smooth_init9.006"
+inputFile="/scratch/yh/channel_rough_data/runs/smooth_2/smooth_2.005"
 
 # Run Paramters
 # Reynolds number
@@ -84,6 +85,10 @@ then
   echo "#SBATCH -n $mpiProcessors --tasks-per-node=24" >> job.sh
   echo "#SBATCH -t $runTime" >> job.sh
   echo "#SBATCH --mem-per-cpu=5000" >> job.sh
+
+  if [[ $jobDependency != "none" ]]; then
+    echo "#SBATCH --dependency=aftercorr:$jobDependency" >> job.sh
+  fi
 
   echo "echo \"Running on hosts: \$SLURM_NODELIST\"" >> job.sh
   echo "echo \"Running on \$SLURM_NNODES nodes.\"" >> job.sh
