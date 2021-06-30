@@ -16,7 +16,9 @@ inputFile="/scratch/yh/channel_rough_data/runs/smooth_init9/smooth_init9.006"
 # Run Paramters
 # Reynolds number
 Re=11300
-# total time steps, must be multiple of 500 + 1
+# write a restart file every nimag
+nimag=2000
+# total time steps, must be multiple of nimag + 1
 nstep=10001
 # time step to update CFL and write to .cf
 # no larger thatn 10
@@ -40,6 +42,7 @@ stringToReplace_output="output_filepath_set_by_launchscript"  # in hre.dat, the 
 stringToReplace_input="input_filepath_set_by_launchscript"
 stringToReplace_Re="Re_set_by_launchscript"
 stringToReplace_nstep="nstep_set_by_launchscript"
+stringToReplace_nimag="nimag_set_by_launchscript"
 stringToReplace_nhist="nhist_set_by_launchscript"
 stringToReplace_CFL="CFL_set_by_launchscript"
 
@@ -65,6 +68,7 @@ then
   sed -i "s|$stringToReplace_input|$inputFile|g" hre.dat
   sed -i "s|$stringToReplace_Re|$Re|g" hre.dat
   sed -i "s|$stringToReplace_nstep|$nstep|g" hre.dat
+  sed -i "s|$stringToReplace_nimag|$nimag|g" hre.dat
   sed -i "s|$stringToReplace_nhist|$nhist|g" hre.dat
   sed -i "s|$stringToReplace_CFL|$CFL|g" hre.dat
 
