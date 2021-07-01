@@ -6,26 +6,26 @@
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
 # Run Settings -----------------------------------------------------------------------------------
-runName=smooth_3  # must not exist yet in runFolder
-runTime=22:00:00  # format: hh:mm:ss (Millikan/Richardson)
+runName=kz3_init1  # must not exist yet in runFolder
+runTime=6:00:00  # format: hh:mm:ss (Millikan/Richardson)
 jobDependency="none"  # jobid of run (Millikan/Richardson) for dependency condition
 # jobDependency is optional, put "none" if not needed
 mpiProcessors=96  # must be equal to nprocs in ctes3D
 
-inputFile="/scratch/yh/channel_rough_data/runs/smooth_2/smooth_2.005"
+inputFile="/scratch/yh/channel_rough_data/runs/smooth_3/smooth_3.005"
 
 # Run Paramters
 # Reynolds number
-Re=11300
+Re=9150
 # write a restart file every nimag
 nimag=2000
 # total time steps, must be multiple of nimag + 1
-nstep=10001
+nstep=4001
 # time step to update CFL and write to .cf
 # no larger thatn 10
 nhist=5
 # CFL condition, no larger than 1.5
-CFL=1.0 
+CFL=1.5 
 
 # Run Settings -----------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
@@ -36,7 +36,7 @@ CFL=1.0
 
 # Directory Settings
 runFolder="/home/yh/channel_rough/runs/$runName"
-scratchFolder="/scratch/yh/channel_rough_data/runs/$runName"
+scratchFolder="/home/yh/channel_rough_data/runs/$runName"
 
 # Strings to replace in the hre.dat file that sets the input/output file path
 stringToReplace_output="output_filepath_set_by_launchscript"  # in hre.dat, the file output path

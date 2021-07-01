@@ -31,7 +31,7 @@ contains
         integer, parameter :: mpiMaster = 0
         samplingFrequencyInTimesteps = 300
         !samplingPeriod = 0.0899_sp  ! corresponds to approx tUc/h @ ReTau=660
-        samplingPeriod = 0.09782_sp
+        samplingPeriod = 0.09782_sp  ! corresponds to approx tUc/h @ Smooth wall Retau=550
         collectFlowfield = .false.
         collectWallVelocity = .false.
         fileNumber = 1
