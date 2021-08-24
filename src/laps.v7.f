@@ -586,6 +586,19 @@ c/*       u: solucion                                                */
 c/*    dudy: derivada                                                */
 c/*                                              para los modos 00   */
 c/********************************************************************/
+c/********************************************************************/
+c/*                                                                  */
+c/*           resolve the problem   u'' - rK u = f                   */
+c/*                                                                  */
+c/*                                with u(-1)= bcb                   */
+c/*                                     u(+1)= bct                   */
+c/*                                                                  */
+c/*  input:                                                          */
+c/*       f (f2) : forcing                                           */
+c/*      rK (rK) : independent constant.                             */
+c/* output:                                                          */
+c/*       u (fwk): solution                                          */
+c/********************************************************************/
       subroutine Lapv1(f2,fwk,rK,bcb,bct)
       use matrices,only: dt22,dt21
       
