@@ -1,0 +1,475 @@
+\documentclass[titlepage,12pt,letter]{article}
+\usepackage{extsizes}			\usepackage{bm}
+\usepackage[english]{babel}		\usepackage{amsmath}
+\usepackage{amsfonts}			\usepackage{amssymb}
+\usepackage{graphicx}			\usepackage{epsfig}
+\usepackage{sectsty}			\usepackage{booktabs}
+\usepackage{floatrow}			\floatsetup[table]{capposition=top}	
+\usepackage{siunitx}			\usepackage{caption}
+\usepackage{subcaption}			\usepackage{listings}
+\usepackage{authblk}			\usepackage{rotating}
+\usepackage{multicol}			\usepackage{multirow}
+\usepackage{mathrsfs}			\usepackage[useregional]{datetime2}
+\PassOptionsToPackage{hyphens}{url}
+\usepackage{hyperref}			\hypersetup{colorlinks = true, citecolor = OliveGreen}
+\usepackage[dvipsnames]{xcolor}	\usepackage{pdfpages}
+\usepackage{soul}				\usepackage{enumitem}	
+\bibliographystyle{apalike}
+\usepackage{indentfirst}
+\usepackage{pdflscape}
+\usepackage{arydshln}
+%\usepackage[numbered,framed]{mcode}
+
+\def\thesection{\arabic{section}}	\def\theequation{\arabic{equation}}
+
+\setlength{\textwidth}{6.5in}		\setlength{\textheight}{9.0in}
+\setlength{\oddsidemargin}{0in}		\setlength{\topmargin}{-0.5in}
+
+%% New Commands
+\newcommand{\p}{\partial}
+\newcommand{\e}[1]{\ensuremath{\times 10^{#1}}}
+\newcommand{\abs}[1]{\left| #1 \right|}
+\newcommand{\paren}[1]{\left( #1 \right)}
+\newcommand{\bracket}[1]{\left[ #1 \right]}
+\newcommand{\cbracket}[1]{\left\{ #1 \right\}}
+\newcommand{\at}[2]{\left. #1 \right|_{#2}}
+\newcommand{\highlightbox}[2]{\colorbox{#1}{$\displaystyle #2$}}
+\newcommand{\hlcolor}[2]{\sethlcolor{#1}\hl{#2}}
+\newcommand{\F}{^\circ F}
+\newcommand{\C}{^\circ C}
+\newcommand{\inch}{^{\prime \prime}}
+\newcommand{\pt}[1][]{\frac{\p #1}{\p t}} % partial time derivative
+\newcommand{\Dt}[1][]{\frac{{\rm D} #1}{{\rm D} t}} % material derivative
+\newcommand{\vint}[1]{\int_{V} #1 {\rm \ d}V} % Volume integral
+\newcommand{\aint}[1]{\int_{A} #1 {\rm \ d}A} % Area integral
+\newcommand{\bbar}[1]{\overline{\overline{#1}}} % double over bar for tensor
+\newcommand{\dd}{\,{\rm d}}
+\newcommand{\mathbold}[1]{ {\bm #1} }
+\newcommand{\re}{Re}
+\newcommand{\retau}{ {Re}_{\tau} }
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+
+\newcommand{\red}[1]{{{\color{red}\textbf{#1}}}}
+\newcommand{\blue}[1]{{{\color{blue}\textbf{#1}}}}
+\newcommand{\green}[1]{{{\color{green}\textbf{#1}}}}
+
+\newcommand{\question}{{{\color{red}\textbf{?}}}}
+
+%% Table
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+%% equation, figure and tabel number with section number
+\usepackage{chngcntr}
+\counterwithin{figure}{section}
+\counterwithin{table}{section}
+\numberwithin{equation}{section}
+%% These settings can be changed
+\setlength{\parindent}{0in}
+\setlength{\parskip}{0.5em}
+\setcounter{section}{0}
+
+
+\graphicspath{{D:/Academic/Caltech/Research/}}
+%\epstopdfsetup{verbose=false}
+
+\begin{document}
+{\centering
+{\huge\textbf{DNS Code Outline} \par}
+
+\vspace{0.2in}
+Yuting Huang\par
+\today\par}
+
+\section{Governing Equations}
+Decompose the pressure gradient into a spatial mean $\nabla p_{00}$ and a fluctuating part $\nabla p^{\prime}$
+\begin{equation*}
+	\nabla p=\nabla p_{00}+\nabla p^{\prime}
+\end{equation*}
+Note that the mean pressure gradient is spatially constant, but in general varies with time. Rewrite the momentum equations in velocity-vorticity form
+\begin{equation*}
+	\frac{\partial \bm{u}}{\partial t}+\frac{1}{2} \nabla(\bm{u} \cdot \bm{u})-\bm{H}=-\nabla p^{\prime}+\frac{1}{\operatorname{Re}} \nabla^{2} \bm{u}
+\end{equation*}
+
+where $\bm{H}$ contains the rotational part of the convection term and the mean pressure gradient
+\begin{equation*}
+	\bm{H}=\bm{u} \times \bm{\omega}-\nabla p_{00}
+\end{equation*}
+
+An evolution equation for the vorticity and velocity vectors can be obtained
+\begin{align*}
+	\frac{\partial \bm{\omega}}{\partial t}-\nabla \times \bm{H}&=\frac{1}{\operatorname{Re}} \nabla^{2} \bm{\omega}\\
+	\frac{\partial}{\partial t} \nabla^{2} \bm{u}+\nabla \times(\nabla \times \bm{H})&=\frac{1}{\operatorname{Re}} \nabla^{4} \bm{u}
+\end{align*}
+
+For $g = \omega_2$ and $\phi = \nabla^2 v$, the evolution equations are
+\begin{align}
+	\frac{\partial}{\partial t} g &=h_{g}+\frac{1}{\operatorname{Re}} \nabla^{2} g \label{eq:vor}\\
+	\frac{\partial}{\partial t} \phi &=h_{v}+\frac{1}{\operatorname{Re}} \nabla^{2} \phi \label{eq:phi}
+\end{align}
+and the nonlinear terms are collected in
+\begin{align}
+	h_{g} &=\frac{\partial H_{1}}{\partial z}-\frac{\partial H_{3}}{\partial x} \\
+	h_{v} &=-\frac{\partial}{\partial y}\left(\frac{\partial H_{1}}{\partial x}+\frac{\partial H_{3}}{\partial z}\right)+\left(\frac{\partial^{2}}{\partial x^{2}}+\frac{\partial^{2}}{\partial z^{2}}\right) H_{2}
+\end{align}
+Importantly note the mean pressure gradient contained in $\bm{H}$ vanishes due to the spatial derivatives.
+
+\subsection{Discretization}
+The first and second derivative in $y$ can be summarized as:
+\begin{align}
+	\bm{D}_{11} \cdot u' &= \bm{D}_{12} \cdot u \label{eq:fd1}\\
+	\bm{D}_{21} \cdot u'' &= \bm{D}_{22} \cdot u \label{eq:fd2}
+\end{align}
+where $\bm{D}_{11}$, $\bm{D}_{12}$, $\bm{D}_{21}$, $\bm{D}_{22}$ are all penta-diagonal matrices.
+
+We will use the additive semi-implicit RK schemes and treat the stiff linear operator $L$ implicitly and the non-stiff nonlinear operator $N$ explicitly. The RK scheme advances in three sub-steps from $t^{j}$ to $t^{j+1}$ and is defined as
+\begin{align*}
+	&\bm{q}^{s=2}=\bm{q}^{j}+\Delta t^{j+1}\left[\alpha_{1} L \bm{q}^{s=2}+\gamma_{1} N\left(\bm{q}^{j}\right)\right] \\
+	&\bm{q}^{s=3}=\bm{q}^{j}+\Delta t^{j+1}\left[\alpha_{2} L \bm{q}^{s=3}+\gamma_{2} N\left(\bm{q}^{s=2}\right)\right] \\
+	&\bm{q}^{j+1}=\bm{q}^{j}+\Delta t^{j+1}\left[\alpha_{3} L \bm{q}^{j+1}+\gamma_{3} N\left(\bm{q}^{s=3}\right)\right]
+\end{align*}
+
+where the superscript $s=2$ and $s=3$ label the intermediate solution at the second and third RK stage, respectively, and the $\alpha_{i}$ and $\gamma_{i}$ are the scheme parameters 
+\begin{equation}
+	\alpha = \gamma=\bracket{\frac{1}{3}, \ \frac{1}{2}, \ 1}
+\end{equation}
+
+\subsection{Wall-Normal Vorticity Equation}
+The semi-implicit RK scheme applied to the ODE system for the Fourier transformed wall-normal vorticity~\eqref{eq:vor} multiplied by $\bm{D}_{21}$ and using~\eqref{eq:fd2} gives
+\begin{equation*}
+	\bm{D}_{21} \hat{\bm{g}}^{s+1}=\bm{D}_{21} \hat{\bm{g}}^{j}+\gamma_{s} \Delta t \bracket{ -\frac{1}{\re}\left(k_x^{2}+k_z^{2}\right) \bm{D}_{21} \hat{\bm{g}}^{s+1}+\frac{1}{\re} \bm{D}_{22} \hat{\bm{g}}^{s+1}+\bm{D}_{21} \hat{\bm{h}}_{g}^{s} }
+\end{equation*}
+Note that at the first RK stage $s=j$ and at the third stage $s+1=j+1$. Collecting all terms evaluated at the new time stage on the left-hand side gives
+\begin{equation}
+	\bracket{\bm{D}_{22}-\left(k_x^{2}+k_z^{2}+\frac{\re}{\gamma_{s} \Delta t}\right) \bm{D}_{21}} \hat{\bm{g}}^{s+1}=-\frac{\re}{\gamma_{s} \Delta t} \bracket{ \bm{D}_{21} \hat{\bm{g}}^{j}+\gamma_{s} \Delta t \bm{D}_{21} \hat{\bm{h}}_{g}^{s} }
+\end{equation}
+
+The boundary conditions on $\hat{\bm{g}}$ are directly imposed by replacing the first and last line of the equation.
+
+\subsection{Wall-Normal Velocity Equation}
+Similarly, for $\phi$ we have
+\begin{equation}
+	\bracket{\bm{D}_{22}-\left(k_x^{2}+k_z^{2}+\frac{\re}{\gamma_{s} \Delta t}\right) \bm{D}_{21}} \hat{\bm{\phi}}_p^{s+1}=-\frac{\re}{\gamma_{s} \Delta t} \bracket{ \bm{D}_{21} \hat{\bm{\phi}}_p^{j}+\gamma_{s} \Delta t \bm{D}_{21} \hat{\bm{h}}_{v}^{s} }
+\end{equation}
+
+To enforce the boundary conditions for $v$ and $\partial v / \partial y$ we decompose the wall-normal velocity into a particular solution $\hat{\bm{v}}_{p}^{s+1}$ and two homogeneous solutions $\hat{\bm{v}}_{1}^{s+1}$ and $\hat{\bm{v}}_{2}^{s+1}$
+\begin{equation*}
+\hat{\bm{v}}^{s+1}=\hat{\bm{v}}_{p}^{s+1}+A \hat{\bm{v}}_{1}^{s+1}+B \hat{\bm{v}}_{2}^{s+1}
+\end{equation*}
+with complex coefficients $A$ and $B$. This decomposition allows to enforce the boundary conditions on $v$ by means of the particular solution $\hat{\bm{v}}_{p}$ and the ones on $\partial v / \partial y$ by properly choosing the coefficients $A$ and $B$. 
+
+Particular solutions of $\phi$ satisfy:
+\begin{equation}
+	\bracket{\bm{D}_{22}-\left(k_x^{2}+k_z^{2}+\frac{\re}{\gamma_{s} \Delta t}\right) \bm{D}_{21}} \hat{\bm{\phi}}_{1,2}^{s+1}=0
+\end{equation}
+
+
+The equation for  $\hat{\bm{v}}_{p}^{s+1}$ and two homogeneous solutions $\hat{\bm{v}}_{1}^{s+1}$ and $\hat{\bm{v}}_{2}^{s+1}$ is
+\begin{equation}
+		\bracket{\bm{D}_{22}-\left(k_x^{2}+k_z^{2}\right) \bm{D}_{21}} \hat{\bm{v}}_{p,1,2}^{s+1}=\bm{D}_{21} \hat{\bm{\phi}}_{p,1,2}^{s+1} \\
+\end{equation}
+
+The boundary conditions for the particular solution are
+\begin{alignat*}{5}
+	&\hat{\bm{\phi}}_{p}^{s+1}\left(y_{1}\right)&&=0, &&\quad &&\hat{\bm{\phi}}_{p}^{s+1}\left(y_{N}\right)&&=0 \\
+	&\hat{\bm{v}}_{p}^{s+1}\left(y_{1}\right)&&=\hat{{v}}_{b}^{s+1}, &&\quad &&\hat{\bm{v}}_{p}^{s+1}\left(y_{N}\right)&&=\hat{{v}}_{t}^{s+1}
+\end{alignat*}
+and the homogeneous solutions satisfy
+\begin{alignat*}{5}
+	&\hat{\bm{\phi}}_{1}^{s+1}\left(y_{1}\right)&&=1, &&\quad &&\hat{\bm{\phi}}_{1}^{s+1}\left(y_{N}\right)&&=0 \\
+	&\hat{\bm{v}}_{1}^{s+1}\left(y_{1}\right)&&=0, &&\quad &&\hat{\bm{v}}_{1}^{s+1}\left(y_{N}\right)&&=0
+\end{alignat*}
+\begin{alignat*}{5}
+	&\hat{\bm{\phi}}_{2}^{s+1}\left(y_{1}\right)&&=0, &&\quad &&\hat{\bm{\phi}}_{2}^{s+1}\left(y_{N}\right)&&=1 \\
+	&\hat{\bm{v}}_{2}^{s+1}\left(y_{1}\right)&&=0, &&\quad &&\hat{\bm{v}}_{2}^{s+1}\left(y_{N}\right)&&=0
+\end{alignat*}
+
+Due to the symmetry of the channel, we have:
+\begin{equation*}
+	\hat{\bm{\phi}}_1(y) = \hat{\bm{\phi}}_2(-y)
+\end{equation*}
+and therefore:
+\begin{equation*}
+	\hat{\bm{v}}_1(y) = \hat{\bm{v}}_2(-y)
+\end{equation*}
+and
+\begin{equation*}
+	\hat{\bm{v}}'_1(y) = -\hat{\bm{v}}'_2(-y)
+\end{equation*}
+
+The constants $A$ and $B$ are then chosen such that the boundary conditions on $\partial v / \partial y$ are satisfied
+
+\begin{equation*}
+	\renewcommand{\arraystretch}{2}
+\begin{bmatrix}
+	\hat{v}'_1\left(y_{1}\right) & \hat{v}'_2\left(y_{1}\right) \\
+	\hat{v}'_1\left(y_{N}\right) & \hat{v}'_2\left(y_{N}\right)
+\end{bmatrix}
+\begin{bmatrix}
+	A\\ B
+\end{bmatrix}
+=
+\begin{bmatrix}
+	\hat{v}'_b-\hat{v}'_p\left(y_{1}\right) \\
+	\hat{v}'_t-\hat{v}'_p\left(y_{N}\right) \\
+\end{bmatrix}
+\end{equation*}
+
+Using the symmetry relationships
+\begin{equation*}
+	\renewcommand{\arraystretch}{2}
+	\begin{bmatrix}
+		\hat{v}'_1\left(y_{1}\right) & -\hat{v}'_1\left(y_{N}\right) \\
+		\hat{v}'_1\left(y_{N}\right) & -\hat{v}'_1\left(y_{1}\right)
+	\end{bmatrix}
+	\begin{bmatrix}
+		A\\ B
+	\end{bmatrix}
+	=
+	\begin{bmatrix}
+		\hat{v}'_b-\hat{v}'_p\left(y_{1}\right) \\
+		\hat{v}'_t-\hat{v}'_p\left(y_{N}\right) \\
+	\end{bmatrix}
+\end{equation*}
+
+and invert
+\begin{equation}
+	\renewcommand{\arraystretch}{2}
+	\begin{bmatrix}
+		A\\ B
+	\end{bmatrix}
+	=\frac{1}{-\hat{v}'_1(y_1)\cdot \hat{v}'_1(y_1)+ \hat{v}'_1(y_N)\cdot \hat{v}'_1(y_N)}
+	\begin{bmatrix}
+		-\hat{v}'_1\left(y_{1}\right)& \hat{v}'_1\left(y_{N}\right) \\
+		-\hat{v}'_1\left(y_{N}\right) &	\hat{v}'_1\left(y_{1}\right) 
+	\end{bmatrix}
+	\begin{bmatrix}
+	\hat{v}'_b-\hat{v}'_p\left(y_{1}\right) \\
+	\hat{v}'_t-\hat{v}'_p\left(y_{N}\right) \\
+\end{bmatrix}
+\end{equation}
+
+
+\section{Initialization}
+
+The simulation starts by reading the initial data $\hat{g}_{k}\left(t^{0}\right)$ and $\hat{\phi}_{k}\left(t^{0}\right)$ from the restart file of a previous simulation run. The initial wall-normal velocity $\hat{\bm{v}}_{k}\left(t^{0}\right)$ is not read, but instead calculated from $\hat{\phi}_{k}\left(t^{0}\right)$ using (2.77). Note that in contrast to the regular timesteps, $\hat{\phi}_{k}\left(t^{0}\right)$ is given by the restart file and cannot be decomposed according to (2.105). This makes a decomposition of $v$ in the spirit of $(2.99)$ impossible at the first timestep and therefore $\hat{\bm{v}}_{k}^{j}=\hat{\bm{v}}_{k, p}^{j}$, i.e. only a particular solution $\hat{\bm{v}}_{k, p}^{j}$ satisfying $\hat{\bm{v}}_{k, b}^{j}$ and $\hat{v}_{k, t}^{j}$ is calculated from $2.100$ at simulation startup.
+
+
+
+
+
+
+\newpage
+
+
+\section{Global Variables}
+\begin{table}[H]
+	\centering 
+	\renewcommand{\arraystretch}{1.5} 
+	\begin{tabular}{c|c|c|m{8cm}}
+		Variable&Value&Size&Description \\ \hline
+		alp, bet& 0.5, 1.0&& Lowest $k_x$, $k_z$ wavenumbers\\ \hline
+		mgalx, mgalz, my& 768, 768, 232&& Number of physical space coordinates \\
+		mx, mz& 512, 511&& Number of wavenumbers\\ \hdashline
+		mgalx1, mgalz1& mgalx-1, mgalz-1&&\\
+		mx1, my1, mz1&mx/2-1, my-1, mz-1&&\\ \hline
+		xalp&	&0:mx1	&Complex streamwize wavenumber\\			
+		xbet&	&0:mz1	&Complex spanwize wavenumber\\		\hline
+		alp2& - xalp$^2$ &&\\
+		bet2& - xbet$^2$ &&\\ \hline
+		trp, trp2&	&1:my&Trapezoid integration in y, divided by channel height 2 (the two are different precision?)\\ \hline
+		c & [1/3, 1/2, 1]&1:3& RK constants \\
+		r1& c(rkstep)*Deltat& &\\
+		dtr& Re/Deltat& & \\
+		dtr1& dtr/c(rkstep) = Re/r1 & & \\ \hline		
+		dt11, dt12&&(5, my)&coefficients for 5 diag matrix $DT11$, $DT12$:	$DT11\cdot u' = DT12\cdot u$ \\
+		dt21, dt22&&(5, my)&coefficients for 5 diag matrix $DT21$, $DT22$: $DT21\cdot u'' = DT22\cdot u$ \\ 
+		prem1& dt11 through bandec5&(5, my) &\\\hline
+		
+	\end{tabular} 
+\end{table} 
+
+\section{Low Level Functions}
+\begin{table}[H]
+	\centering 
+	\renewcommand{\arraystretch}{1.4} 
+	\begin{tabular}{c|c|c|m{6.7cm}}
+		Function&Inputs&Outputs&Description \\ \hline
+		deryr(uwk,fwk,n)& \textbf{uwk} & \textbf{fwk} & First derivative in y. uwk and fwk are size my. n is not used.\\
+		deryr2(u,du,m,n,wk4)& \textbf{u} & \textbf{du} & First derivative in y. u and du are size 2,my,m, where first index describe real/complex. Input n should be my.\\ \hline
+		fourxz(fou,phys,-1,mmy)&\textbf{phys}& \textbf{fou} & FFT\\
+		fourxz(fou,phys,+1,mmy)&\textbf{fou}& \textbf{phys} & IFFT\\ \hline		
+		bandec5(a,n); banbks5(a,n,b)&\textbf{a},\textbf{n},\textbf{b}&\textbf{b}& compute $b = A\backslash b$, where $A$ is 5-diagonal $n\times n$ matrix with diagonals given by the rows of a, with the first row as the lowest diagonal. 
+		
+		bandec5 updates \textbf{a}, then banbks5 updates \textbf{b} to the final answer\\ \hline
+		\multirow{2}{*}{Lapv1(f2,fwk,rK,bcb,bct)}&\textbf{f2} ($f$), \textbf{rK} ($a$)& \multirow{2}{*}{\textbf{fwk} ($u$)}  &solve: $u'' - a\cdot u = f$	\\
+		&\textbf{bcb}, \textbf{bct}& & with $u(-1)= bcb$, $u(+1)= bct$\\ 
+
+	\end{tabular} 
+\end{table} 
+
+\subsection{lapsov}
+
+lapsov(phi,v,dvdy,f,ome,g, rk1,rk2,bcbv,bctv,bcbdv,bctdv,bcbo,bcto)
+
+
+%c/********************************************************************/
+%c/*  Solve for v, omega and phi                                      */
+%c/*    for the next rk step at a particular kx kz pair               */
+%c/*                                                                  */
+%c/*  For omega:                                                      */
+%c/*    omega'' - rk1 omega = g                                       */
+%c/*      with omega(-1) = bcbo, omega(+1) = bcto                     */
+%c/*                                                                  */
+%c/*  For phi:                                                        */
+%c/*    phi'' - rk1 phi = f                                           */
+%c/*      with boundary conditions determined by the dv/dy condition  */
+%c/*                                                                  */
+%c/*  For v:                                                          */
+%c/*    v'' -  rk2 v = phi                                            */
+%c/*      with     v(-1) = bcbv ,     v(+1) = bctv                    */
+%c/*      and  dv/dy(-1) = bcbdv, dv/dy(+1) = bctdv                   */
+%c/*                                                                  */
+%c/*  To implement the boundary conditions for dv/dy                  */
+%c/*  v and phi are decomposed into particular and homogeous solution */
+%c/*  then linearly conbined to give final answer                     */
+%c/*                                                                  */
+%c/* Input:                                                           */
+%c/*    f, g       : forcing for phi and omega                        */
+%c/*    rk1        : constant, should be kx^2+kz^2+Re/c/Deltat        */
+%c/*    rk2        : constant, should be kx^2+kz^2                    */
+%c/*    bcbv ,bctv : boundary conditions for v                        */
+%c/*    bcbdv,bctdv: boundary conditions for dv/dy                    */
+%c/*    bcbo ,bcto : boundary conditions for omega                    */
+%c/* Output:                                                          */
+%c/*    phi, v, dvdy, ome                                             */
+%c/*    solutions are size 2,my first index indicates real/imag part  */
+%c/********************************************************************/
+
+\begin{table}[H]
+	\centering 
+	\renewcommand{\arraystretch}{1.5} 
+	\begin{tabular}{l|l}
+		Description& Line \\ \hline
+		\textbf{for} each $y$ plane \textbf{do} &1100\\
+		\qquad compute \textbf{o1c} ($\omega_1$), \textbf{o3c} ($\omega_3$), except 00 mode, \eqref{eq:om3}\eqref{eq:om1}& 1104-1123 \\
+		\qquad compute \textbf{u1c} ($u$), \textbf{u3c} ($w$), except 00 mode, \eqref{eq:w}\eqref{eq:u}& 1126-1145 \\
+		\qquad unpack 00 modes of \textbf{u1c}, \textbf{u3c}, \textbf{o1c}, \textbf{o3c} from \textbf{work2}&1149-1153 \\
+		\qquad copy data for \textbf{u2c}, \textbf{o2c} &1156-1161 \\ \hdashline
+		\multicolumn{2}{c}{\qquad \textbf{Now, have data for $u,v,w,\omega_1,\omega_2,\omega_3$ from the previous time step in spectral space}}\\ \hdashline
+		\qquad statistics,  vorticity at wall: \textbf{Wx0}, \textbf{Wz0}, \textbf{WxL}, \textbf{WzL}, velocity gradient tensor&1191-1403 \\
+		\qquad save data& 1405-1414\\
+		\qquad IFT to physical space \textbf{u1c} $\rightarrow$\textbf{u1r} ...&1419- 1426\\
+		\qquad more statistics&1436-1469\\
+		\qquad CFL&1473-1492\\
+		\qquad compute $\bm{u}\times\bm{\omega}$: \textbf{u1r} ($H_3$), \textbf{u2r} ($H_1$), \textbf{u3r} ($H_2$)&1507-1517\\
+		\qquad FFT to Fourier space \textbf{u1r} $\rightarrow$\textbf{u1c} ...&1526-1528\\
+		\qquad save 00 mode of forcing: \textbf{rf0u} = $H_1(0,0)$,	\textbf{rf0w} = $H_3(0,0)$&1533-1534\\
+		\qquad compute \textbf{ome1c} = $\frac{\p H_1}{\p x} + \frac{\p H_3}{\p z}$, \textbf{rhgc} =  $-\frac{\p H_3}{\p x} + \frac{\p H_1}{\p z}$, \textbf{rhvc} = $\paren{\frac{\p^2}{\p x^2}+\frac{\p^2}{\p z^2}} H_2$&1540-1563\\
+		\qquad save vorticity forcing ($h_g$)&1571-1574\\
+		\textbf{END For}& 1577\\
+		more statistics&1586-1595\\
+		Update \textbf{Deltat} and \textbf{dtr}&1599-1617\\
+		exchange \textbf{rf0u} and \textbf{rf0w} with all processors, with NaN detection before and after&1626-1681\\\hline
+	\end{tabular} 
+\end{table}
+
+
+\newpage
+\section{Main Functions}
+\subsection{hvhg}
+Defined on line 935 - 1693 in cross.f
+
+Used on line 595 - 598 in cross.f
+
+Used for computing the non-linear forcing 
+
+\paragraph{Input/Outputs:}\phantom{a}\\
+hvhg(phic,ome2c,rhvc,rhgc, rf0u,rf0w,ome1c, work2,sp,myid,rkstep, \\\phantom{hvhg} u1r,u2r,u3r,o1r,o2r,o3r, u1c,u2c,u3c,o1c,o2c,o3c )
+
+
+\begin{table}[H]
+	\centering 
+	\renewcommand{\arraystretch}{1.4} 
+	\begin{tabular}{c|c|c|c}
+		&Variable name &           &Variable name        \\
+		&in hvhg       &Description&when called in cross \\ \hline
+		\multirow{6}{*}{Input}&\textbf{phic}&$\nabla^2v$&\textbf{phiwk}\\
+		&\textbf{ome2c}&$\omega_2$&\textbf{vorwk}\\
+		&\textbf{rhvc}&$dv/dy$&\textbf{hv}\\
+		&\textbf{rhgc}&$v$&\textbf{hg}\\
+		&\textbf{ome1c}&$d \omega_2/dy$ &\textbf{dvordy}\\ 
+		&\textbf{work2}& 00 modes of $\omega_3$, $\omega_1$, $u$, $w$ stacked in a column&\textbf{work}\\
+		
+		\hline
+		
+		\multirow{5}{*}{Output}&\textbf{rhvc}& $\paren{\frac{\p^2}{\p x^2}+\frac{\p^2}{\p z^2}} H_2$&\textbf{hv}\\
+		&\textbf{rhgc}&$-\frac{\p H_3}{\p x} + \frac{\p H_1}{\p z}$&\textbf{hg}\\
+		&\textbf{rf0u}&$H_1(0,0)$&\textbf{rf0u}\\
+		&\textbf{rf0w}&$H_3(0,0)$&\textbf{rf0w}\\
+		&\textbf{ome1c}&$\frac{\p H_1}{\p x} + \frac{\p H_3}{\p z}$&\textbf{dvordy}\\
+		
+		\hline
+		
+		\multirow{3}{*}{Other}&\textbf{sp}&Energy spectra, updated&\\
+		&\textbf{myid}&Processor ID&\\
+		&\textbf{rkstep}&RK step number&\\
+		
+		\hline
+		
+		\multirow{4}{*}{Temp}&\textbf{u1r,u2r,u3r}&\multirow{4}{6cm}{These variables are not accessed outside function hvhg}&\textbf{u1r,u2r,u3r}\\
+		&\textbf{o1r,o2r,o3r}&&\textbf{o1r,o2r,o3r}\\
+		&\textbf{u1c,u2c,u3c}&&\textbf{u1r,u2r,u3r}\\
+		&\textbf{o1c,o2c,o3c}&&\textbf{o1r,o2r,o3r}\\
+		
+		\hline
+		
+	\end{tabular} 
+\end{table} 
+
+\newpage
+\paragraph{Equations used:}
+\begin{align}
+	\paren{\frac{\p^2}{\p x^2}+\frac{\p^2}{\p z^2}} \omega_3  &= -\bracket{\frac{\p^2 }{\p y \p z} \omega_2 - \frac{\p}{\p x}\paren{\nabla^2 v}} \label{eq:om3}\\
+	\paren{\frac{\p^2}{\p x^2}+\frac{\p^2}{\p z^2}} \omega_1  &= -\bracket{\frac{\p^2 }{\p x \p y } \omega_2 + \frac{\p}{\p z}\paren{\nabla^2 v}} \label{eq:om1}\\
+	\paren{\frac{\p^2}{\p x^2}+\frac{\p^2}{\p z^2}} w  &= -\bracket{\frac{\p^2 }{\p y \p z} v + \frac{\p}{\p x}\omega_2} \label{eq:w}\\
+	\paren{\frac{\p^2}{\p x^2}+\frac{\p^2}{\p z^2}} u  &= -\bracket{\frac{\p^2 }{\p x \p y} v - \frac{\p}{\p z}\omega_2} \label{eq:u}
+\end{align}
+
+\begin{table}[H]
+	\centering 
+	\renewcommand{\arraystretch}{1.5} 
+	\begin{tabular}{l|l}
+		Description& Line \\ \hline
+		\textbf{for} each $y$ plane \textbf{do} &1100\\
+		\qquad compute \textbf{o1c} ($\omega_1$), \textbf{o3c} ($\omega_3$), except 00 mode, \eqref{eq:om3}\eqref{eq:om1}& 1104-1123 \\
+		\qquad compute \textbf{u1c} ($u$), \textbf{u3c} ($w$), except 00 mode, \eqref{eq:w}\eqref{eq:u}& 1126-1145 \\
+		\qquad unpack 00 modes of \textbf{u1c}, \textbf{u3c}, \textbf{o1c}, \textbf{o3c} from \textbf{work2}&1149-1153 \\
+		\qquad copy data for \textbf{u2c}, \textbf{o2c} &1156-1161 \\ \hdashline
+		\multicolumn{2}{c}{\qquad \textbf{Now, have data for $u,v,w,\omega_1,\omega_2,\omega_3$ from the previous time step in spectral space}}\\ \hdashline
+		\qquad statistics,  vorticity at wall: \textbf{Wx0}, \textbf{Wz0}, \textbf{WxL}, \textbf{WzL}, velocity gradient tensor&1191-1403 \\
+		\qquad save data& 1405-1414\\
+		\qquad IFT to physical space \textbf{u1c} $\rightarrow$\textbf{u1r} ...&1419- 1426\\
+		\qquad more statistics&1436-1469\\
+		\qquad CFL&1473-1492\\
+		\qquad compute $\bm{u}\times\bm{\omega}$: \textbf{u1r} ($H_3$), \textbf{u2r} ($H_1$), \textbf{u3r} ($H_2$)&1507-1517\\
+		\qquad FFT to Fourier space \textbf{u1r} $\rightarrow$\textbf{u1c} ...&1526-1528\\
+		\qquad save 00 mode of forcing: \textbf{rf0u} = $H_1(0,0)$,	\textbf{rf0w} = $H_3(0,0)$&1533-1534\\
+		\qquad compute \textbf{ome1c} = $\frac{\p H_1}{\p x} + \frac{\p H_3}{\p z}$, \textbf{rhgc} =  $-\frac{\p H_3}{\p x} + \frac{\p H_1}{\p z}$, \textbf{rhvc} = $\paren{\frac{\p^2}{\p x^2}+\frac{\p^2}{\p z^2}} H_2$&1540-1563\\
+		\qquad save vorticity forcing ($h_g$)&1571-1574\\
+		\textbf{END For}& 1577\\
+		more statistics&1586-1595\\
+		Update \textbf{Deltat} and \textbf{dtr}&1599-1617\\
+		exchange \textbf{rf0u} and \textbf{rf0w} with all processors, with NaN detection before and after&1626-1681\\\hline
+ 	\end{tabular} 
+\end{table}
+
+
+
+
+
+
+\end{document}
+
+

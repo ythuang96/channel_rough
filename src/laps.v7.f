@@ -567,37 +567,18 @@ c     CALCULO LOS COEFICIENTES A y B IMPONIENDO dvdy(1)=bctdv, dvdy(-1)=bcbdv
       
 
 
-
-
 c/********************************************************************/
+c/*        Solve the problem   fwk'' - rK fwk = f2                   */
 c/*                                                                  */
-c/*           resuelve el problema  u'' - rK u = f                   */
+c/*                                with fwk(-1)= bcb                 */
+c/*                                     fwk(+1)= bct                 */
 c/*                                                                  */
-c/*                                 con u(-1)= bcb                   */
-c/*                                     u(+1)= bct                   */
-c/*                                                                  */
-c/*	     DIFERENCIAS FINITAS COMPACTAS			     */
-c/*  input:                                                          */
-c/*       f: forzante                                                */
-c/*      rK: constante independiente.                                */
-c/*      wk: area de trabajo de 9*n minimo			     */ 
-c/* output:                                                          */
-c/*       u: solucion                                                */
-c/*    dudy: derivada                                                */
-c/*                                              para los modos 00   */
-c/********************************************************************/
-c/********************************************************************/
-c/*                                                                  */
-c/*           resolve the problem   u'' - rK u = f                   */
-c/*                                                                  */
-c/*                                with u(-1)= bcb                   */
-c/*                                     u(+1)= bct                   */
-c/*                                                                  */
-c/*  input:                                                          */
-c/*       f (f2) : forcing                                           */
-c/*      rK (rK) : independent constant.                             */
-c/* output:                                                          */
-c/*       u (fwk): solution                                          */
+c/* Input:                                                           */
+c/*      f2      : forcing                                           */
+c/*      rK      : independent constant.                             */
+c/*      bct, bcb: top and bottom boundary conditions                */
+c/* Output:                                                          */
+c/*      fwk     : solution                                          */
 c/********************************************************************/
       subroutine Lapv1(f2,fwk,rK,bcb,bct)
       use matrices,only: dt22,dt21
@@ -616,11 +597,7 @@ c/********************************************************************/
       common /fis/ Re,alp,bet,a0,y(my),hy(my),fmap(my),y2(my)
       save   /fis/
 
-
-
-c--------------------------------------------------------------------------
-c			calculo v (resuelvo el poisson):
-
+      ! Compute wk1 matrix: dt22 - rk*dt21 with boundary conditions
       wk1(1,1)=0d0
       wk1(2,1)=0d0
       wk1(3,1)=1d0
@@ -636,10 +613,9 @@ c			calculo v (resuelvo el poisson):
       wk1(3,my)=1d0
       wk1(4,my)=0d0
       wk1(5,my)=0d0
-      
       call bandec5(wk1,my)
       
-c     resuelvo  v (coeficientes reales):
+      ! multiply forcing with dt21 and apply BC
       fwk(1)=bcb
       fwk(2)=dt21(2,2)*f2(1)+dt21(3,2)*f2(2)+dt21(4,2)*f2(3)+
      .     dt21(5,2)*f2(4)
@@ -653,18 +629,47 @@ c     resuelvo  v (coeficientes reales):
      .     dt21(3,my-1)*f2(my-1)+dt21(4,my-1)*f2(my)
       fwk(my)=bct
       
+      ! solve linear system
       call banbks5(wk1,my,fwk)
       
-      
       end
-      
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     
-C
-C   JUNTO BILAP + LAPVDV !!!!
-C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
+
+
+
+
+c/********************************************************************/
+c/*  Solve for v, omega and phi                                      */
+c/*    for the next rk step at a particular kx kz pair               */
+c/*                                                                  */
+c/*  For omega:                                                      */
+c/*    omega'' - rk1 omega = g                                       */
+c/*      with omega(-1) = bcbo, omega(+1) = bcto                     */
+c/*                                                                  */
+c/*  For phi:                                                        */
+c/*    phi'' - rk1 phi = f                                           */
+c/*      with boundary conditions determined by the dv/dy condition  */
+c/*                                                                  */
+c/*  For v:                                                          */
+c/*    v'' -  rk2 v = phi                                            */
+c/*      with     v(-1) = bcbv ,     v(+1) = bctv                    */
+c/*      and  dv/dy(-1) = bcbdv, dv/dy(+1) = bctdv                   */
+c/*                                                                  */
+c/*  To implement the boundary conditions for dv/dy                  */
+c/*  v and phi are decomposed into particular and homogeous solution */
+c/*  then linearly conbined to give final answer                     */
+c/*                                                                  */
+c/* Input:                                                           */
+c/*    f, g       : forcing for phi and omega                        */
+c/*    rk1        : constant, should be kx^2+kz^2+Re/c/Deltat        */
+c/*    rk2        : constant, should be kx^2+kz^2                    */
+c/*    bcbv ,bctv : boundary conditions for v                        */
+c/*    bcbdv,bctdv: boundary conditions for dv/dy                    */
+c/*    bcbo ,bcto : boundary conditions for omega                    */
+c/* Output:                                                          */
+c/*    phi, v, dvdy, ome                                             */
+c/*    solutions are size 2,my first index indicates real/imag part  */
+c/********************************************************************/
       subroutine lapsov(phi,v,dvdy,f,ome,g,
      .     rk1,rk2,bcbv,bctv,bcbdv,bctdv,bcbo,bcto)
       use matrices,only:dt21,dt22,dt12,prem1
@@ -706,11 +711,14 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
          enddo
       else
          
-c     RESUELVO LA BILAPLACIANA EN 2 ETAPAS:
-c     PRIMERO RESUELVO LAS phi DE LOS TRES PROBLEMAS (particular+2homog)
-c     y resuelvo tambien las omegas
-c     
-c     preparo la matriz wk1, que es la misma para todos los poisson phi:
+
+
+c     First solve phi and omega
+
+
+c     -----------------------------------------------------------------
+c     Prepare the wk1 matrix with rk1, 
+c     which is the same for all phi
          wk1(1,1) = 0d0
          wk1(2,1) = 0d0
          wk1(3,1) = 1d0
@@ -726,14 +734,16 @@ c     preparo la matriz wk1, que es la misma para todos los poisson phi:
          wk1(3,my) = 1d0
          wk1(4,my) = 0d0
          wk1(5,my) = 0d0
-         
          call bandec5(wk1,my)
-         
-c     phip'' - rk1*phip = f     phip(1) = phip(-1) = 0 
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Solve: phip'' - rk1*phip = f  with  phip(1) = phip(-1) = 0 
+         ! Real part
          do j=1,my
             v1(j) = f(1,j) 
          enddo 
-         
          phipr(1)=0d0
          phipr(2)=dt21(2,2)*v1(1)+dt21(3,2)*v1(2)+dt21(4,2)*v1(3)+
      .        dt21(5,2)*v1(4)
@@ -748,10 +758,10 @@ c     phip'' - rk1*phip = f     phip(1) = phip(-1) = 0
          phipr(my)=0d0
          call banbks5(wk1,my,phipr)
          
+         ! Imaginary part
          do j=1,my
             v1(j) = f(2,j) 
          enddo 
-      
          phipi(1)=0d0
          phipi(2)=dt21(2,2)*v1(1)+dt21(3,2)*v1(2)+dt21(4,2)*v1(3)+
      .        dt21(5,2)*v1(4)
@@ -765,21 +775,25 @@ c     phip'' - rk1*phip = f     phip(1) = phip(-1) = 0
      .        dt21(3,my-1)*v1(my-1)+dt21(4,my-1)*v1(my)
          phipi(my)=0d0
          call banbks5(wk1,my,phipi)
-         
-c     phi1'' - rk1*phi1 = 0     phi1(1) =0  phi1(-1)=1 
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Solve phi1'' - rk1*phi1 = 0  with  phi1(1) =0  phi1(-1)=1 
          phi1(1)=1d0
          do j=2,my
             phi1(j)=0d0
          enddo
          call banbks5(wk1,my,phi1)
-         
-c     phi2'' - rk1*phi2 = 0     phi2(1) =1  phi2(-1)=0 
-         
-c     omer'' - rk1*omer = gr ,ome(-1)=bcbo,ome(1)=bcto
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Solve omer'' - rk1*omer = g  with  ome(-1)=bcbo,ome(1)=bcto
+         ! Real part
          do j=1,my
             v1(j) = g(1,j) 
          enddo 
-         
          omer(1)=real(bcbo)
          omer(2)=dt21(2,2)*v1(1)+dt21(3,2)*v1(2)+dt21(4,2)*v1(3)+
      .        dt21(5,2)*v1(4)
@@ -794,10 +808,10 @@ c     omer'' - rk1*omer = gr ,ome(-1)=bcbo,ome(1)=bcto
          omer(my)=real(bcto)
          call banbks5(wk1,my,omer)
          
+         ! Imaginary Part
          do j=1,my
             v1(j) = g(2,j) 
          enddo 
-         
          omei(1)=aimag(bcbo)
          omei(2)=dt21(2,2)*v1(1)+dt21(3,2)*v1(2)+dt21(4,2)*v1(3)+
      .        dt21(5,2)*v1(4)
@@ -810,12 +824,16 @@ c     omer'' - rk1*omer = gr ,ome(-1)=bcbo,ome(1)=bcto
          omei(my-1)=dt21(1,my-1)*v1(my-3)+dt21(2,my-1)*v1(my-2)+
      .        dt21(3,my-1)*v1(my-1)+dt21(4,my-1)*v1(my)
          omei(my)=aimag(bcto)
-         
          call banbks5(wk1,my,omei)
-         
-         
-c     AHORA RESUELVO LAS VELOCIDADES
-c     de nuevo la matriz wk1 es la misma para las 3 velocidades:
+c     -----------------------------------------------------------------
+
+
+c     Now solve for v
+
+
+c     -----------------------------------------------------------------
+c     Prepare the wk1 matrix with rk2, 
+c     which is the same for all velocities
          wk1(1,1) = 0d0
          wk1(2,1) = 0d0
          wk1(3,1) = 1d0
@@ -831,11 +849,13 @@ c     de nuevo la matriz wk1 es la misma para las 3 velocidades:
          wk1(3,my) = 1d0
          wk1(4,my) = 0d0
          wk1(5,my) = 0d0
-         
          call bandec5(wk1,my)
-         
-c     vp''   - rk2*vp   = phip  vp(1)   = vp(-1)   = Vwall
-c     REAl
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Solve vp'' - rk2*vp = phip  with  vp(1) = vp(-1) = Vwall
+         ! Real Part
          vpr(1)=real(bcbv)
          vpr(2) = dt21(2,2)*phipr(1)+dt21(3,2)*phipr(2)+
      .        dt21(4,2)*phipr(3)+dt21(5,2)*phipr(4)
@@ -850,7 +870,7 @@ c     REAl
          vpr(my)=real(bctv)
          call banbks5(wk1,my,vpr)
          
-c     IMAGINARIO
+         ! Imaginary Part
          vpi(1)=aimag(bcbv)
          vpi(2) = dt21(2,2)*phipi(1)+dt21(3,2)*phipi(2)+
      .        dt21(4,2)*phipi(3)+dt21(5,2)*phipi(4)
@@ -864,8 +884,11 @@ c     IMAGINARIO
      .        dt21(3,my-1)*phipi(my-1)+dt21(4,my-1)*phipi(my)
          vpi(my)=aimag(bctv)
          call banbks5(wk1,my,vpi)
-         
-c     v1''   - rk2*v1   = phi1  v1(1)   =   v1(-1)  =0
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Solve v1'' - rk2*v1 = phi1  with  v1(1) = v1(-1) =0
          v1(1)= 0d0
          v1(2)=dt21(2,2)*phi1(1)+dt21(3,2)*phi1(2)+
      .        dt21(4,2)*phi1(3)+dt21(5,2)*phi1(4)
@@ -879,10 +902,13 @@ c     v1''   - rk2*v1   = phi1  v1(1)   =   v1(-1)  =0
      .        dt21(3,my-1)*phi1(my-1)+dt21(4,my-1)*phi1(my)
          v1(my)=0d0
          call banbks5(wk1,my,v1)
-         
-         
-c     CALCULO DE LAS DERIVADAS: vec2->vec3, vec5->vec6, vec8->vec9
-c     REAL
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Compute derivative of vp -> dvp
+c     Note: fmap is not applied!!
+         ! Real Part
          dvpr(1)=dt12(3,1)*vpr(1)+dt12(4,1)*vpr(2) + 
      .        dt12(5,1)*vpr(3)        
          dvpr(2)=dt12(2,2)*vpr(1) +
@@ -899,8 +925,8 @@ c     REAL
          dvpr(my)=  dt12(1,my)*vpr(my-2)  +dt12(2,my)*vpr(my-1)+
      .        dt12(3,my)*vpr(my)
          call banbks5(prem1,my,dvpr)
-         
-c     IMAGINARIO
+
+         ! Imaginary Part
          dvpi(1)=dt12(3,1)*vpi(1)+dt12(4,1)*vpi(2) + 
      .        dt12(5,1)*vpi(3)        
          dvpi(2)=dt12(2,2)*vpi(1) +
@@ -917,7 +943,12 @@ c     IMAGINARIO
          dvpi(my)=  dt12(1,my)*vpi(my-2)  +dt12(2,my)*vpi(my-1)+
      .        dt12(3,my)*vpi(my)
          call banbks5(prem1,my,dvpi)
-         
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Compute derivative of v1 -> dv1
+c     Note: fmap is not applied!!
          dv1(1) = dt12(3,1)*v1(1)+dt12(4,1)*v1(2)+
      .        dt12(5,1)*v1(3)        
          dv1(2) = dt12(2,2)*v1(1)+
@@ -934,20 +965,31 @@ c     IMAGINARIO
          dv1(my)=   dt12(1,my)*v1(my-2)  +dt12(2,my)*v1(my-1)+
      .        dt12(3,my)*v1(my)   
          call banbks5(prem1,my,dv1)
-         
-c     CALCULO LOS COEFICIENTES A y B IMPONIENDO dvdy(1)=bctdv, dvdy(-1)=bcbdv
-         
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Compute the complex coefficients A and B 
+c     so that the solution satisfies dvdy(1)=bctdv, dvdy(-1)=bcbdv
+c     Note that fmap is applied here
+         ! Determinant
          det=-dv1(1)*dv1(1) + dv1(my)*dv1(my)
+         ! Real part
          Ar=(-dv1(my)*(dvpr(my)-real(bctdv)/fmap(my)) 
      .        + dv1(1)*(dvpr(1)-real(bcbdv)/fmap(1)))/det
          Br=(-dv1(1)*(dvpr(my)-real(bctdv)/fmap(my))
      .        +  dv1(my)*(dvpr(1)-real(bcbdv)/fmap(1)))/det
-         
+         ! Imag part
          Ai=(-dv1(my)*(dvpi(my)-aimag(bctdv)/fmap(my))
      .        + dv1(1)*(dvpi(1)-aimag(bcbdv)/fmap(1)))/det
          Bi=(-dv1(1)*(dvpi(my)-aimag(bctdv)/fmap(my))
      .        + dv1(my)*(dvpi(1)-aimag(bcbdv)/fmap(1)))/det
-         
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Combine the particular solution with the homogeneous solutions
+c     Note that fmap is applied here
          do j=1,my
             ome(1,j) = omer(j)
             ome(2,j) = omei(j)
@@ -958,7 +1000,7 @@ c     CALCULO LOS COEFICIENTES A y B IMPONIENDO dvdy(1)=bctdv, dvdy(-1)=bcbdv
             dvdy(1,j)= fmap(j)*(dvpr(j) +Ar*dv1(j)-Br*dv1(my-j+1))
             dvdy(2,j)= fmap(j)*(dvpi(j) +Ai*dv1(j)-Bi*dv1(my-j+1))
          enddo
-         
+c     -----------------------------------------------------------------
          
       endif
       

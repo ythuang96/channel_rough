@@ -1073,8 +1073,8 @@ c     c c c c c c c c c c cc c c c c c c c c c c cc c c c c c c c c c c c
 c     at this point:
 c     rhv is dv / dy -- F-F-P
 c     rhg is v -- F-F-P
-c     phi is nabla^2(v) -- F-F-P
-c     ome1 is d(omega_2)/dy -- F-F-P
+c     phic is nabla^2(v) -- F-F-P
+c     ome1c is d(omega_2)/dy -- F-F-P
 c     ome2 is omega_2 --F-F-P
 c     c c c c c c c c c c cc c c c c c c c c c c cc c c c c c c c c c c c
       
@@ -1099,7 +1099,7 @@ c----------------Initialize variables out of the y loop
       
       DO J = JB,JE
          
-c----------------------computes non 0 modes of ome1, ome3
+c---------------------- computes omega_1 (o1c) and omega_3 (o3c)
          
          do k=1,mz1
             dk  = 1.0/xbet(k)
@@ -1122,7 +1122,7 @@ c----------------------computes non 0 modes of ome1, ome3
             enddo
          enddo
          
-c----------------------computes non 0 modes of u,w
+c----------------------computes u1c (u) and u3c (w)
          do k=1,mz1
             dk  = 1.0/xbet(k)
             u3c(0,k) = -rhvc (0,k,j) * dk
@@ -1144,7 +1144,7 @@ c----------------------computes non 0 modes of u,w
             enddo
          enddo
          
-c----------------------all nodes, 0 modes, u,w,ome1,ome3
+c----------------------00 modes of u,w,ome1,ome3
          
          jj = j-1
          o3c(0,0) = -work2(      j)
@@ -1164,20 +1164,20 @@ c
 c     c c c c c c c c c c cc c c c c c c c c c c cc c c c c c c c c c c c
 c     at this point:
 c     3-D arrays    --------------
-c     rhv is dv / dy -- F-F-P
-c     rhg is v -- F-F-P
-c     phi is nabla^2(v) -- F-F-P
-c     ome1 is d(omega_2)/dy -- F-F-P
-c     ome2 is omega_2 --F-F-P
+c     rhvc is dv / dy -- F-F-P
+c     rhgc is v -- F-F-P
+c     phic is nabla^2(v) -- F-F-P
+c     ome1c is d(omega_2)/dy -- F-F-P
+c     ome2c is omega_2 --F-F-P
 c     3-D arrays    --------------
 c     
 c     2-D arrays    --------------
-c     u1 is u
-c     u2 is v
-c     u3 is w
-c     o1 is omega_1
-c     o2 is omega_2
-c     o3 is omega_3
+c     u1c is u
+c     u2c is v
+c     u3c is w
+c     o1c is omega_1
+c     o2c is omega_2
+c     o3c is omega_3
 c     all variables in Fourierx -- Fourier z -- Physical y
 c     2-D arrays    --------------
 c     everything in ONE x-z plane
@@ -1619,7 +1619,7 @@ c--------------------computes Deltat
 c                          /* saves coefficients for Kx = Kz = 0    */
 c     /cccccccccccccccccccccccccccccccccccccccccccccccc/
 c     MODULE FOR SP2 MPI uses SENDRECV               c/
-c     sends a block (jb:je) everybody and receive    c/
+c     sends a block (jb:je) to everybody and receive  c/
 c     from everybody                                 c/
 c     /cccccccccccccccccccccccccccccccccccccccccccccccc/
 
