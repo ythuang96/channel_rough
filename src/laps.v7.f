@@ -286,7 +286,7 @@ c     -----------------------------------------------------------------
       
       
 c/********************************************************************/
-c/*  Solve for v and phi                                      */
+c/*  Solve for v and phi                                             */
 c/*    for the next rk step at a particular kx kz pair               */
 c/*                                                                  */
 c/*  For phi:                                                        */
@@ -311,6 +311,9 @@ c/*    bcbdv,bctdv: boundary conditions for dv/dy                    */
 c/* Output:                                                          */
 c/*    phi, v, dvdy,                                                 */
 c/*    solutions are size 2,my first index indicates real/imag part  */
+c/*                                                                  */
+c/* This function is the same as Lapsov,                             */
+c/* without solving for omega                                        */
 c/********************************************************************/
       subroutine Bilap(phi,v,dvdy,f,rk1,rk2,bcbv,bctv,bcbdv,bctdv)
       use matrices,only:dt21,dt22,dt12,prem1
