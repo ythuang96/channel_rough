@@ -166,22 +166,22 @@ c/*............................................c/*
       icfl   = 1                ! first time step always needs a step size
       
       if(myid.eq.0) then
-         
          write(ext1,'(i3.3)') id22
          fname=filstt(1:index(filstt,' ')-1)//'.'//ext1//'.cf'
-	 write (*,*) fname
+         write (*,*) fname
          open(39,file=fname,status='unknown')
       endif
-c========================================================================
-c     THIS IS THE TIME LOOP
-c========================================================================
-      
+
+
+c/********************************************************************/
+c/*     THIS IS THE TIME LOOP                                        */
+c/********************************************************************/
       do 30 istep=1,nstep
          
-      	 if (myid.eq.0) then
+         if (myid.eq.0) then
             totaltimer = totaltimer-MPI_WTIME()
             iter_time=-MPI_WTIME()
-      	 endif
+         endif
          
          if (mod(istep-1,nhist) .eq. 0) then
             ihist=1
@@ -192,7 +192,8 @@ c========================================================================
             istati=1
          endif
 
-         ! --- velocity gradient tensor and visualization--- !
+c     -----------------------------------------------------------------
+         ! velocity gradient tensor and visualization
          ! if collected, write velocity gradient tensor and
          ! visualization data to file
          if(collectData) then
@@ -214,9 +215,11 @@ c========================================================================
              call allocate_data_buffers(jb, je, myid)
              collectData = .true.
          endif
-         ! --- end velocity gradient tensor and visualization --- !
+c     -----------------------------------------------------------------
 
-         ! --- save flowfields
+
+c     -----------------------------------------------------------------
+c     Save flowfields
          if (collectFlowfield) then
            ! data collected at the previous timestep is written at the
            ! subsequent timestep. time-Deltat corresponds to the time
@@ -233,8 +236,11 @@ c========================================================================
          call assess_whether_to_collect_flowfield(istep-1)
          call assess_whether_to_collect_wall_velocity(istep)
          ! --- end save flowfields
+c     -----------------------------------------------------------------
 
-c      ==================================   write image to a file    */
+
+c     -----------------------------------------------------------------
+c     write image to a file
          if (mod(istep-1,nimag) .eq. 0 .and. istep.ne.1) then
             
             if (myid.eq.0) then
@@ -244,7 +250,7 @@ c      ==================================   write image to a file    */
             endif
             
             
-c     /* procedure to receive all the slices and stats  */
+            ! procedure to receive all the slices and stats  */
             call sendsta(myid)
             call chjik2ikj(phi,phi,dvordy,dvordy,myid)
             call chjik2ikj(vor,vor,dvordy,dvordy,myid)
@@ -253,26 +259,20 @@ c     /* procedure to receive all the slices and stats  */
                chwk(1+j)        = vor(j,0,kb)
                dvordy(j,0,kb) = phi(j,0,kb)
             enddo
-            
-c-------everybody sends data to the master
-            
+
             if(myid.ne.0) then
-               
+               ! everybody sends data to the master
                call MPI_SEND(chwk,mx*mz*mmy,MPI_REAL,
      &              0,myid,MPI_COMM_WORLD,ierr)
                call MPI_SEND(dvordy,mx*mz*mmy,MPI_REAL,
      &              0,myid,MPI_COMM_WORLD,ierr)
-               
             else
-               
-c------the master first writes its stuff
-               
+               ! the master first writes its stuff
                call escru(chwk,dvordy,u00,w00,spwk,jb,je,0,1,1,
      .              uWallBottom,uWallTop,vWallBottom,vWallTop,
      .              wWallBottom,wWallTop,massu0)
                
-c------then receives everything from everybody
-               
+               ! then receives everything from everybody
                do iproc=1,numerop-1
                   
                   leng=(jend(iproc)-jbeg(iproc)+1)*mx*mz
@@ -281,25 +281,19 @@ c------then receives everything from everybody
                   
                   call MPI_RECV(dvordy,leng,MPI_REAL,
      &                 iproc,iproc,MPI_COMM_WORLD,istat,ierr)
-                  
-                  
-c-------and writes it
-                  
+                  ! and writes it
                   call escru(chwk,dvordy,u00,w00,spwk,jbeg(iproc),
      &                 jend(iproc),iproc,1,1,
      &                 uWallBottom,uWallTop,vWallBottom,vWallTop,
      &                 wWallBottom,wWallTop,massu0)
-                  
                enddo
-               
             endif 
             
-c-------upper half sends spectra
-            
+            ! Spectra
             do j=2*nspec+1,nspec+1,-1
-               
                jj = 2*nspec+2 - j
                
+               ! upper half sends spectra
                if (myid.eq.jspiproc(j).and.
      &              myid.ne.jspiproc(jj)) then
                   
@@ -310,8 +304,7 @@ c-------upper half sends spectra
                   
                endif
                
-c-------lower half receives upper half spectra and computes average
-               
+               ! lower half receives upper half spectra and computes average
                if (myid.eq.jspiproc(jj)) then
                   
                   leng = (mx1+1)*(nz1+1)*7
@@ -323,7 +316,6 @@ c-------lower half receives upper half spectra and computes average
                      call MPI_RECV(spwk(0,0,1,1),leng,MPI_REAL,
      &                    jspiproc(j),0,MPI_COMM_WORLD,istat,ierr)
 
-
                   else
                      
                      do i=0,leng-1
@@ -332,62 +324,50 @@ c-------lower half receives upper half spectra and computes average
                      
                   endif
                   
-c-------------velocity spectra are symmetric
-                  
+                  ! velocity spectra are symmetric
                   do i = 0,leng1-1
                      spwk(i,0,1,1) =.5*(spwk(i,0,1,1) + sp(i,0,1,jj))
                   enddo
                   
-c-------------velocity cospectra are skew-symmetric
-                  
+                  ! velocity cospectra are skew-symmetric
                   do i = leng1,leng2-1
                      spwk(i,0,1,1) =.5*(-spwk(i,0,1,1) + sp(i,0,1,jj))
                   enddo
                   
-c-------------vorticity spectra are symmetric
-                  
+                  ! vorticity spectra are symmetric
                   do i = leng2,leng-1
                      spwk(i,0,1,1) =.5*(spwk(i,0,1,1) + sp(i,0,1,jj))
                   enddo
                   
-c-------everybody sends data to the master
-                  
+                  ! everybody sends data to the master
                   if(myid.ne.0) then
                      
-c-------only lower half sends averaged spectra to the master
-                     
+                     ! only lower half sends averaged spectra to the master
                      leng = (mx1+1)*(nz1+1)*7
                      call MPI_SEND(spwk,leng,MPI_REAL,
      &                    0,myid,MPI_COMM_WORLD,ierr)
                      
                   else
-c------the master first writes its stuff
-                     
+                     ! the master first writes its stuff
                      call escru(chwk,dvordy,u00,w00,spwk,jb,je,0,2,jj,
      .                    uWallBottom,uWallTop,vWallBottom,vWallTop,
      .                    wWallBottom,wWallTop,massu0)
-                     
-                  endif             
-                  
+                  endif
                endif 
                
                if (myid.eq.0.and.jspiproc(jj).ne.myid) then
-                  
-c------then receives everything from everybody
-                  
+                  ! then receives everything from everybody
                   leng = (mx1+1)*(nz1+1)*7
                   call MPI_RECV(spwk,leng,MPI_REAL,jspiproc(jj),
      &                 jspiproc(jj),MPI_COMM_WORLD,istat,ierr)
                   
-c-------and writes it
-                  
+                  ! and writes it
                   call escru(chwk,dvordy,u00,w00,spwk,jbeg(iproc),
      &                 jend(iproc),iproc,2,jj,
      &                 uWallBottom,uWallTop,vWallBottom,vWallTop,
      &                 wWallBottom,wWallTop,massu0)
                   
                endif
-               
             enddo
             
             
@@ -399,98 +379,63 @@ c-------and writes it
                id22 = id22+1
             endif
             
-            
          endif
-c     ==================================  finished writing image */
-
-         
-c     /********************************************************************/
-c     /*      time stepper                                                */
-c     /*      da un paso en el tiempo. Runge - Kutta  para terminos       */
-c     /*      convectivos euler inverso para la parte viscosa.            */
-c     /*                                                                  */
-c     /*       Resuelve:    Gt  + Hg = 1/Re G"                            */
-c     /*                    V"t + Hv = 1/Re V""                           */
-c     /*                                                                  */
-c     /*   input:                                                         */
-c     /*     vor: vorticidad segun la direccion y (n) 		     */
-c     /*     phi: laplaciana velocidad segun la direccion y  (n)          */
-c     /*     vorwk: copia de vor para el calc. de los term. no lineales   */
-c     /*     phiwk: copia de phi para el calc. de los term. no lineales   */
-c     /*     hg: Hg                                                       */
-c     /*     hv: Hv                                                       */
-c     /*     dvordy: area de trabajo de dimension mx*nxymax               */
-c     /*     chwk: area de trabajo para los chz2y                         */
-c     /*                                                                  */
-c     /*  output:                                                         */
-c     /*     vor: vorticidad segun la direccion y (n+1)                   */
-c     /*     phi: laplaciana velocidad segun la direccion y  (n+1)        */
-c     /*      hg: contiene  v (velocidad segun y)                         */
-c     /*      hv: contiene  dv/dy                                         */
-c     /*..................................................................*/
-c     /*  MODULE FOR MPI SP2                                              */
-c     /*..................................................................*/
-c     /*                                                                  */
-c     /*   updated jjs 07/01/01                                           */
-c     /*   in jik form jca                                                */
-c     /*   to CFdiff by of						  */
-c     /*   cleaned by jj 05/08 for ctr, without major changes             */
-c     */                                                                  */
-c     */      ACHTUNG:  This runge kutta is ok but could be better        */
-c     */                                                                  */
-c     /********************************************************************/
-         
+c     finished writing image
+c     -----------------------------------------------------------------
 
 
+c/********************************************************************/
+c/*      time stepper                                                */
+c/*      take a step in time. Runge - Kutta for terms                */
+c/*      inverse euler convective for the viscous part.              */
+c/*                                                                  */
+c/*       Solves  :    Gt  + Hg = 1/Re G"                            */
+c/*                    V"t + Hv = 1/Re V""                           */
+c/*                                                                  */
+c/*   input:                                                         */
+c/*     vor: vorticity according to the y (n) direction              */
+c/*     phi: laplacian velocity according to the direction y (n)     */
+c/*     vorwk: vor copy for the calc. of the non-linear terms.       */
+c/*     phiwk: copy of phi for the calc. of the non-linear terms.    */
+c/*     hg: Hg                                                       */
+c/*     hv: Hv                                                       */
+c/*     dvordy: working area of ​​dimension mx * nxymax                */
+c/*     chwk: work area for chz2y                                    */
+c/*                                                                  */
+c/*  output:                                                         */
+c/*     vor: vorticity according to the y direction (n + 1)          */
+c/*     phi: laplacian velocity according to the y direction (n + 1) */
+c/*      hg: contains v (velocity according to y)                    */
+c/*      hv: contains dv / dy                                        */
+c/********************************************************************/
 
-c     /********************************************************************/
-c     /*      time stepper                                                */
-c     /*      take a step in time. Runge - Kutta for terms       */
-c     /*      inverse euler convective for the viscous part.            */
-c     /*                                                                  */
-c     /*       Solves  :    Gt  + Hg = 1/Re G"                            */
-c     /*                    V"t + Hv = 1/Re V""                           */
-c     /*                                                                  */
-c     /*   input:                                                         */
-c     /*     vor: vorticity according to the y (n) direction          */
-c     /*     phi: laplacian velocity according to the direction y (n)     */
-c     /*     vorwk: vor copy for the calc. of the non-linear terms.    */
-c     /*     phiwk: copy of phi for the calc. of the non-linear terms.    */
-c     /*     hg: Hg                                                       */
-c     /*     hv: Hv                                                       */
-c     /*     dvordy: working area of ​​dimension mx * nxymax               */
-c     /*     chwk: work area for chz2y                         */
-c     /*                                                                  */
-c     /*  output:                                                         */
-c     /*     vor: vorticity according to the y direction (n + 1)                   */
-c     /*     phi: laplacian velocity according to the y direction (n + 1)        */
-c     /*      hg: contains v (velocity according to y)                         */
-c     /*      hv: contains dv / dy                                         */
-c     /********************************************************************/
 
-
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     this is done only for the first step
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-         
+c/********************************************************************/
+c/*     Special treatment for first time step                        */
+c/********************************************************************/
          if(irun.eq.0) then
             
             irun = 1
             
-c     /*   Todos necesitan el tiempo!!!!
+c     -----------------------------------------------------------------
            ! all processors have explicitly set the time to zero, so
            ! this step can be skipped
            ! call  MPI_BCAST(time,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
-            
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
            ! first step: set boundary conditions for v
            ! vWall is read from restart file, but let's set it
            ! explicitly here, just in case we want to do something
            ! else than in the restart file
            call set_wall_roughness(uWallBottom, uWallTop, vWallBottom,
      &       vWallTop)
+c     -----------------------------------------------------------------
 
-c     /*   calcula la v a partir de phi */
-c     /*   calculate the v from phi */
+
+c     -----------------------------------------------------------------
+c     Calculate the v from phi
             do k=kb,ke
                k1 = icx(k-1)
                do i=0,mx1
@@ -516,7 +461,10 @@ c     /*   calculate the v from phi */
      .                 rk,bcb,bct)
                enddo
             enddo
+c     -----------------------------------------------------------------
 
+
+c     -----------------------------------------------------------------
 c     /*     prepara phiwk,vorwk,u00wk,w00wk */
             
             do j=0,my1
@@ -549,7 +497,9 @@ c     !!! target mass flux.  historical Madrid value
             endif
             
          endif
-cccccccccc--end special first step ccccccccccccccccccccc
+c/********************************************************************/
+c/*     End special first step                                       */
+c/********************************************************************/
          
          
          
@@ -932,31 +882,33 @@ c     >           commtimer-comm_time,MPI_WTIME()+iter_time
       
       end
       
-c     /********************************************************************
-c     /*                                                                  */
-c     /*         computes the forcing terms (convective terms)            */
-c     /*                                                                  */
-c     /*    input:                                                        */
-c     /*      phi: Delt(v)   (F-F-Tch)                                    */
-c     /*      vor: vorticity (F-F-Tch)                                    */
-c     /*      rhg: velocity along y axis (F-F-phys)                       */
-c     /*      rhv: dv/dy                 (F-F-phys)                       */
-c     /*      work: area de trabajo de dimension al menos  max(mgalx,4*my) */
-c     /*                                                                  */
-c     /*   output:                                                        i/
-c     /*     rhv: nonlinear term for the phi equation    (F-F-Tch)       */
-c     /*     rhg: non linear term for vorticity equation (F-F-Tch)       */
-c     /*     rf0u: non linear term for the evolution of Kx=Kz=0  u        */
-c     /*     rf0w: non linear term for the evolution of Kx=Kz=0  w        */
-c     /*                                                                  */
-c     /*..................................................................*/
-c     /*  MODULE FOR MPI SP2                                              */
-c     /*..................................................................*
-c     /*                                                                  */
-c     /*    updated jjs 22/12/00     (INCOMPLETE)                         */
-c     /*    single  jjs  4/01/01                                          */
-c     /*    low storage : 24/01/01 (incomplete)
-c     /********************************************************************/
+c/********************************************************************/
+c/*                                                                  */
+c/*         computes the forcing terms (convective terms)            */
+c/*                                                                  */
+c/*    input:                                                        */
+c/*      phic : phi = nabla^2 v  (F-F-P)                             */
+c/*      ome2c: omega2           (F-F-P)                             */
+c/*      rhvc : dv/dy            (F-F-P)                             */
+c/*      rhgc : v                (F-F-P)                             */
+c/*      ome1c: d omega2/dy      (F-F-P)                             */
+c/*      work2: kx = kz = 0 modes of omega3, omega1, u, w            */
+c/*             stacked in a column vector                           */
+c/*                                                                  */
+c/*   output:                                                        */
+c/*     rhvc : d^2H2/dx^2 + d^2H2/dz^2  (F-F-P)                      */
+c/*     rhgc : -dH3/dx + dH1/dz         (F-F-P)                      */
+c/*     rf0u : kx = kz = 0 mode of H1   (column vector)              */
+c/*     rf0w : kx = kz = 0 mode of H3   (column vector)              */
+c/*     ome1c:  dH1/dx + dH3/dz         (F-F-P)                      */
+c/*                                                                  */
+c/*                                                                  */
+c/*      (F-F-P) indicates the matrix dimensions are                 */
+c/*              Fourier x - Fourier z - Physical y                  */
+c/*              and each processor contains data from a few         */
+c/*              kx-kz planes.                                       */
+c/*                                                                  */
+c/********************************************************************/
       subroutine hvhg(phic,ome2c,rhvc,rhgc,
      .     rf0u,rf0w,ome1c,
      .     work2,sp,myid,rkstep, 
@@ -1069,19 +1021,19 @@ c---------------6 * (mgalx+2)  * mgalz planes
       ipo2 = ipo1 + my
       ipo3 = ipo2 + my
       
-c     c c c c c c c c c c cc c c c c c c c c c c cc c c c c c c c c c c c
+c     -----------------------------------------------------------------
 c     at this point:
-c     rhv is dv / dy -- F-F-P
-c     rhg is v -- F-F-P
-c     phic is nabla^2(v) -- F-F-P
-c     ome1c is d(omega_2)/dy -- F-F-P
-c     ome2 is omega_2 --F-F-P
-c     c c c c c c c c c c cc c c c c c c c c c c cc c c c c c c c c c c c
-      
-c----------------------start operating by planes
-      
-c----------------Initialize variables out of the y loop
-      
+c     rhv   is dv / dy
+c     rhg   is v
+c     phic  is nabla^2(v)
+c     ome1c is d(omega_2)/dy
+c     ome2  is omega_2
+c     All Fourier x -Fourier z -Physical y 
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Initialize variables out of the y loop
       do kk=1,9
          uner(kk) = 0.
       enddo
@@ -1095,18 +1047,23 @@ c----------------Initialize variables out of the y loop
       
       hxalp=alp*mx*0.5
       hzalp=bet*mz*0.5
-      
-      
+c     -----------------------------------------------------------------
+
+
+c     Loop over y planes
       DO J = JB,JE
-         
-c---------------------- computes omega_1 (o1c) and omega_3 (o3c)
-         
+
+
+c     -----------------------------------------------------------------
+c     computes omega_1 (o1c) and omega_3 (o3c)
+c     except kx = 0 and kz = 0 modes
+         ! kx = 0 modes
          do k=1,mz1
             dk  = 1.0/xbet(k)
             o3c(0,k) = -ome1c(0,k,j) * dk
             o1c(0,k) = - phic(0,k,j) * dk
          enddo
-         
+         ! All other modes
          do k=0,mz1
             dk  = xbet(k)
             dk2 = bet2(k)
@@ -1118,17 +1075,21 @@ c---------------------- computes omega_1 (o1c) and omega_3 (o3c)
      &              *temp
                o1c(i,k) = ( ome1c(i,k,j)*xalp(i) + phic(i,k,j)*dk)
      &              *temp
-               
             enddo
          enddo
-         
-c----------------------computes u1c (u) and u3c (w)
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     computes u1c (u) and u3c (w)
+c     except kx = 0 and kz = 0 modes
+         ! kx = 0 modes
          do k=1,mz1
             dk  = 1.0/xbet(k)
             u3c(0,k) = -rhvc (0,k,j) * dk
             u1c(0,k) = ome2c (0,k,j) * dk
          enddo
-         
+         ! All other modes
          do k=0,mz1
             dk  = xbet(k)
             dk2 = bet2(k)
@@ -1140,61 +1101,49 @@ c----------------------computes u1c (u) and u3c (w)
      &              *temp
                u1c(i,k) = ( rhvc(i,k,j)*xalp(i) - ome2c(i,k,j)*dk )
      &              *temp
-               
             enddo
          enddo
-         
-c----------------------00 modes of u,w,ome1,ome3
-         
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     00 modes of u,w,omega1,omega3 unpacked from input work2
          jj = j-1
          o3c(0,0) = -work2(      j)
          o1c(0,0) =  work2(ipo1+jj)
          u1c(0,0) =  work2(ipo2+jj) 
          u3c(0,0) =  work2(ipo3+jj)
-         
-c     -------------- copy v and omega_2 into their planes
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     copy v and omega2 from the input
          do k=0,mz1
             do i=0,mx1
                u2c(i,k) = rhgc(i,k,j)
                o2c(i,k) = ome2c(i,k,j) !!! warning, ome2c(0,0,j) must be zero
             enddo
          enddo
+c     -----------------------------------------------------------------
 
-c     
-c     c c c c c c c c c c cc c c c c c c c c c c cc c c c c c c c c c c c
+
+c     -----------------------------------------------------------------
 c     at this point:
-c     3-D arrays    --------------
-c     rhvc is dv / dy -- F-F-P
-c     rhgc is v -- F-F-P
-c     phic is nabla^2(v) -- F-F-P
-c     ome1c is d(omega_2)/dy -- F-F-P
-c     ome2c is omega_2 --F-F-P
-c     3-D arrays    --------------
-c     
-c     2-D arrays    --------------
 c     u1c is u
 c     u2c is v
 c     u3c is w
 c     o1c is omega_1
 c     o2c is omega_2
 c     o3c is omega_3
-c     all variables in Fourierx -- Fourier z -- Physical y
-c     2-D arrays    --------------
-c     everything in ONE x-z plane
-c     c c c c c c c c c c cc c c c c c c c c c c cc c c c c c c c c c c c
-         
-         
-c======
-c     /*     statistics of  v, omega_1, omega_3      */
-c     /*     statistics of  u,w, omega_2             */
-         
+c     All variables in Fourier x - Fourier z for one x-z plane
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Collect spectra information
          if (istati.eq.1 .and. rkstep.eq.1) then
-            
-c     -----------------  spectra
-c     ---------------- only if my plane contains spectra information
-            
+            ! If my plane contains spectra information
             if (jsp(j).eq.1) then
-               
                do kk = 0,mz1
                   k = icx(kk)
                   sp(0,k,1,iy) = sp(0,k,1,iy)+u1c(0,kk)*
@@ -1229,18 +1178,12 @@ c     ---------------- only if my plane contains spectra information
                   enddo
                enddo
                
-c     ----------------  update spectra y index
-               
+               ! Next spectra plane
                iy = iy + 1
-               
             endif
             
-c----------just add 1 to nacum once !!!!
             
             if (j.eq.je)  nacumsp = nacumsp +1
-            
-c     ----- intensities ------------
-c     ----- & dissipation ------------
             
             do kk=1,9
                ener(kk) = 0.
@@ -1248,8 +1191,7 @@ c     ----- & dissipation ------------
             
             do k=0,mz1
                
-c     intensities ----------------
-               
+               ! intensities
                aa = u1c(0,k)*conjg(u1c(0,k))
                up(j) = up(j) + aa
                ener(1)=ener(1) + aa
@@ -1286,8 +1228,7 @@ c     intensities ----------------
                w3p(j)= w3p(j) + aa
                ener(9)=ener(9) + aa
                
-c     dissipation  ----------------
-               
+               ! dissipation
                aa =  bet2(k) * 
      &              ( u1c(0,k)*conjg(u1c(0,k)) +
      &              u2c(0,k)*conjg(u2c(0,k)) + 
@@ -1338,8 +1279,6 @@ c     dissipation  ----------------
                   w3p(j)= w3p(j) + aa
                   ener(9)=ener(9) + aa
                   
-c              dissipation  ----------------
-                  
                   aa = ( alp2(i) + bet2(k) ) * 
      &                 ( u1c(i,k)*conjg(u1c(i,k)) +
      &                 u2c(i,k)*conjg(u2c(i,k)) + 
@@ -1356,15 +1295,13 @@ c              dissipation  ----------------
                enddo
             enddo
             
-c     c --------------- add this plane energy
-            
+            ! add this plane energy
             hyy = hy(j)
             do kk = 1,9
                uner(kk) = uner(kk) + ener(kk)*hyy
             enddo
             
-c     ------------ means
-            
+            ! means
             um(j) = um(j)+u1c(0,0)
             vm(j) = vm(j)+u2c(0,0)
             wm(j) = wm(j)+u3c(0,0)
@@ -1372,8 +1309,7 @@ c     ------------ means
             w2m(j)= w2m(j)+o2c(0,0)
             w3m(j)= w3m(j)+o3c(0,0)
             
-c--------------update nacum just once !!!
-            
+            ! update nacum just once !!!
             if (j.eq.je)   nacum = nacum+1
             
             if (myid.eq.0) then
@@ -1381,28 +1317,38 @@ c--------------update nacum just once !!!
                Wz0a=Wz0a+o3c(0,0)
             endif
          endif
-         
+c     Complete Collect Spectra
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     compute vorticity & Re stress at walls
          if (rkstep.eq.1) then
-            
-c-------------compute vorticity & Re stress  at walls
+            ! Bottom Wall
             if (j.eq.1) then
                Wx0 = o1c(0,0)
                Wz0 = o3c(0,0)
             endif
+            ! Top Wall
             if (j.eq.my) then
                WxL = o1c(0,0)
                WzL = o3c(0,0)
             endif
-            
          endif
+c     -----------------------------------------------------------------
 
-         ! compute velocity gradient tensor
+
+c     -----------------------------------------------------------------
+c     compute velocity gradient tensor
          if(collectData .and. rkstep==1) then
              call compute_velocity_gradient_tensor(u1c, u2c, u3c,
      &           o1c, o3c, xalp, xbet, j, jb)
          endif
+c     -----------------------------------------------------------------
 
-         ! save velocity and vorticity fields if required
+
+c     -----------------------------------------------------------------
+c     save velocity and vorticity fields if required
          ! note: the forcing fields are saved elsewhere, see
          ! save_vorticity_forcing_at_plane_to_buffer (in hvhg)
          ! save_velocity_forcing_to_buffer (in cross1)
@@ -1412,30 +1358,31 @@ c-------------compute vorticity & Re stress  at walls
            call save_vorticity_at_wallparallel_plane_to_buffer(o1c,
      &       o2c, o3c, j, jb)
          endif
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Move everything to Physical x - Physical z 
          
-c     /*      Move everything to PPP          */
-         
-c     ------- substract umax/2 to u00 to increase dt !!!!
+         ! substract umax/2 to u00 to increase dt !!!!
          u1c(0,0) = u1c(0,0) - a0 
-         
+         ! IFFT2
          call fourxz(u1c,u1r,1,1) ! u
          call fourxz(u2c,u2r,1,1) ! v
          call fourxz(u3c,u3r,1,1) ! w
          call fourxz(o1c,o1r,1,1) !omega_1
          call fourxz(o2c,o2r,1,1) !omega_2
          call fourxz(o3c,o3r,1,1) !omega_3
-
          ! collect visualization data
          if (collectData .and. rkstep==1) then
              call save_velocity_fields(j, jb, u2r)
          endif
-         
-         
-c     ----------- triple products 
-         
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
          if (rkstep.eq.1) then
-            
-            
+            ! Compute triple products 
             if (istati.eq.1) then
                do k = 1,mgalz
                   do i=1,mgalx 
@@ -1446,7 +1393,7 @@ c     ----------- triple products
                   enddo 
                enddo 
             endif
-            
+            ! Compute uv Stress at the bottom wall
             if (j.eq.1) then
                uv0=0.
                do k=1,mgalz
@@ -1456,6 +1403,7 @@ c     ----------- triple products
                enddo
                uv0= uv0/(mgalz*mgalx)
             endif
+            ! Compute uv Stress at the top wall
             if (j.eq.my) then
                uvL=0.
                do k=1,mgalz
@@ -1465,23 +1413,16 @@ c     ----------- triple products
                enddo
                uvL= uvL/(mgalz*mgalx)
             endif
-            
          endif
-         
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     CFL Condition
          uggg=0
          
          if (icfl.eq.1.and.rkstep.eq.1) then
-            
-c     /*      estimates maximum time step     */
-c     /********************************************************************/
-c     /*                                                                  */
-c     /*    estimates spatial eigenvalues and computes maximum            */
-c     /*    time step.                                                    */
-c     /*                                                                  */
-c     /*  input :                                                         */
-c     /*    rhv,rhg,phi : velocities in (phys-phys-phys) plane            */
-c     /*                                                                  */
-c     /********************************************************************/
+            ! hyy is y grid spacing at the current x-z plane
             hyy = hy(j)
             do k=1,mgalz
                do i=1,mgalx
@@ -1492,18 +1433,15 @@ c     /********************************************************************/
             enddo
             
          endif
-         
-c     /* rhg= H1 = v.omega_3 - w.omega_2 (F-F-P)  */
-c     /* phi= H2 = w.omega_1 - u.omega_3 (F-F-P)  */
-c     /* rhv= H3 = u.omega_2 - v.omega_1 (F-F-P)  */
-         
-c     /********************************************************************/
-c     /*                                                                  */
-c     /*         computes u X  omega                                      */
-c     /*                                                                  */
-c     /*                                                                  */
-c     /********************************************************************/
-         
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     computes H = u X omega
+c     u2r = H1 = v.omega_3 - w.omega_2 
+c     u3r = H2 = w.omega_1 - u.omega_3 
+c     u1r = H3 = u.omega_2 - v.omega_1
+c     All 3 variables are physical x - physical z for one x-z plane
          do k=1,mgalz
             do i=1,mgalx
                aa = u2r(i,k)
@@ -1515,45 +1453,53 @@ c     /********************************************************************/
      &              o1r(i,k)
             enddo
          enddo
-         
-c---------------------at this point
-c---------------------u1 : H3
-c---------------------u3 : H2
-c---------------------u2 : H1
-         
-c---------------------back to F-F-T
-         
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     FFT2 of H to Fourier x - Fourier z
+         ! H3
          call fourxz(u1c,u1r,-1,1)
+         ! H1
          call fourxz(u2c,u2r,-1,1)
+         ! H2
          call fourxz(u3c,u3r,-1,1)
-         
-         
-c     /* saves coefficients for Kx = Kz = 0    */
-         
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     saves coefficients for kx = kz = 0 modes of H1 and H3
+         ! H1
          rf0u(j)=real(u2c(0,0))
+         ! H3
          rf0w(j)=real(u1c(0,0))
-         
-c     =====
-c     /*   u2 = - dH3/dx + dH1/dz      */
-c     /*   o1 = dH1/dx + dH3/dz      */
-         
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Compute derivatives of H1, H2, H3
+         ! o1 =   dH1/dx + dH3/dz
+         ! u2 = - dH3/dx + dH1/dz
          do k=0,mz1
             do i=0,mx1
-               o1c(i,k) = xalp(i)*u2c(i,k)+xbet(k)*u1c(i,k)
+               o1c(i,k) =  xalp(i)*u2c(i,k)+xbet(k)*u1c(i,k)
                u2c(i,k) = -xalp(i)*u1c(i,k)+xbet(k)*u2c(i,k)
             enddo
          enddo
-         
-c     /*   rhv = d^2 H2/dx^2 + d^H2/dz^2      */
-         
+         ! u1 = d^2 H2/dx^2 + d^H2/dz^2
          do k=0,mz1
             do i=0,mx1
                u1c(i,k) = - u3c(i,k)*(alp2(i)+bet2(k))
             enddo
          enddo
-         
-c======
-c     --------------------- copy planes into outputs
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Copy planes into outputs
+         ! rhvc  = d^2 H2/dx^2 + d^H2/dz^2
+         ! rhgc  = - dH3/dx + dH1/dz
+         ! ome1c =   dH1/dx + dH3/dz
          do k=0,mz1
             do i=0,mx1
                rhvc(i,k,j)=u1c(i,k)
@@ -1561,8 +1507,11 @@ c     --------------------- copy planes into outputs
                ome1c(i,k,j)=o1c(i,k)
             enddo
          enddo
+c     -----------------------------------------------------------------
 
-         ! save vorticity forcing if required
+
+c     -----------------------------------------------------------------
+c     Save vorticity forcing if required
          ! note: the velocity, vorticity and velocity forcing fields
          ! are saved elsewhere, see
          ! save_velocity_at_wallparallel_plane_to_buffer (in hvhg)
@@ -1572,17 +1521,21 @@ c     --------------------- copy planes into outputs
            call save_vorticity_forcing_at_plane_to_buffer(rhgc(:,:,j),
      &       j, jb)
          endif
-         
-c     -------------------------- finishes the y loop
+c     -----------------------------------------------------------------
+
+
+c     Finosh loop over y planes
       ENDDO
-      
-c     ----------------------- some things have to be done after the y loop
-      
-c     ---------------------- adds up the total energy
-      
-c     /********************************************************************/
-c     /*        computes the energy
-c     /********************************************************************/
+
+
+c     -----------------------------------------------------------------
+c     Things that require info from all y planes
+c     Exchange data between all processors
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Adds up the total energy
       if (istati.eq.1.and.rkstep.eq.1.and.ihist.eq.1) then
          call MPI_ALLREDUCE(uner,ener,9,MPI_REAL,MPI_SUM,
      .        MPI_COMM_WORLD,ierr)
@@ -1590,14 +1543,12 @@ c     /********************************************************************/
          do i=1,9
             ener(i)=sqrt(abs(ener(i)))
          enddo
-         
-         
       endif
-      
-c--------------------computes Deltat
-      
+c     -----------------------------------------------------------------
+
+c     -----------------------------------------------------------------
+c     Computes Deltat
       if (icfl.eq.1.and.rkstep.eq.1) then
-         
          
          cfl0 = max(cflx,max(cfly,cflz))
          
@@ -1605,7 +1556,6 @@ c--------------------computes Deltat
      .        MPI_COMM_WORLD,ierr)
          
          if (reigmx1.lt.1e-1)  uggg=1
-         
          
          Deltat=CFL/reigmx1
          dtr=Re/Deltat
@@ -1615,14 +1565,16 @@ c--------------------computes Deltat
          endif
          
       endif
-      
-c                          /* saves coefficients for Kx = Kz = 0    */
-c     /cccccccccccccccccccccccccccccccccccccccccccccccc/
-c     MODULE FOR SP2 MPI uses SENDRECV               c/
-c     sends a block (jb:je) to everybody and receive  c/
-c     from everybody                                 c/
-c     /cccccccccccccccccccccccccccccccccccccccccccccccc/
+c     -----------------------------------------------------------------
 
+
+c     -----------------------------------------------------------------
+c     Saves coefficients for kx = kz = 0
+
+c     MODULE FOR SP2 MPI uses SENDRECV
+c     sends a block (jb:je) to everybody and receive from everybody
+
+      ! Check for NAN
       ilocalu =0
       ilocalw =0
       icount  =0
@@ -1636,18 +1588,17 @@ c     /cccccccccccccccccccccccccccccccccccccccccccccccc/
             ilocalw  =1
          endif
       enddo
-      
       if (ilocalu.eq.1 .OR. ilocalw.eq.1) then 
          write(*,*) 'NaN before SENDRECV in hvhg',ilocalu,ilocalw,
      .        'myid=',myid,'   count:',icount
          call system("hostname")
       endif
       
+      ! All processors exchange data for 00 modes
       do iproc=0,numerop-1
          
          if (iproc.ne.myid) then
             mmyr=jend(iproc)-jbeg(iproc)+1
-            
             call MPI_SENDRECV(rf0u(jb),mmy,MPI_REAL8,
      .           iproc,0,rf0u(jbeg(iproc)),
      .           mmyr,MPI_REAL8,
@@ -1660,6 +1611,7 @@ c     /cccccccccccccccccccccccccccccccccccccccccccccccc/
          endif
       enddo
       
+      ! Check for NAN
       ilocalu =0
       ilocalw =0
       icount  =0
@@ -1673,20 +1625,22 @@ c     /cccccccccccccccccccccccccccccccccccccccccccccccc/
             ilocalw  =1
          endif
       enddo
-      
       if (ilocalu.eq.1 .OR. ilocalw.eq.1) then 
          write(*,*) 'NaN after  SENDRECV in hvhg',ilocalu,ilocalw,
      ,        'myid=',myid,'   count:',icount
          call system("hostname")
       endif
+c     -----------------------------------------------------------------
 
-c     c c c c c c c c c c cc c c c c c c c c c c cc c c c c c c c c c c c
-c     at this point: ome1, rhv and rhg are the outs
-c     they must be trasformed from xy-xz before completion
-c     o1: dH1/dx + dH3/dz
-c     u2: -dH3/dx + dH1/dz
-c     u1: d^2H2/dx^2 + d^2H2/dz^2
-c     c c c c c c c c c c cc c c c c c c c c c c cc c c c c c c c c c c c
+
+c     -----------------------------------------------------------------
+c     at this point: ome1c, rhvc and rhgc are the outputs
+c     they are all Fourier x - Fourier z - Physical y
+c     each processor has data in a few kx-kz planes
+c     ome1c:  dH1/dx + dH3/dz
+c     rhgc : -dH3/dx + dH1/dz
+c     rhvc : d^2H2/dx^2 + d^2H2/dz^2
+c     -----------------------------------------------------------------
       
       end
       

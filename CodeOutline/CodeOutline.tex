@@ -142,7 +142,7 @@ The semi-implicit RK scheme applied to the ODE system for the Fourier transforme
 \end{equation*}
 Note that at the first RK stage $s=j$ and at the third stage $s+1=j+1$. Collecting all terms evaluated at the new time stage on the left-hand side gives
 \begin{equation}
-	\bracket{\bm{D}_{22}-\left(k_x^{2}+k_z^{2}+\frac{\re}{\gamma_{s} \Delta t}\right) \bm{D}_{21}} \hat{\bm{g}}^{s+1}=-\frac{\re}{\gamma_{s} \Delta t} \bracket{ \bm{D}_{21} \hat{\bm{g}}^{j}+\gamma_{s} \Delta t \bm{D}_{21} \hat{\bm{h}}_{g}^{s} }
+	\bracket{\bm{D}_{22}-\left(k_x^{2}+k_z^{2}+\frac{\re}{\gamma_{s} \Delta t}\right) \bm{D}_{21}} \hat{\bm{g}}^{s+1}=-\frac{\re}{\gamma_{s} \Delta t} \bracket{ \bm{D}_{21} \hat{\bm{g}}^{j}+\gamma_{s} \Delta t \bm{D}_{21} \hat{\bm{h}}_{g}^{s} } \label{eq:ome}
 \end{equation}
 
 The boundary conditions on $\hat{\bm{g}}$ are directly imposed by replacing the first and last line of the equation.
@@ -150,7 +150,7 @@ The boundary conditions on $\hat{\bm{g}}$ are directly imposed by replacing the 
 \subsection{Wall-Normal Velocity Equation}
 Similarly, for $\phi$ we have
 \begin{equation}
-	\bracket{\bm{D}_{22}-\left(k_x^{2}+k_z^{2}+\frac{\re}{\gamma_{s} \Delta t}\right) \bm{D}_{21}} \hat{\bm{\phi}}_p^{s+1}=-\frac{\re}{\gamma_{s} \Delta t} \bracket{ \bm{D}_{21} \hat{\bm{\phi}}_p^{j}+\gamma_{s} \Delta t \bm{D}_{21} \hat{\bm{h}}_{v}^{s} }
+	\bracket{\bm{D}_{22}-\left(k_x^{2}+k_z^{2}+\frac{\re}{\gamma_{s} \Delta t}\right) \bm{D}_{21}} \hat{\bm{\phi}}_p^{s+1}=-\frac{\re}{\gamma_{s} \Delta t} \bracket{ \bm{D}_{21} \hat{\bm{\phi}}_p^{j}+\gamma_{s} \Delta t \bm{D}_{21} \hat{\bm{h}}_{v}^{s} } \label{eq:phip}
 \end{equation}
 
 To enforce the boundary conditions for $v$ and $\partial v / \partial y$ we decompose the wall-normal velocity into a particular solution $\hat{\bm{v}}_{p}^{s+1}$ and two homogeneous solutions $\hat{\bm{v}}_{1}^{s+1}$ and $\hat{\bm{v}}_{2}^{s+1}$
@@ -161,29 +161,36 @@ with complex coefficients $A$ and $B$. This decomposition allows to enforce the 
 
 Particular solutions of $\phi$ satisfy:
 \begin{equation}
-	\bracket{\bm{D}_{22}-\left(k_x^{2}+k_z^{2}+\frac{\re}{\gamma_{s} \Delta t}\right) \bm{D}_{21}} \hat{\bm{\phi}}_{1,2}^{s+1}=0
+	\bracket{\bm{D}_{22}-\left(k_x^{2}+k_z^{2}+\frac{\re}{\gamma_{s} \Delta t}\right) \bm{D}_{21}} \hat{\bm{\phi}}_{1,2}^{s+1}=0 \label{eq:phi1}
 \end{equation}
 
 
 The equation for  $\hat{\bm{v}}_{p}^{s+1}$ and two homogeneous solutions $\hat{\bm{v}}_{1}^{s+1}$ and $\hat{\bm{v}}_{2}^{s+1}$ is
 \begin{equation}
-		\bracket{\bm{D}_{22}-\left(k_x^{2}+k_z^{2}\right) \bm{D}_{21}} \hat{\bm{v}}_{p,1,2}^{s+1}=\bm{D}_{21} \hat{\bm{\phi}}_{p,1,2}^{s+1} \\
+		\bracket{\bm{D}_{22}-\left(k_x^{2}+k_z^{2}\right) \bm{D}_{21}} \hat{\bm{v}}_{p,1,2}^{s+1}=\bm{D}_{21} \hat{\bm{\phi}}_{p,1,2}^{s+1} \label{eq:v}
 \end{equation}
 
 The boundary conditions for the particular solution are
-\begin{alignat*}{5}
+\begin{equation}
+	\left\{
+\begin{aligned}
 	&\hat{\bm{\phi}}_{p}^{s+1}\left(y_{1}\right)&&=0, &&\quad &&\hat{\bm{\phi}}_{p}^{s+1}\left(y_{N}\right)&&=0 \\
 	&\hat{\bm{v}}_{p}^{s+1}\left(y_{1}\right)&&=\hat{{v}}_{b}^{s+1}, &&\quad &&\hat{\bm{v}}_{p}^{s+1}\left(y_{N}\right)&&=\hat{{v}}_{t}^{s+1}
-\end{alignat*}
+\end{aligned}\right.\label{eq:phip_bc}
+\end{equation}
 and the homogeneous solutions satisfy
-\begin{alignat*}{5}
+\begin{equation}
+	\left\{\begin{aligned}
 	&\hat{\bm{\phi}}_{1}^{s+1}\left(y_{1}\right)&&=1, &&\quad &&\hat{\bm{\phi}}_{1}^{s+1}\left(y_{N}\right)&&=0 \\
 	&\hat{\bm{v}}_{1}^{s+1}\left(y_{1}\right)&&=0, &&\quad &&\hat{\bm{v}}_{1}^{s+1}\left(y_{N}\right)&&=0
-\end{alignat*}
-\begin{alignat*}{5}
+\end{aligned}\right. \label{eq:phi1_bc}
+\end{equation}
+\begin{equation}
+ \left\{	\begin{aligned}
 	&\hat{\bm{\phi}}_{2}^{s+1}\left(y_{1}\right)&&=0, &&\quad &&\hat{\bm{\phi}}_{2}^{s+1}\left(y_{N}\right)&&=1 \\
 	&\hat{\bm{v}}_{2}^{s+1}\left(y_{1}\right)&&=0, &&\quad &&\hat{\bm{v}}_{2}^{s+1}\left(y_{N}\right)&&=0
-\end{alignat*}
+\end{aligned}\right. \label{eq:phi2_bc}
+\end{equation}
 
 Due to the symmetry of the channel, we have:
 \begin{equation*}
@@ -247,7 +254,7 @@ and invert
 	\begin{bmatrix}
 	\hat{v}'_b-\hat{v}'_p\left(y_{1}\right) \\
 	\hat{v}'_t-\hat{v}'_p\left(y_{N}\right) \\
-\end{bmatrix}
+\end{bmatrix} \label{eq:AB}
 \end{equation}
 
 
@@ -303,81 +310,78 @@ The simulation starts by reading the initial data $\hat{g}_{k}\left(t^{0}\right)
 		bandec5(a,n); banbks5(a,n,b)&\textbf{a},\textbf{n},\textbf{b}&\textbf{b}& compute $b = A\backslash b$, where $A$ is 5-diagonal $n\times n$ matrix with diagonals given by the rows of a, with the first row as the lowest diagonal. 
 		
 		bandec5 updates \textbf{a}, then banbks5 updates \textbf{b} to the final answer\\ \hline
-		\multirow{2}{*}{Lapv1(f2,fwk,rK,bcb,bct)}&\textbf{f2} ($f$), \textbf{rK} ($a$)& \multirow{2}{*}{\textbf{fwk} ($u$)}  &solve: $u'' - a\cdot u = f$	\\
-		&\textbf{bcb}, \textbf{bct}& & with $u(-1)= bcb$, $u(+1)= bct$\\ 
+		\multirow{2}{*}{Lapv1(f2,fwk,rK,bcb,bct)}&\textbf{f2} ($f$), \textbf{rK} ($a$)& \multirow{2}{*}{\textbf{fwk} ($u$)}  &solve: $u'' - a\cdot u = f$, real part only	\\
+		&\textbf{bcb}, \textbf{bct}& & with $u(-1)= bcb$, $u(+1)= bct$\\ \hdashline
+		
+		\multirow{2}{*}{Lapvdv(phi,v,dvdy,rK,bcb,bct)}&\textbf{phi} ($\phi$), \textbf{rK} ($a$)& {\textbf{v}}  &solve: $v'' - a\cdot v = \phi$, real and imaginary, then compute the first derivative	\\
+		&\textbf{bcb}, \textbf{bct}&\textbf{dvdy} & with $v(-1)= bcb$, $v(+1)= bct$\\ \hdashline
+		
+		\multirow{2}{*}{Lapv(phi,v,rK,bcb,bct)}&\textbf{phi} ($\phi$), \textbf{rK} ($a$)& {\textbf{v}}  &same as Lapvdv, without computing\\
+		&\textbf{bcb}, \textbf{bct}& & first derivative\\ \hdashline
+		
 
 	\end{tabular} 
 \end{table} 
 
+\newpage
+\section{Main Functions}
 \subsection{lapsov}
+Defined on line 641 - 1008 in laps.v7.f
 
+Used on line 758 - 760 in cross.f
+
+Used for computing solution of $\phi, v, \omega_2$ at the next RK stage.
+
+\paragraph{Input/Outputs:}\phantom{a}\\
 lapsov(phi,v,dvdy,f,ome,g, rk1,rk2,bcbv,bctv,bcbdv,bctdv,bcbo,bcto)
 
-
-%c/********************************************************************/
-%c/*  Solve for v, omega and phi                                      */
-%c/*    for the next rk step at a particular kx kz pair               */
-%c/*                                                                  */
-%c/*  For omega:                                                      */
-%c/*    omega'' - rk1 omega = g                                       */
-%c/*      with omega(-1) = bcbo, omega(+1) = bcto                     */
-%c/*                                                                  */
-%c/*  For phi:                                                        */
-%c/*    phi'' - rk1 phi = f                                           */
-%c/*      with boundary conditions determined by the dv/dy condition  */
-%c/*                                                                  */
-%c/*  For v:                                                          */
-%c/*    v'' -  rk2 v = phi                                            */
-%c/*      with     v(-1) = bcbv ,     v(+1) = bctv                    */
-%c/*      and  dv/dy(-1) = bcbdv, dv/dy(+1) = bctdv                   */
-%c/*                                                                  */
-%c/*  To implement the boundary conditions for dv/dy                  */
-%c/*  v and phi are decomposed into particular and homogeous solution */
-%c/*  then linearly conbined to give final answer                     */
-%c/*                                                                  */
-%c/* Input:                                                           */
-%c/*    f, g       : forcing for phi and omega                        */
-%c/*    rk1        : constant, should be kx^2+kz^2+Re/c/Deltat        */
-%c/*    rk2        : constant, should be kx^2+kz^2                    */
-%c/*    bcbv ,bctv : boundary conditions for v                        */
-%c/*    bcbdv,bctdv: boundary conditions for dv/dy                    */
-%c/*    bcbo ,bcto : boundary conditions for omega                    */
-%c/* Output:                                                          */
-%c/*    phi, v, dvdy, ome                                             */
-%c/*    solutions are size 2,my first index indicates real/imag part  */
-%c/********************************************************************/
+\begin{table}[H]
+	\centering 
+	\renewcommand{\arraystretch}{1.4} 
+	\begin{tabular}{c|c|c|c}
+		&Variable name &           &Variable name        \\
+		&in lapsov       &Description&when called in cross \\ \hline
+		\multirow{6}{*}{Input}&\textbf{f, g}&forcing for $\phi$ and $\omega$: $h_v$ and $h_g$&\textbf{hv(0,i,k)},\textbf{hg(0,i,k)}\\
+		&\textbf{rk1}&constant, should be $k_x^2+k_z^2+\re/(\gamma_s \Delta t)$ &\textbf{rk2}\\
+		&\textbf{rk2}&constant, should be $k_x^2+k_z^2$ &\textbf{rk}\\ 
+		&\textbf{bcbv, bctv}&boundary conditions for $v$&\textbf{bcb,bct}\\
+		&\textbf{bcbdv, bctdv}&boundary conditions for $dv/dy$&\textbf{bcbdv,bctdv}\\
+		&\textbf{bcbo, bcto}&boundary conditions for $\omega$&\textbf{bcbo,bcto}\\
+		
+		\hline
+		
+		\multirow{4}{*}{Output}&\textbf{phi}& $\phi = \nabla^2 v$&\textbf{phiwk(0,i,k)}\\
+		&\textbf{v}&$v$&\textbf{hg(0,i,k)}\\
+		&\textbf{dvdy}&$dv/dy$&\textbf{hv(0,i,k)}\\
+		&\textbf{ome}&$\omega_2$&\textbf{vorwk(0,i,k)}\\\hline
+	\end{tabular} 
+\end{table} 
+All output variables have size (1:2, 1:my), where 1 in the first index indicates real part and 2 in the first index indicate imaginary part.
 
 \begin{table}[H]
 	\centering 
 	\renewcommand{\arraystretch}{1.5} 
 	\begin{tabular}{l|l}
 		Description& Line \\ \hline
-		\textbf{for} each $y$ plane \textbf{do} &1100\\
-		\qquad compute \textbf{o1c} ($\omega_1$), \textbf{o3c} ($\omega_3$), except 00 mode, \eqref{eq:om3}\eqref{eq:om1}& 1104-1123 \\
-		\qquad compute \textbf{u1c} ($u$), \textbf{u3c} ($w$), except 00 mode, \eqref{eq:w}\eqref{eq:u}& 1126-1145 \\
-		\qquad unpack 00 modes of \textbf{u1c}, \textbf{u3c}, \textbf{o1c}, \textbf{o3c} from \textbf{work2}&1149-1153 \\
-		\qquad copy data for \textbf{u2c}, \textbf{o2c} &1156-1161 \\ \hdashline
-		\multicolumn{2}{c}{\qquad \textbf{Now, have data for $u,v,w,\omega_1,\omega_2,\omega_3$ from the previous time step in spectral space}}\\ \hdashline
-		\qquad statistics,  vorticity at wall: \textbf{Wx0}, \textbf{Wz0}, \textbf{WxL}, \textbf{WzL}, velocity gradient tensor&1191-1403 \\
-		\qquad save data& 1405-1414\\
-		\qquad IFT to physical space \textbf{u1c} $\rightarrow$\textbf{u1r} ...&1419- 1426\\
-		\qquad more statistics&1436-1469\\
-		\qquad CFL&1473-1492\\
-		\qquad compute $\bm{u}\times\bm{\omega}$: \textbf{u1r} ($H_3$), \textbf{u2r} ($H_1$), \textbf{u3r} ($H_2$)&1507-1517\\
-		\qquad FFT to Fourier space \textbf{u1r} $\rightarrow$\textbf{u1c} ...&1526-1528\\
-		\qquad save 00 mode of forcing: \textbf{rf0u} = $H_1(0,0)$,	\textbf{rf0w} = $H_3(0,0)$&1533-1534\\
-		\qquad compute \textbf{ome1c} = $\frac{\p H_1}{\p x} + \frac{\p H_3}{\p z}$, \textbf{rhgc} =  $-\frac{\p H_3}{\p x} + \frac{\p H_1}{\p z}$, \textbf{rhvc} = $\paren{\frac{\p^2}{\p x^2}+\frac{\p^2}{\p z^2}} H_2$&1540-1563\\
-		\qquad save vorticity forcing ($h_g$)&1571-1574\\
-		\textbf{END For}& 1577\\
-		more statistics&1586-1595\\
-		Update \textbf{Deltat} and \textbf{dtr}&1599-1617\\
-		exchange \textbf{rf0u} and \textbf{rf0w} with all processors, with NaN detection before and after&1626-1681\\\hline
+		Prepare \textbf{wk1} = $\bracket{DT22 - rk1 \cdot DT21}^{-1}$ &719-738\\
+		Solve for \textbf{phip} ($\phi_p$), real and imag, \eqref{eq:phip}, \eqref{eq:phip_bc}&741-778\\
+		Solve for \textbf{phi1} ($\phi_1$), only real, \eqref{eq:phi1}, \eqref{eq:phi1_bc}&781-788\\
+		Solve for \textbf{ome}  ($\omega$), real and imag, \eqref{eq:ome}, with BC given by \textbf{bcbo, bcto}&791-828\\
+		\hdashline
+		Prepare \textbf{wk1} = $\bracket{DT22 - rk2 \cdot DT21}^{-1}$ &834-853\\
+		Solve for \textbf{vp} ($v_p$), real and imag, \eqref{eq:v}, \eqref{eq:phip_bc}, with BC given by \textbf{bcbv, bctv}&856-887\\
+		Solve for \textbf{v1} ($v_1$), only real, \eqref{eq:v}, \eqref{eq:phi1_bc}&890-905\\
+		\hdashline
+		Compute \textbf{dvp}, the derivative of \textbf{vp}&908-946\\
+		Compute \textbf{dv1}, the derivative of \textbf{v1}&949-968\\
+		\hdashline
+		Compute \textbf{A, B}, \eqref{eq:AB} so that the BC for $dv/dy$ given by \textbf{bcbdv, bctdv} are satisfied&971-987\\
+		\hdashline
+		Compute outputs \textbf{ome, phi, v, dvdy} using \textbf{A, B}&990-1003\\ \hline
 	\end{tabular} 
 \end{table}
 
 
-\newpage
-\section{Main Functions}
 \subsection{hvhg}
 Defined on line 935 - 1693 in cross.f
 
@@ -427,6 +431,8 @@ hvhg(phic,ome2c,rhvc,rhgc, rf0u,rf0w,ome1c, work2,sp,myid,rkstep, \\\phantom{hvh
 		
 	\end{tabular} 
 \end{table} 
+
+All matrix input \textbf{phic, ome2c, rhvc, rhgc, ome1c} and matrix output \textbf{rhvc, rhgc, ome1c} are Fourier x - Fourier z - Physical y, and each processor contains a few kx-kz planes.
 
 \newpage
 \paragraph{Equations used:}

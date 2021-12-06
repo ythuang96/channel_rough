@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (MiKTeX 21.10) (preloaded format=pdflatex 2021.11.12)  3 DEC 2021 17:40
+This is pdfTeX, Version 3.141592653-2.6-1.40.23 (MiKTeX 21.10) (preloaded format=pdflatex 2021.11.12)  6 DEC 2021 13:46
 entering extended mode
 **./CodeOutline.tex
 (CodeOutline.tex
@@ -924,39 +924,44 @@ File: ursfs.fd 1998/03/24 rsfs font definition file (jk)
 
 {C:/Users/Michael Huang/AppData/Local/MiKTeX/pdftex/config/pdftex.map}]
 [2] [3] [4]
-Overfull \hbox (50.77701pt too wide) in paragraph at lines 270--291
+Overfull \hbox (50.77701pt too wide) in paragraph at lines 277--298
  [][] 
  []
 
 
-Overfull \hbox (36.26688pt too wide) in paragraph at lines 297--310
+Overfull \hbox (53.57994pt too wide) in paragraph at lines 304--324
  [][] 
  []
 
-[5]
-Overfull \hbox (39.1261pt too wide) in paragraph at lines 353--376
+[5] [6]
+Overfull \hbox (8.46869pt too wide) in paragraph at lines 341--358
  [][] 
  []
 
-[6] [7]
-Overfull \hbox (26.24747pt too wide) in paragraph at lines 395--429
+
+Overfull \hbox (43.31677pt too wide) in paragraph at lines 364--382
  [][] 
  []
 
-[8]
-Overfull \hbox (39.1261pt too wide) in paragraph at lines 443--466
+[7]
+Overfull \hbox (26.24747pt too wide) in paragraph at lines 399--433
  [][] 
  []
 
-[9] (CodeOutline.aux)
+[8] [9]
+Overfull \hbox (39.1261pt too wide) in paragraph at lines 449--472
+ [][] 
+ []
+
+[10] (CodeOutline.aux)
 Package rerunfilecheck Info: File `CodeOutline.out' has not changed.
-(rerunfilecheck)             Checksum: CE48DCD1DBAAE6BE677AD15D48F6A9C1;1353.
+(rerunfilecheck)             Checksum: 0292FCC090EE8436B1512F76DF259923;1353.
  ) 
 Here is how much of TeX's memory you used:
- 22241 strings out of 478907
- 417595 string characters out of 2848063
- 738781 words of memory out of 3000000
- 39768 multiletter control sequences out of 15000+600000
+ 22255 strings out of 478907
+ 417741 string characters out of 2848063
+ 739253 words of memory out of 3000000
+ 39776 multiletter control sequences out of 15000+600000
  413468 words of font info for 64 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  73i,14n,81p,855b,772s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -973,9 +978,9 @@ ograms/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/Michael Huang/A
 ppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/User
 s/Michael Huang/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cm
 sy8.pfb>
-Output written on CodeOutline.pdf (9 pages, 163409 bytes).
+Output written on CodeOutline.pdf (10 pages, 169930 bytes).
 PDF statistics:
- 179 PDF objects out of 1000 (max. 8388607)
- 43 named destinations out of 1000 (max. 500000)
+ 195 PDF objects out of 1000 (max. 8388607)
+ 49 named destinations out of 1000 (max. 500000)
  81 words of extra memory for PDF output out of 10000 (max. 10000000)
 
