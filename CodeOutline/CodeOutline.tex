@@ -88,9 +88,9 @@ Decompose the pressure gradient into a spatial mean $\nabla p_{00}$ and a fluctu
 	\nabla p=\nabla p_{00}+\nabla p^{\prime}
 \end{equation*}
 Note that the mean pressure gradient is spatially constant, but in general varies with time. Rewrite the momentum equations in velocity-vorticity form
-\begin{equation*}
-	\frac{\partial \bm{u}}{\partial t}+\frac{1}{2} \nabla(\bm{u} \cdot \bm{u})-\bm{H}=-\nabla p^{\prime}+\frac{1}{\operatorname{Re}} \nabla^{2} \bm{u}
-\end{equation*}
+\begin{equation}
+	\frac{\partial \bm{u}}{\partial t}+\frac{1}{2} \nabla(\bm{u} \cdot \bm{u})-\bm{H}=-\nabla p^{\prime}+\frac{1}{\re} \nabla^{2} \bm{u} \label{eq:nse}
+\end{equation}
 
 where $\bm{H}$ contains the rotational part of the convection term and the mean pressure gradient
 \begin{equation*}
@@ -99,14 +99,14 @@ where $\bm{H}$ contains the rotational part of the convection term and the mean 
 
 An evolution equation for the vorticity and velocity vectors can be obtained
 \begin{align*}
-	\frac{\partial \bm{\omega}}{\partial t}-\nabla \times \bm{H}&=\frac{1}{\operatorname{Re}} \nabla^{2} \bm{\omega}\\
-	\frac{\partial}{\partial t} \nabla^{2} \bm{u}+\nabla \times(\nabla \times \bm{H})&=\frac{1}{\operatorname{Re}} \nabla^{4} \bm{u}
+	\frac{\partial \bm{\omega}}{\partial t}-\nabla \times \bm{H}&=\frac{1}{\re} \nabla^{2} \bm{\omega}\\
+	\frac{\partial}{\partial t} \nabla^{2} \bm{u}+\nabla \times(\nabla \times \bm{H})&=\frac{1}{\re} \nabla^{4} \bm{u}
 \end{align*}
 
 For $g = \omega_2$ and $\phi = \nabla^2 v$, the evolution equations are
 \begin{align}
-	\frac{\partial}{\partial t} g &=h_{g}+\frac{1}{\operatorname{Re}} \nabla^{2} g \label{eq:vor}\\
-	\frac{\partial}{\partial t} \phi &=h_{v}+\frac{1}{\operatorname{Re}} \nabla^{2} \phi \label{eq:phi}
+	\frac{\partial}{\partial t} g &=h_{g}+\frac{1}{\re} \nabla^{2} g \label{eq:vor}\\
+	\frac{\partial}{\partial t} \phi &=h_{v}+\frac{1}{\re} \nabla^{2} \phi \label{eq:phi}
 \end{align}
 and the nonlinear terms are collected in
 \begin{align}
@@ -142,7 +142,7 @@ The semi-implicit RK scheme applied to the ODE system for the Fourier transforme
 \end{equation*}
 Note that at the first RK stage $s=j$ and at the third stage $s+1=j+1$. Collecting all terms evaluated at the new time stage on the left-hand side gives
 \begin{equation}
-	\bracket{\bm{D}_{22}-\left(k_x^{2}+k_z^{2}+\frac{\re}{\gamma_{s} \Delta t}\right) \bm{D}_{21}} \hat{\bm{g}}^{s+1}=-\frac{\re}{\gamma_{s} \Delta t} \bracket{ \bm{D}_{21} \hat{\bm{g}}^{j}+\gamma_{s} \Delta t \bm{D}_{21} \hat{\bm{h}}_{g}^{s} } \label{eq:ome}
+	\bracket{\bm{D}_{22}-\left(k_x^{2}+k_z^{2}+\frac{\re}{\gamma_{s} \Delta t}\right) \bm{D}_{21}} \hat{\bm{g}}^{s+1}=-\frac{\re}{\gamma_{s} \Delta t} \bm{D}_{21} \bracket{ \hat{\bm{g}}^{j}+\gamma_{s} \Delta t \hat{\bm{h}}_{g}^{s} } \label{eq:ome}
 \end{equation}
 
 The boundary conditions on $\hat{\bm{g}}$ are directly imposed by replacing the first and last line of the equation.
@@ -150,7 +150,7 @@ The boundary conditions on $\hat{\bm{g}}$ are directly imposed by replacing the 
 \subsection{Wall-Normal Velocity Equation}
 Similarly, for $\phi$ we have
 \begin{equation}
-	\bracket{\bm{D}_{22}-\left(k_x^{2}+k_z^{2}+\frac{\re}{\gamma_{s} \Delta t}\right) \bm{D}_{21}} \hat{\bm{\phi}}_p^{s+1}=-\frac{\re}{\gamma_{s} \Delta t} \bracket{ \bm{D}_{21} \hat{\bm{\phi}}_p^{j}+\gamma_{s} \Delta t \bm{D}_{21} \hat{\bm{h}}_{v}^{s} } \label{eq:phip}
+	\bracket{\bm{D}_{22}-\left(k_x^{2}+k_z^{2}+\frac{\re}{\gamma_{s} \Delta t}\right) \bm{D}_{21}} \hat{\bm{\phi}}_p^{s+1}=-\frac{\re}{\gamma_{s} \Delta t} \bm{D}_{21} \bracket{ \hat{\bm{\phi}}_p^{j}+\gamma_{s} \Delta t \hat{\bm{h}}_{v}^{s} } \label{eq:phip}
 \end{equation}
 
 To enforce the boundary conditions for $v$ and $\partial v / \partial y$ we decompose the wall-normal velocity into a particular solution $\hat{\bm{v}}_{p}^{s+1}$ and two homogeneous solutions $\hat{\bm{v}}_{1}^{s+1}$ and $\hat{\bm{v}}_{2}^{s+1}$
@@ -257,6 +257,35 @@ and invert
 \end{bmatrix} \label{eq:AB}
 \end{equation}
 
+\subsection{00 Modes}
+The 00 modes of $u$ and $w$ need to be computed separately, as they contribute to the mass flux, which is held constant.
+
+Equation~\eqref{eq:nse} can be rewritten for $u_{00}$ and $w_{00}$, the $k_x = k_z = 0$ modes:
+\begin{align*}
+	\frac{\p}{\p t} u_{00} - H_{1,00} &=  \frac{1}{\re} \frac{\p^2}{\p y^2} u_{00}\\
+	\frac{\p}{\p t} w_{00} - H_{3,00} &=  \frac{1}{\re} \frac{\p^2}{\p y^2} w_{00}
+\end{align*} 
+Apply the semi-implicit RK scheme multiplied by $\bm{D}_{21}$ and using~\eqref{eq:fd2} gives
+\begin{align*}
+	\bm{D}_{21} u_{00}^{s+1} &= \bm{D}_{21} u_{00}^j + \gamma_s \Delta t \bracket{\frac{1}{\re} \bm{D}_{22} u_{00}^{s+1} +  \bm{D}_{21} H_{1,00}^s}\\
+	\bm{D}_{21} w_{00}^{s+1} &= \bm{D}_{21} w_{00}^j + \gamma_s \Delta t \bracket{\frac{1}{\re} \bm{D}_{22} w_{00}^{s+1} +  \bm{D}_{21} H_{3,00}^s}
+\end{align*}
+rearrange:
+\begin{align}
+	\bracket{ \bm{D}_{22} - \frac{\re}{\gamma_s \Delta t}\bm{D}_{21} } u_{00,p}^{s+1}&= - \frac{\re}{\gamma_s \Delta t}\bm{D}_{21} \bracket{u_{00}^j +   \gamma_s \Delta t H_{1,00}^s} \label{eq:u00p}\\
+	\bracket{ \bm{D}_{22} - \frac{\re}{\gamma_s \Delta t}\bm{D}_{21} } w_{00,p}^{s+1}&= - \frac{\re}{\gamma_s \Delta t}\bm{D}_{21} \bracket{w_{00}^j +    \gamma_s \Delta t H_{3,00}^s} \label{eq:w00p}
+\end{align}
+Since $\bm{H}$ also contains the mean pressure gradient, which is an unknown constant in space that varies with time, we will solve, the solution to a constant forcing:
+\begin{align}
+	\bracket{ \bm{D}_{22} - \frac{\re}{\gamma_s \Delta t}\bm{D}_{21} } u_{00,h}^{s+1}&= - \frac{\re}{\gamma_s \Delta t}\bm{D}_{21} \label{eq:u00h}\\
+	\bracket{ \bm{D}_{22} - \frac{\re}{\gamma_s \Delta t}\bm{D}_{21} } w_{00,h}^{s+1}&= - \frac{\re}{\gamma_s \Delta t}\bm{D}_{21} \label{eq:w00h}
+\end{align}
+Then we have
+\begin{align}
+	 u_{00}^{s+1}&= u_{00,p}^{s+1} + C_1 u_{00,h}^{s+1}\\
+	 w_{00}^{s+1}&= w_{00,p}^{s+1} + C_2 w_{00,h}^{s+1}
+\end{align}
+so that the desired constant mass flux is satisfied.
 
 \section{Initialization}
 
@@ -281,10 +310,10 @@ The simulation starts by reading the initial data $\hat{g}_{k}\left(t^{0}\right)
 		mx, mz& 512, 511&& Number of wavenumbers\\ \hdashline
 		mgalx1, mgalz1& mgalx-1, mgalz-1&&\\
 		mx1, my1, mz1&mx/2-1, my-1, mz-1&&\\ \hline
-		xalp&	&0:mx1	&Complex streamwize wavenumber\\			
-		xbet&	&0:mz1	&Complex spanwize wavenumber\\		\hline
-		alp2& - xalp$^2$ &&\\
-		bet2& - xbet$^2$ &&\\ \hline
+		xalp&	&0:mx1	&Complex streamwize wavenumber $ik_x$\\			
+		xbet&	&0:mz1	&Complex spanwize wavenumber $ik_z$\\		\hline
+		alp2& - xalp$^2$ &0:mx1& $k_x^2$ (Note that xalp contains $i$)\\
+		bet2& - xbet$^2$ &0:mx1& $k_z^2$ (Note that xbet contains $i$)\\ \hline
 		trp, trp2&	&1:my&Trapezoid integration in y, divided by channel height 2 (the two are different precision?)\\ \hline
 		c & [1/3, 1/2, 1]&1:3& RK constants \\
 		r1& c(rkstep)*Deltat& &\\
@@ -406,7 +435,7 @@ hvhg(phic,ome2c,rhvc,rhgc, rf0u,rf0w,ome1c, work2,sp,myid,rkstep, \\\phantom{hvh
 		&\textbf{rhvc}&$dv/dy$&\textbf{hv}\\
 		&\textbf{rhgc}&$v$&\textbf{hg}\\
 		&\textbf{ome1c}&$d \omega_2/dy$ &\textbf{dvordy}\\ 
-		&\textbf{work2}& 00 modes of $\omega_3$, $\omega_1$, $u$, $w$ stacked in a column&\textbf{work}\\
+		&\textbf{work2}& 00 modes of $-\omega_3$, $\omega_1$, $u$, $w$ stacked in a column&\textbf{work}\\
 		
 		\hline
 		
@@ -472,8 +501,66 @@ All matrix input \textbf{phic, ome2c, rhvc, rhgc, ome1c} and matrix output \text
 		exchange \textbf{rf0u} and \textbf{rf0w} with all processors, with NaN detection before and after&1626-1681\\\hline
  	\end{tabular} 
 \end{table}
+\newpage
+\subsection{cross1}
+Defined on line 1 - 961 in cross.f
 
+Used in main
 
+Used for performing the time stepping
+
+\begin{table}[H]
+	\centering 
+	\renewcommand{\arraystretch}{1.5} 
+	\begin{tabular}{l|l}
+		Description& Line \\ \hline
+		\textbf{for} each time step \textbf{do} &179\\
+		\qquad velocity gradient tensor and visualization (old code)&195-218\\
+		\qquad \textbf{If} the previous step saved data to buffer, then write data to h5 file& 221-239\\
+		\qquad \textbf{If} the previous step is multiplier of \textbf{nimag}, then write restart file& 242-383\\ \hdashline
+		
+		\qquad \textbf{If} first time step: &389\\
+		\qquad \qquad  Set BC&400-407\\
+		\qquad \qquad Compute \textbf{hg}: $v$ and \textbf{hv}: $dv/dy$ from \textbf{phi}: $\phi$ using \textbf{Lapvdv}&410-441\\
+		\qquad \qquad Copy \textbf{u00wk} = \textbf{u00}, \textbf{w00wk} = \textbf{w00}&444-450\\
+		\qquad \qquad Compute $y$ derivative \textbf{rf0u}: ${\tfrac{d}{dy} u(0,0) = - \omega_3(0,0)}$, \textbf{rf0w}: ${\tfrac{d}{dy} w(0,0) = + \omega_1(0,0)}$&451-455\\
+		\qquad \qquad Copy \textbf{vorwk} = \textbf{vor}: $\omega_2$, \textbf{phiwk} = \textbf{phi}: $\phi$&458-472\\
+		\qquad \textbf{END If} for special first step&492\\ \hdashline
+		
+		\qquad \textbf{for} 3 RK steps \textbf{do}& 501\\
+		\qquad \qquad Compute $y$ derivative \textbf{dvordy}: $d \omega_2 /dy$&504-508\\
+		\qquad \qquad Change \textbf{phiwk}, \textbf{hv}, \textbf{hg}, \textbf{dvordy}, \textbf{vorwk} from $k_x-y$ planes to $k_x-k_z$ planes&511-518\\
+		\qquad \qquad Stack 00 modes of $-\omega_3,\omega_1,u,w$ in \textbf{work}&521-539\\
+		\qquad \qquad Compute \textbf{hv}: $\paren{\tfrac{\p^2}{\p x^2}+\tfrac{\p^2}{\p z^2}}H_2$, \textbf{hg}: $-\tfrac{\p H_3}{\p x} + \tfrac{\p H_1}{\p z}$, \textbf{dvordy}: $\tfrac{\p H_1}{\p x} + \tfrac{\p H_3}{\p z}$&\multirow{2}{*}{542-559}\\
+		\qquad \qquad Compute \textbf{rf0u}: $H_1(k_x=k_z=0)$, \textbf{rf0w}: $H_3(k_x=k_z=0)$ with \textbf{hvhg}&\\
+		\qquad \qquad Mean subtract for \textbf{rf0u} and \textbf{rf0w} \red{Problem!}&562-582\\
+		\qquad \qquad Change \textbf{dvordy}, \textbf{hv}, \textbf{hg} from $k_x-k_z$ planes to $k_x-y$ planes&585-593\\
+		\qquad \qquad Compute $y$ derivative \textbf{dvordy}:  $\frac{\p}{\p y} \paren{\tfrac{\p H_1}{\p x} + \tfrac{\p H_3}{\p z}}$&596-601\\
+		\qquad \qquad Compute \textbf{hv}:  $\paren{\tfrac{\p^2}{\p x^2}+\tfrac{\p^2}{\p z^2}}H_2-\frac{\p}{\p y} \paren{\tfrac{\p H_1}{\p x} + \tfrac{\p H_3}{\p z}}$&604-616\\
+		\qquad \qquad Save \textbf{hv} to buffer&619-629
+		\end{tabular} 
+\end{table}
+\newpage
+\begin{table}[H]
+	\centering 
+	\renewcommand{\arraystretch}{1.5} 
+	\begin{tabular}{l|l}
+		\qquad \qquad Compute RHS forcing for $u_{00}$: \textbf{rf0u}; for $w_{00}$: \textbf{rf0w}; for $\omega_3$: \textbf{hg}; for $\phi$: \textbf{hv}&\multirow{2}{*}{632-669}\\ 
+		\qquad \qquad \eqref{eq:u00p},\eqref{eq:w00p},\eqref{eq:ome},\eqref{eq:phip}&\\
+		\qquad \qquad Set BC&672-672\\
+		\qquad \qquad Save wall acceleration&679-712\\
+		\qquad \qquad Advance \textbf{phiwk}: $\phi$, \textbf{hg}: $v$, \textbf{hv}: $dv/dy$, \textbf{vorwk}: $\omega_2$ using \textbf{lapsov}&715-762\\
+		\qquad \qquad Advance \textbf{u00wk}: $u_{00}$, \textbf{w00wk}: $w_{00}$ with constant mass flux using \textbf{Lapv1}&765-810\\
+		\qquad \qquad Compute $y$ derivative \textbf{rf0u}: ${\tfrac{d}{dy} u(0,0) = - \omega_3(0,0)}$, \textbf{rf0w}: ${\tfrac{d}{dy} w(0,0) = + \omega_1(0,0)}$&812-821\\
+		\qquad \textbf{END for} end loop over 3 RK stages&824\\ \hdashline
+		
+		\qquad Copy variable for the new time step:& \multirow{2}{*}{830-846}\\
+		\qquad \textbf{u00} = \textbf{u00wk}, \textbf{w00} = \textbf{w00wk}, \textbf{vor} = \textbf{vorwk}, \textbf{phi} = \textbf{phiwk}&\\
+		\qquad Master processor write history record& 849-915\\
+		\qquad Increment Time&918-921\\
+		\textbf{END for} time loop complete&943\\ \hline
+	\end{tabular} 
+\end{table}
 
 
 

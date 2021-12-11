@@ -176,7 +176,7 @@ c/*............................................c/*
 c/********************************************************************/
 c/*     THIS IS THE TIME LOOP                                        */
 c/********************************************************************/
-      do 30 istep=1,nstep
+      do istep=1,nstep
          
          if (myid.eq.0) then
             totaltimer = totaltimer-MPI_WTIME()
@@ -233,14 +233,14 @@ c     Save flowfields
      &         xalp, xbet, time-Deltat, Re, massu0)
          endif
          ! call assess_whether_to_collect_flowfield_dt(time)
-         call assess_whether_to_collect_flowfield(istep-1)
+         call assess_whether_to_collect_flowfield(istep)
          call assess_whether_to_collect_wall_velocity(istep)
-         ! --- end save flowfields
+         ! end save flowfields
 c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
-c     write image to a file
+c     write restart file
          if (mod(istep-1,nimag) .eq. 0 .and. istep.ne.1) then
             
             if (myid.eq.0) then
@@ -249,8 +249,7 @@ c     write image to a file
      &             vWallTop(mxwall, mzwall)
             endif
             
-            
-            ! procedure to receive all the slices and stats  */
+            ! procedure to receive all the slices and stats
             call sendsta(myid)
             call chjik2ikj(phi,phi,dvordy,dvordy,myid)
             call chjik2ikj(vor,vor,dvordy,dvordy,myid)
@@ -385,32 +384,6 @@ c     -----------------------------------------------------------------
 
 
 c/********************************************************************/
-c/*      time stepper                                                */
-c/*      take a step in time. Runge - Kutta for terms                */
-c/*      inverse euler convective for the viscous part.              */
-c/*                                                                  */
-c/*       Solves  :    Gt  + Hg = 1/Re G"                            */
-c/*                    V"t + Hv = 1/Re V""                           */
-c/*                                                                  */
-c/*   input:                                                         */
-c/*     vor: vorticity according to the y (n) direction              */
-c/*     phi: laplacian velocity according to the direction y (n)     */
-c/*     vorwk: vor copy for the calc. of the non-linear terms.       */
-c/*     phiwk: copy of phi for the calc. of the non-linear terms.    */
-c/*     hg: Hg                                                       */
-c/*     hv: Hv                                                       */
-c/*     dvordy: working area of ​​dimension mx * nxymax                */
-c/*     chwk: work area for chz2y                                    */
-c/*                                                                  */
-c/*  output:                                                         */
-c/*     vor: vorticity according to the y direction (n + 1)          */
-c/*     phi: laplacian velocity according to the y direction (n + 1) */
-c/*      hg: contains v (velocity according to y)                    */
-c/*      hv: contains dv / dy                                        */
-c/********************************************************************/
-
-
-c/********************************************************************/
 c/*     Special treatment for first time step                        */
 c/********************************************************************/
          if(irun.eq.0) then
@@ -457,24 +430,33 @@ c     Calculate the v from phi
                     write(*,*) 'vwallBottom = ', bcb
                     write(*,*) 'vWallTop = ', bct
                   endif
+                  ! solve nabla^2 v = phi
+                  ! phi is the  input
                   call Lapvdv(phi(0,i,k),hg(0,i,k),hv(0,i,k),
      .                 rk,bcb,bct)
+                  ! hg  is the output: v
+                  ! hv  is the output: dv/dy
                enddo
             enddo
 c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
-c     /*     prepara phiwk,vorwk,u00wk,w00wk */
-            
+c     Compute 00 modes of omega1 and omega3
+            ! Compute y derivative of u and w
             do j=0,my1
                u00wk(j)=u00(j)
                w00wk(j)=w00(j)
             enddo
-            
             call deryr(u00wk,rf0u,my)
             call deryr(w00wk,rf0w,my)
-            
+            ! rf0u = du/dy(kx=kz=0) = - o3(kx=kz=0)
+            ! rf0w = dw/dy(kx=kz=0) = + o1(kx=kz=0)
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Copy data to vorwk and phiwk
             do  k=kb,ke
                do i=0,mx1
                   do j=0,2*my-1
@@ -483,100 +465,145 @@ c     /*     prepara phiwk,vorwk,u00wk,w00wk */
                   enddo
                enddo
             enddo
-c     computes mass 
+            ! vorwk and phi wk are size 0:2*my-1, 0:mx1, kb:ke
+            ! the first index includes both real and imaginary part
+            ! vorwk: omega2
+            ! phiwk: phi = nabla^2 v
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     compute u mass flux
+            ! Integrate the channel
             massu0=0d0
             massw0=0d0
             do j=0,my1
                massu0 = massu0 + trp2(j)*u00(j)
             enddo
 
-c     !!! target mass flux.  historical Madrid value 
+            ! target mass flux, historical Madrid value 
             massu0 = .8987636566162d0 
             if(myid.eq.0) then
                write (*,*) 'mass flux:',massu0,massw0
             endif
-            
+c     -----------------------------------------------------------------
+
+
          endif
 c/********************************************************************/
 c/*     End special first step                                       */
 c/********************************************************************/
          
          
-         
-c     /*  Runge-Kutta third order  */
-c-----
-         
-         do 10 rkstep=1,3
-            
-c-----------------------computes d (ome_2) / dy
-c-----------------------dvordy      : d (vorwk) / dy -- F-F
-            
+c/********************************************************************/
+c/*     Runge-Kutta third order                                      */
+c/********************************************************************/
+         do rkstep=1,3
+
+
+c     -----------------------------------------------------------------
+c     Compute y derivative of omega2
             call deryr2(vorwk,dvordy,(mx1+1)*mmz,my,chwk)
-            
-c     c c c c c c c c c c cc c c c c c c c c c c cc c c c c c c c c c c c
-c     all arrays changed from z slices to y slices
-c     c c c c c c c c c c cc c c c c c c c c c c cc c c c c c c c c c c c
-            
-            call chjik2ikj(phiwk,phiwk,chwk,chwk,myid)
-            call chjik2ikj(hv,hv,chwk,chwk,myid)
-            call chjik2ikj(hg,hg,chwk,chwk,myid)
+            ! dvordy = d omega2 / dy
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     All arrays changed from kx-y planes to kx-kz planes
+            call chjik2ikj(phiwk ,phiwk ,chwk,chwk,myid)
+            call chjik2ikj(hv    ,hv    ,chwk,chwk,myid)
+            call chjik2ikj(hg    ,hg    ,chwk,chwk,myid)
             call chjik2ikj(dvordy,dvordy,chwk,chwk,myid)
-            call chjik2ikj(vorwk,vorwk,chwk,chwk,myid)
-            
-c-----------------------storage for 0 modes
-            
+            call chjik2ikj(vorwk ,vorwk ,chwk,chwk,myid)
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Storaging 0 modes in work
             ipo1 = 1    + my
             ipo2 = ipo1 + my
             ipo3 = ipo2 + my
             ipo4 = ipo3 + my
-            
-c-----------------------all nodes compute 0  mode of vorticity
-c     work(1):du00;  work(ipo1):dw00;  work(ipo2):u00;  work(ipo3):w00;
-            
+
+            ! work is a column vector of the kx=kz=0 modes
+            ! 1st one is: du/dy(00) = - omega3(00)
+            ! 2nd one is: dw/dy(00) = + omega1(00)
+            ! 3rd one is:     u(00)
+            ! 4th one is:     w(00)
             do j=0,my1
-               work(1+j)   =rf0u(j)           
-               work(ipo1+j)=rf0w(j)
+               work(   1+j)=rf0u (j)
+               work(ipo1+j)=rf0w (j)
                work(ipo2+j)=u00wk(j)
                work(ipo3+j)=w00wk(j)
-               
             enddo
-            
-            
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Compute non-linear terms
+            ! phiwk, vorwk, hv, hg, dvordy, work are inputs
+            ! u1r, u2r ... are all work variables
             call hvhg(phiwk,vorwk,hv,hg,rf0u,
      .           rf0w,dvordy,work,sp,myid,rkstep, 
      .           u1r,u2r,u3r,o1r,o2r,o3r, 
      .           u1r,u2r,u3r,o1r,o2r,o3r)
-            
-            
+            ! Ouputs:
+            ! hv    : (d^2/dx^2 + d^2/dz^2) H2
+            ! hg    : - d H3/dx + d H1/dz
+            ! rf0u  : H1(kx=kz=0)
+            ! rf0w  : H3(kx=kz=0)
+            ! dvordy: + d H1/dx + d H3/dz 
+            ! 
+            ! The 3 matrices are kx-kz-y
+            ! with each processor containing a few kx-kz planes
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Mean subtraction for rf0u and rf0w
+c ?????????????????????????????????????????????????????????????????????
+c ?????????????????????????????????????????????????????????????????????
+c ?????????????????????????????????????????????????????????????????????
+            ! Integrate in y
             H00u=0d0
             H00w=0d0
             do j=0,my1
                H00u = trp2(j)*rf0u(j)
                H00w = trp2(j)*rf0w(j)
             enddo
-            
+c ?????????????????????????????????????????????????????????????????????
+c ?????????????????????????????????????????????????????????????????????
+c ?????????????????????????????????????????????????????????????????????
+            ! Mean subtract
             do j=0,my1
                rf0u(j) = rf0u(j)-H00u
                rf0w(j) = rf0w(j)-H00w
             enddo
+c     -----------------------------------------------------------------
 
-c     c c c c c c c c c c cc c c c c c c c c c c cc c c c c c c c c c c c
-c     at this point: dvordy, rhv and rhg are the outs
-c     they must be trasformed from y slices to z slices before completion
-c     dvordy: dH1/dx + dH3/dz
-c     hg: -dH3/dx + dH1/dz
-c     hv: d^2H2/dx^2 + d^2H2/dz^2
-c     c c c c c c c c c c cc c c c c c c c c c c cc c c c c c c c c c c c
-            
+
+c     -----------------------------------------------------------------
+c     All arrays changed from kx-kz planes to kx-y planes
             call chikj2jik(dvordy,dvordy,chwk,chwk,myid)
-            call chikj2jik(hv,hv,chwk,chwk,myid)
-            call chikj2jik(hg,hg,chwk,chwk,myid)
-            
-c------------------------computes dvordy = d (dH1/dx + dH3/dz) / dy
+            call chikj2jik(hv    ,hv    ,chwk,chwk,myid)
+            call chikj2jik(hg    ,hg    ,chwk,chwk,myid)
+            ! hv    : (d/dx^2 + d/dz^2) H2
+            ! hg    : - d H3/dx + d H1/dz
+            ! dvordy: + d H1/dx + d H3/dz
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Compute y derivative of dvordy
+            ! before: dvordy = + d H1/dx + d H3/dz
             call deryr2(dvordy,dvordy,(mx1+1)*mmz,my,chwk)
-            
-c---  computes  rhv =d^2H2/dx^2 + d^2H2/dz^2 - d(dH1/dx + dH3/dz)/dy
-            
+            ! now:    dvordy = d/dy ( + d H1/dx + d H3/dz )
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Compute v velocity forcing hv
+            ! before: hv = (d/dx^2 + d/dz^2) H2
             do k=kb,ke
                do i=0,mx1
                   do j=0,2*my-1
@@ -584,10 +611,13 @@ c---  computes  rhv =d^2H2/dx^2 + d^2H2/dz^2 - d(dH1/dx + dH3/dz)/dy
                   enddo
                enddo
             enddo
-            
-c-----------
+            ! now hv = (d/dx^2 + d/dz^2) H2 - d(dH1/dx + dH3/dz)/dy
+            ! this is the complete v velocity forcing
+c     -----------------------------------------------------------------
 
-            ! save velocity forcing if required
+
+c     -----------------------------------------------------------------
+c     Save v velocity forcing if required
             ! note: the velocity, vorticity and vorticity forcing
             ! fields are saved in subroutine hvhg, see
             ! save_velocity_at_wallparallel_plane_to_buffer
@@ -596,17 +626,21 @@ c-----------
             if (collectFlowfield .and. rkstep==1) then
               call save_velocity_forcing_to_buffer(hv, jb, je)
             endif
-            
-c-----------advances in time : nonlinear terms explicitly
-            
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Compute the RHS forcing for u00, w00, omega3, phi
+            ! gamma_s * Deltat
             r1=c(rkstep)*Deltat
-            
-            
+            ! Compute RHS forcing for u00 and w00
+            ! Note: they are missing a scalar multiplier
             do j=0,my1
                u00wk(j)=u00(j)+r1*rf0u(j)
                w00wk(j)=w00(j)+r1*rf0w(j)
             enddo
-            
+            ! Compute RHS forcing for omega2 and phi
+            ! Note they are missing a scalar multiplier
             do k=kb,ke
                do i=0,mx1
                   do j=0,2*my-1
@@ -616,14 +650,14 @@ c-----------advances in time : nonlinear terms explicitly
                enddo
             enddo
             
+            ! Re/ ( gamma_s * Deltat )
             dtr1=dtr/c(rkstep)
-            
-            
+            ! Apply the scalar multiplier
             do j=0,my1
                rf0u(j)=-dtr1*u00wk(j)
                rf0w(j)=-dtr1*w00wk(j)
             enddo
-            
+            ! Apply the scalar multiplier
             do k=kb,ke
                do i=0,mx1
                   do j=0,2*my-1
@@ -632,20 +666,20 @@ c-----------advances in time : nonlinear terms explicitly
                   enddo
                enddo
             enddo
-            
+c     -----------------------------------------------------------------
 
-c------------ updating boundary condition for the viscous time step 
-c                    ----    BCS-HERE ----
-            ! subsequent timesteps: set velocity boundary conditions
-            ! uWall = wWall = 0, this is built in implicitly below
-            ! in bcbo, bcbdv etc.
-            ! v is set according to opposition control
+
+c     -----------------------------------------------------------------
+c     Update boundary condition for the viscous time step 
             call set_wall_roughness(uWallBottom, uWallTop, vWallBottom,
      &          vWallTop)
+c     -----------------------------------------------------------------
 
-c      ----   END OF BCS-HERE FOR THE BOTTOM WALL ---- 
 
-            ! save wall acceleration
+c     -----------------------------------------------------------------
+c     Save wall acceleration
+c     Note that when sampling based on time, the acceleration is
+c     not computed correctly!
             ! note: the velocity, vorticity and vorticity forcing
             ! fields are saved in subroutine hvhg, see:
             ! save_velocity_at_wallparallel_plane_to_buffer
@@ -655,6 +689,8 @@ c      ----   END OF BCS-HERE FOR THE BOTTOM WALL ----
             ! save_velocity_forcing_to_buffer
             ! time step before data collection: save previous velocity
             ! to compute acceleration
+
+            ! Save wall velocity at previous time step
             if(collectWallVelocity .and. (.not. collectFlowfield)) then
               if(rkstep == 1) then
                 call save_velocity_bottom_wall_to_buffer(uWallBottom,
@@ -673,76 +709,85 @@ c      ----   END OF BCS-HERE FOR THE BOTTOM WALL ----
      &            vWallTop, wWallTop, Deltat)
               endif
             endif
-            
-            do k=kb,ke
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Advance phi, v, dv/dy, omega2
+            do k=kb,ke ! Loop over the assigned kz of this processor
                k1 = icx(k-1)
-               do i=0,mx1
+               do i=0,mx1 ! Loop over all kx
                   
-                  rk = bet2(k1)+alp2(i)
-                  rk2 = dtr1+rk
+                  rk = bet2(k1)+alp2(i) ! kx^2 + kz^2
+                  rk2 = dtr1+rk ! kx^2 + kz^2 + Re/( gamma_s * Deltat )
 
                   ! boundary condition for rough wall
+                  ! BC for omega2 from BC of u and w
                   bcbo = -xalp(i)*wWallBottom(i,k-1) +
      &              xbet(k-1)*uWallBottom(i,k-1)
                   bcto = -xalp(i)*wWallTop(i,k-1) +
      &              xbet(k-1)*uWallTop(i,k-1)
-
+                  ! BC for v
                   bcb = vWallBottom(i,k-1)
                   bct = vWallTop(i,k-1)
-
+                  ! BC for dv/dy from u and w using continuity
                   bcbdv = -xalp(i)*uWallBottom(i,k-1) -
      &              xbet(k-1)*wWallBottom(i,k-1)
                   bctdv = -xalp(i)*uWallTop(i,k-1) -
      &              xbet(k-1)*wWallTop(i,k-1)
 
                   ! temporary: no slip bc
-                  !bcbo = (0.0, 0.0)
-                  !bcto = (0.0, 0.0)
-
-                  !bcb = (0.0, 0.0)
-                  !bct = (0.0, 0.0)
-
+                  !bcbo  = (0.0, 0.0)
+                  !bcto  = (0.0, 0.0)
+                  !bcb   = (0.0, 0.0)
+                  !bct   = (0.0, 0.0)
                   !bcbdv = (0.0, 0.0)
                   !bctdv = (0.0, 0.0)
                   
+                  ! Solve for phi, v, dv/dy, omega2 at the next RK step
+                  ! for each kx, kz wavenumbers
                   call lapsov(phiwk(0,i,k),hg(0,i,k),hv(0,i,k),
      &                 hv(0,i,k),vorwk(0,i,k),hg(0,i,k),
      &                 rk2,rk,bcb,bct,bcbdv,bctdv,bcbo,bcto)
-                  
-               enddo
-            enddo
-c                    ----  END  BCS-HERE ---- 
-            
-            
+                  ! Outputs:
+                  ! phiwk: phi = nabla^2 v
+                  ! hg   : v
+                  ! hv   : dv/dy
+                  ! vorwk: omega2
+                  ! All 4 matrices are size 0:2*my-1, 0:mx1, kb:ke
+               enddo ! end loop over kx
+            enddo ! end loop over kz
 
-c     /* Kx = Kz = 0 modes         */
-c     Se calculan en dos fases:
-            
-            
-c     Velocidad sin correccion de presion-masa
-            bcbr = 0d0          !! Estas no tienen por que ser nulas!!
+c     Advance phi, v, dv/dy, omega2 complete
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Advance kx = kz = 0 modes of u and w
+            ! Velocity ​​without pressure-mass correction
+            ! Solve [d/dt - 1/Re * d^2/dy^2] u = H1(00)
+            bcbr = 0d0
             bctr = 0d0
-            
             rk = dtr1 
             call Lapv1(rf0u,u00wk,rk,bcbr,bctr)
             call Lapv1(rf0w,w00wk,rk,bcbr,bctr)
+            ! The solution is u00wk and w00wk
             
-c     Velocidad correccion presion-masa, cc homogeneas:
+            ! Velocity with constant RHS forcing
+            ! Solve [d/dt - 1/Re * d^2/dy^2] u = constant
             bcbr = 0d0
             bctr = 0d0
-            
             do j=0,my1
                rf0u(j) = -dtr1
                rf0w(j) = -dtr1
             enddo 
-            
             rk = dtr1
             call Lapv1(rf0u,rf0u,rk,bcbr,bctr)
             call Lapv1(rf0w,rf0w,rk,bcbr,bctr)
+            ! The solution is rf0u and rf0w
             
-            
-c     Calculo masa de cada flujo:
-            
+            ! Compute the mass flux for the two solutions
+            ! integrate in y
             massu1=0d0
             massu2=0d0
             massw1=0d0
@@ -754,27 +799,42 @@ c     Calculo masa de cada flujo:
                massw2 = massw2 + trp2(j)*rf0w(j)
             enddo
             
+            ! Linearly conbine the two solutions
+            ! to get constant mass flux
+            ! massu0, massw0 is the target mass flux
             cteu =(massu0 - massu1)/massu2
             ctew =(massw0 - massw1)/massw2
-            
             do j=0,my1
                u00wk(j) = u00wk(j) + cteu*rf0u(j)
                w00wk(j) = w00wk(j) + ctew*rf0w(j)
             enddo
             
+            ! Compute the derivatives of u00 and w00
             call deryr(u00wk,rf0u,my)
             call deryr(w00wk,rf0w,my)
             
-c     u00wk,w00wk ;   y ademas rf0$ = d$00        
+            ! u00wk: the kx = kz = 0 u mode
+            ! w00wk: the kx = kz = 0 w mode
+            ! rf0u : d/dy of u00
+            ! rf0w : d/dy of w00
+c     Advance kx = kz = 0 modes of u and w complete
+c     -----------------------------------------------------------------
+
             
-            
- 10      continue               !!! finalizado subpaso del RK3
-         
+         ENDDO
+c/********************************************************************/
+c/*     Runge-Kutta third order Complete                             */
+c/********************************************************************/
+
+
+c     -----------------------------------------------------------------
+c     Copy variables for the new time step
+         ! 00 modes for u and w
          do j=0,my1
             u00(j)=u00wk(j)
             w00(j)=w00wk(j)
          enddo
-
+         ! phi and omega3 dat
          do k=kb,ke
             do i=0,mx1
                do j= 0,2*my-1
@@ -783,47 +843,49 @@ c     u00wk,w00wk ;   y ademas rf0$ = d$00
                enddo
             enddo
          enddo
-         
-c--------------------send WxL, WzL
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     WxL, WzL, uvL
+         ! WxL: plane averaged omega1 at top wall, also = + d/dy w00
+         ! WzL: plane averaged omega3 at top wall, also = - d/dy u00
+         ! uvL: plane averaged Re stress at top wall
          if (ihist.eq.1) then
-            
+            ! Last processor send WxL, WzL, uvL to master
             if (myid.eq.numerop-1) then
-               
                chwk (1) = WxL
                chwk (2) = WzL
                chwk (3) = uvL 
-               
                call MPI_SEND(chwk,3,MPI_REAL,
      &              0,0,MPI_COMM_WORLD,ierr)
-               
             endif
-            
+            ! Master recieves WxL, WzL, uvL
             if (myid.eq.0) then
-               
                call MPI_RECV(chwk,3,MPI_REAL,
      &              numerop-1,0,MPI_COMM_WORLD,istat,ierr)
-               
                WxL =  chwk(1)
                WzL =  chwk(2)
                uvL =  chwk(3)
             endif
          endif
-         
-         
-c     /*     write history record     */
-         
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Master writes history record
          if(myid.eq.0) then
             
             
             reynota=0.5*re*re*(abs(wz0/re+uv0)
      .           +abs(wzl/re+uvL))
             
+            ! mass flux in u and w
             massu = massu1 +cteu*massu2
             massw = massw1 +ctew*massw2
             
-            
+            ! write histroy record
             if (ihist.eq.1) then
-               
                tmp=my1/2
                
  325           format(a10,i5,9(d14.6))
@@ -836,9 +898,9 @@ c     /*     write history record     */
                write(39,324) time,-1.*Wz0,WzL,sqrt(reynota),ener,
      .              u00(floor(tmp))*Re/sqrt(reynota),massw
                call flush(39)
-               
             endif
             
+            ! switch to new .cf file
             if (mod(istep-1,nimag).eq.0 .and. 
      &           istep.ne.1 .and. istep.ne.nstep) then
                
@@ -847,19 +909,28 @@ c     /*     write history record     */
                fname=filstt(1:index(filstt,' ')-1)//'.'//ext1//'.cf'
                write (*,*) fname
                open(39,file=fname,status='unknown')
-               
             endif
             
          endif
-         
-c     /* time:
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Increment time
          time=time+Deltat
-         
-         
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Reset istati, icfl, ihist
          if(istati.eq.1) istati = 0
          if(icfl.eq.1)   icfl   = 0
          if(ihist.eq.1)  ihist  = 0
-         
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     Master write step time
          if (myid.eq.0) then
             totaltimer=totaltimer+MPI_WTIME()
 c            write(*,'(i7,3f20.5)') istep,
@@ -867,9 +938,16 @@ c     >           MPI_WTIME()+iter_time-commtimer+comm_time,
 c     >           commtimer-comm_time,MPI_WTIME()+iter_time
             comm_time = commtimer
          end if
-         
- 30   continue
-      
+c     -----------------------------------------------------------------
+
+      ENDDO
+c/********************************************************************/
+c/*     TIME LOOP COMPLETE                                           */
+c/********************************************************************/
+
+
+c     -----------------------------------------------------------------
+c     Master writes data about the total computation time
       if (myid.eq.0) then
          print *,"Total time: ",totaltimer
          print *,"Trans. time: ",transtimer
@@ -877,11 +955,13 @@ c     >           commtimer-comm_time,MPI_WTIME()+iter_time
          print *,"Comm/Total: ",commtimer/totaltimer
          print *,"Trans/Total: ",transtimer/totaltimer
          print *,"Aver time per step: ",totaltimer/nstep
-         
       end if
+c     -----------------------------------------------------------------
       
       end
-      
+
+
+
 c/********************************************************************/
 c/*                                                                  */
 c/*         computes the forcing terms (convective terms)            */
@@ -1107,7 +1187,8 @@ c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
-c     00 modes of u,w,omega1,omega3 unpacked from input work2
+c     00 modes of -omega3,omega1,u,w unpacked from input work2
+c     They are stacked in a column vector
          jj = j-1
          o3c(0,0) = -work2(      j)
          o1c(0,0) =  work2(ipo1+jj)
@@ -1335,6 +1416,7 @@ c     compute vorticity & Re stress at walls
                WzL = o3c(0,0)
             endif
          endif
+         ! Wx0, Wz0, WxL, WzL are global variables
 c     -----------------------------------------------------------------
 
 
@@ -1414,6 +1496,7 @@ c     -----------------------------------------------------------------
                uvL= uvL/(mgalz*mgalx)
             endif
          endif
+         ! uv0 and uvL are global variables
 c     -----------------------------------------------------------------
 
 
