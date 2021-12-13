@@ -258,7 +258,17 @@ and invert
 \end{equation}
 
 \subsection{00 Modes}
-The 00 modes of $u$ and $w$ need to be computed separately, as they contribute to the mass flux, which is held constant.
+The 00 modes of $u$ and $w$ need to be computed separately, as they contribute to the mass flux, which is held constant. 
+
+In addition, the equations used for computing $u$, $w$, $\omega_1$ and $\omega_3$ from $\phi$ and $\omega_2$ are singular when $k_x = k_z = 0$, therefore requiring special treatment. We also have:
+\begin{align*}
+	\omega_{1,00} &= +\frac{\p}{\p y} w_{00}\\
+	\omega_{3,00} &= -\frac{\p}{\p y} u_{00}
+\end{align*}
+and also:
+\begin{equation}
+	v_{00} = \phi_{00} = \omega_{2,00} = 0 \label{eq:00}
+\end{equation}
 
 Equation~\eqref{eq:nse} can be rewritten for $u_{00}$ and $w_{00}$, the $k_x = k_z = 0$ modes:
 \begin{align*}
@@ -411,6 +421,8 @@ All output variables have size (1:2, 1:my), where 1 in the first index indicates
 		Compute outputs \textbf{ome, phi, v, dvdy} using \textbf{A, B}&990-1003\\ \hline
 	\end{tabular} 
 \end{table}
+
+Note: if \textbf{rk2} = 0 ($k_x = k_z = 0$), then \textbf{phi}, \textbf{ome}, \textbf{v} and \textbf{dvdy} are all set to 0, consistent with equation~\eqref{eq:00}.
 
 
 \subsection{hvhg}
