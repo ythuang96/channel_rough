@@ -6,26 +6,26 @@
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
 # Run Settings -----------------------------------------------------------------------------------
-runName=kz3_init1  # must not exist yet in runFolder
-runTime=6:00:00  # format: hh:mm:ss (Millikan/Richardson)
+runName=kz3_8_test  # must not exist yet in runFolder
+runTime=1:00:00  # format: hh:mm:ss (Millikan/Richardson)
 jobDependency="none"  # jobid of run (Millikan/Richardson) for dependency condition
 # jobDependency is optional, put "none" if not needed
 mpiProcessors=96  # must be equal to nprocs in ctes3D
 
-inputFile="/scratch/yh/channel_rough_data/runs/smooth_3/smooth_3.005"
+inputFile="/home/yh/channel_rough_data/runs/kz3_7/kz3_7.001"
 
 # Run Paramters
 # Reynolds number
-Re=9150
+Re=8850
 # write a restart file every nimag
-nimag=2000
+nimag=15000
 # total time steps, must be multiple of nimag + 1
-nstep=4001
+nstep=300
 # time step to update CFL and write to .cf
 # no larger thatn 10
 nhist=5
 # CFL condition, no larger than 1.5
-CFL=1.5 
+CFL=1.0 
 
 # Run Settings -----------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
@@ -58,6 +58,7 @@ then
   # create scratch directory where all data are saved
   mkdir $scratchFolder
   # save files so that run can be repeated if needed
+  cp ./launch.sh $runFolder
   cp ../build/channel $runFolder
   cp ../src/ctes3D $runFolder
   cp hre.dat $runFolder

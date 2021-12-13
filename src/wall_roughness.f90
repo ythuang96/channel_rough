@@ -4,8 +4,8 @@ module wall_roughness
     implicit none
     private
     include 'ctes3D'
-    real(kind=sp), parameter :: disturbanceU = 0.01_sp
-    real(kind=sp), parameter :: disturbanceV = -0.01_sp
+    real(kind=sp), parameter :: disturbanceU = 0.0058_sp
+    real(kind=sp), parameter :: disturbanceV = -0.0058_sp
     !real(kind=sp), parameter :: disturbanceU = 0.0_sp
     !real(kind=sp), parameter :: disturbanceV = 0.0_sp
     real(kind=sp), parameter :: targetWavenumberX = 0.0_sp
