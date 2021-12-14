@@ -993,6 +993,7 @@ c/********************************************************************/
       use save_flowfield, only: collectFlowfield,
      &  save_velocity_at_wallparallel_plane_to_buffer,
      &  save_vorticity_at_wallparallel_plane_to_buffer,
+     &  save_phi_at_wallparallel_plane_to_buffer,
      &  save_vorticity_forcing_at_plane_to_buffer
       implicit none
       include "ctes3D"
@@ -1429,10 +1430,12 @@ c     save velocity and vorticity fields if required
          ! save_vorticity_forcing_at_plane_to_buffer (in hvhg)
          ! save_velocity_forcing_to_buffer (in cross1)
          if (collectFlowfield .and. rkstep==1) then
-           call save_velocity_at_wallparallel_plane_to_buffer(u1c,
-     &       u2c, u3c, j, jb)
-           call save_vorticity_at_wallparallel_plane_to_buffer(o1c,
-     &       o2c, o3c, j, jb)
+            call save_velocity_at_wallparallel_plane_to_buffer(u1c,
+     &         u2c, u3c, j, jb)
+            call save_vorticity_at_wallparallel_plane_to_buffer(o1c,
+     &         o2c, o3c, j, jb)
+            call save_phi_at_wallparallel_plane_to_buffer(
+     &         phic(0,0,j), j, jb)
          endif
 c     -----------------------------------------------------------------
 

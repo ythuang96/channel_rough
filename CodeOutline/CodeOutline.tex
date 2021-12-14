@@ -82,19 +82,67 @@
 Yuting Huang\par
 \today\par}
 
+\section{DNS Parameters and Checklist}
+\subsection{DNS Parameters}
+
+
+\subsection{DNS Checklist}
+\subsubsection{Important Paramters}
+\begin{table}[H]
+	\centering 
+	\renewcommand{\arraystretch}{1.4} 
+	\begin{tabular}{l|l|l}
+		File&Line& \\ \hline
+		\multirow{2}{*}{save\_flowfield.f90}&32&\textbf{SamplingFrequencyInTimesteps} (fix step sampling)\\
+		&33-35&\textbf{samplingPeriod} (fix time sampling)\\ \hline
+		
+		\multirow{2}{*}{cross.f}&235&fix time sampling\\
+		&236&fix step sampling\\ \hline
+		
+		\multirow{2}{*}{wall\_roughness.f90}&7-8&\textbf{disturbanceU}, \textbf{disturbanceV}\\
+		&11-12&\textbf{targetWavenumberX}, \textbf{absoluteValueTargetWavenumberZ} \\ \hline
+		
+		\multirow{6}{*}{launch.sh}&9&\textbf{runName}\\
+		&10-11&\textbf{runTime}, \textbf{jobDependency}\\
+		&15&\textbf{inputFile}\\
+		&19&\textbf{Re}\\
+		&21,23,26&\textbf{nimag}, \textbf{nstep}, \textbf{nhist}\\
+		&28&\textbf{CFL}\\ \hline		
+	\end{tabular} 
+\end{table} 
+
+\subsubsection{Directory Settings}
+\begin{table}[H]
+	\centering 
+	\renewcommand{\arraystretch}{1.4} 
+	\begin{tabular}{l|l|l}
+		File&Line& \\ \hline
+		\multirow{2}{*}{launch.sh}&28&\textbf{runFolder}\\
+		&39&\textbf{scratchFolder}\\ \hline		
+	\end{tabular} 
+\end{table} 
+
+\subsubsection{Processor Number}
+\begin{table}[H]
+	\centering 
+	\renewcommand{\arraystretch}{1.4} 
+	\begin{tabular}{l|l|l}
+		File&Line& \\ \hline
+		ctes3D&15&\textbf{numerop}\\
+		launch.sh&13&\textbf{mpiProcessors}\\ \hline		
+	\end{tabular} 
+\end{table} 
+
+
 \section{Governing Equations}
-Decompose the pressure gradient into a spatial mean $\nabla p_{00}$ and a fluctuating part $\nabla p^{\prime}$
-\begin{equation*}
-	\nabla p=\nabla p_{00}+\nabla p^{\prime}
-\end{equation*}
-Note that the mean pressure gradient is spatially constant, but in general varies with time. Rewrite the momentum equations in velocity-vorticity form
+Rewrite the momentum equations in velocity-vorticity form
 \begin{equation}
-	\frac{\partial \bm{u}}{\partial t}+\frac{1}{2} \nabla(\bm{u} \cdot \bm{u})-\bm{H}=-\nabla p^{\prime}+\frac{1}{\re} \nabla^{2} \bm{u} \label{eq:nse}
+	\frac{\partial \bm{u}}{\partial t}+\frac{1}{2} \nabla(\bm{u} \cdot \bm{u})-\bm{H}=-\nabla p+\frac{1}{\re} \nabla^{2} \bm{u} \label{eq:nse}
 \end{equation}
 
-where $\bm{H}$ contains the rotational part of the convection term and the mean pressure gradient
+where $\bm{H}$ contains the rotational part of the convection term
 \begin{equation*}
-	\bm{H}=\bm{u} \times \bm{\omega}-\nabla p_{00}
+	\bm{H}=\bm{u} \times \bm{\omega}
 \end{equation*}
 
 An evolution equation for the vorticity and velocity vectors can be obtained
@@ -272,10 +320,10 @@ and also:
 
 Equation~\eqref{eq:nse} can be rewritten for $u_{00}$ and $w_{00}$, the $k_x = k_z = 0$ modes:
 \begin{align*}
-	\frac{\p}{\p t} u_{00} - H_{1,00} &=  \frac{1}{\re} \frac{\p^2}{\p y^2} u_{00}\\
-	\frac{\p}{\p t} w_{00} - H_{3,00} &=  \frac{1}{\re} \frac{\p^2}{\p y^2} w_{00}
+	\frac{\p}{\p t} u_{00}  &= H_{1,00} + \frac{1}{\re} \frac{\p^2}{\p y^2} u_{00} + C_1\\
+	\frac{\p}{\p t} w_{00}  &= H_{3,00} + \frac{1}{\re} \frac{\p^2}{\p y^2} w_{00} + C_2
 \end{align*} 
-Apply the semi-implicit RK scheme multiplied by $\bm{D}_{21}$ and using~\eqref{eq:fd2} gives
+where the constant terms come from the mean pressure gradient. Apply the semi-implicit RK scheme multiplied by $\bm{D}_{21}$ without the constants and using~\eqref{eq:fd2} gives
 \begin{align*}
 	\bm{D}_{21} u_{00}^{s+1} &= \bm{D}_{21} u_{00}^j + \gamma_s \Delta t \bracket{\frac{1}{\re} \bm{D}_{22} u_{00}^{s+1} +  \bm{D}_{21} H_{1,00}^s}\\
 	\bm{D}_{21} w_{00}^{s+1} &= \bm{D}_{21} w_{00}^j + \gamma_s \Delta t \bracket{\frac{1}{\re} \bm{D}_{22} w_{00}^{s+1} +  \bm{D}_{21} H_{3,00}^s}
@@ -285,21 +333,32 @@ rearrange:
 	\bracket{ \bm{D}_{22} - \frac{\re}{\gamma_s \Delta t}\bm{D}_{21} } u_{00,p}^{s+1}&= - \frac{\re}{\gamma_s \Delta t}\bm{D}_{21} \bracket{u_{00}^j +   \gamma_s \Delta t H_{1,00}^s} \label{eq:u00p}\\
 	\bracket{ \bm{D}_{22} - \frac{\re}{\gamma_s \Delta t}\bm{D}_{21} } w_{00,p}^{s+1}&= - \frac{\re}{\gamma_s \Delta t}\bm{D}_{21} \bracket{w_{00}^j +    \gamma_s \Delta t H_{3,00}^s} \label{eq:w00p}
 \end{align}
-Since $\bm{H}$ also contains the mean pressure gradient, which is an unknown constant in space that varies with time, we will solve, the solution to a constant forcing:
+To enforce constant mass flux, we will find the solution to a constant forcing:
 \begin{align}
 	\bracket{ \bm{D}_{22} - \frac{\re}{\gamma_s \Delta t}\bm{D}_{21} } u_{00,h}^{s+1}&= - \frac{\re}{\gamma_s \Delta t}\bm{D}_{21} \label{eq:u00h}\\
 	\bracket{ \bm{D}_{22} - \frac{\re}{\gamma_s \Delta t}\bm{D}_{21} } w_{00,h}^{s+1}&= - \frac{\re}{\gamma_s \Delta t}\bm{D}_{21} \label{eq:w00h}
 \end{align}
-Then we have
+Then compute the appropriate constants
 \begin{align}
 	 u_{00}^{s+1}&= u_{00,p}^{s+1} + C_1 u_{00,h}^{s+1}\\
 	 w_{00}^{s+1}&= w_{00,p}^{s+1} + C_2 w_{00,h}^{s+1}
 \end{align}
 so that the desired constant mass flux is satisfied.
 
-\section{Initialization}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\textwidth]{DNS3.png}
+\end{figure}
 
-The simulation starts by reading the initial data $\hat{g}_{k}\left(t^{0}\right)$ and $\hat{\phi}_{k}\left(t^{0}\right)$ from the restart file of a previous simulation run. The initial wall-normal velocity $\hat{\bm{v}}_{k}\left(t^{0}\right)$ is not read, but instead calculated from $\hat{\phi}_{k}\left(t^{0}\right)$ using (2.77). Note that in contrast to the regular timesteps, $\hat{\phi}_{k}\left(t^{0}\right)$ is given by the restart file and cannot be decomposed according to (2.105). This makes a decomposition of $v$ in the spirit of $(2.99)$ impossible at the first timestep and therefore $\hat{\bm{v}}_{k}^{j}=\hat{\bm{v}}_{k, p}^{j}$, i.e. only a particular solution $\hat{\bm{v}}_{k, p}^{j}$ satisfying $\hat{\bm{v}}_{k, b}^{j}$ and $\hat{v}_{k, t}^{j}$ is calculated from $2.100$ at simulation startup.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\textwidth]{DNS4.png}
+\end{figure}
+
+
+%\section{Initialization}
+%
+%The simulation starts by reading the initial data $\hat{g}_{k}\left(t^{0}\right)$ and $\hat{\phi}_{k}\left(t^{0}\right)$ from the restart file of a previous simulation run. The initial wall-normal velocity $\hat{\bm{v}}_{k}\left(t^{0}\right)$ is not read, but instead calculated from $\hat{\phi}_{k}\left(t^{0}\right)$ using (2.77). Note that in contrast to the regular timesteps, $\hat{\phi}_{k}\left(t^{0}\right)$ is given by the restart file and cannot be decomposed according to (2.105). This makes a decomposition of $v$ in the spirit of $(2.99)$ impossible at the first timestep and therefore $\hat{\bm{v}}_{k}^{j}=\hat{\bm{v}}_{k, p}^{j}$, i.e. only a particular solution $\hat{\bm{v}}_{k, p}^{j}$ satisfying $\hat{\bm{v}}_{k, b}^{j}$ and $\hat{v}_{k, t}^{j}$ is calculated from $2.100$ at simulation startup.
 
 
 
@@ -496,9 +555,9 @@ All matrix input \textbf{phic, ome2c, rhvc, rhgc, ome1c} and matrix output \text
 		\qquad compute \textbf{u1c} ($u$), \textbf{u3c} ($w$), except 00 mode, \eqref{eq:w}\eqref{eq:u}& 1126-1145 \\
 		\qquad unpack 00 modes of \textbf{u1c}, \textbf{u3c}, \textbf{o1c}, \textbf{o3c} from \textbf{work2}&1149-1153 \\
 		\qquad copy data for \textbf{u2c}, \textbf{o2c} &1156-1161 \\ \hdashline
-		\multicolumn{2}{c}{\qquad \textbf{Now, have data for $u,v,w,\omega_1,\omega_2,\omega_3$ from the previous time step in spectral space}}\\ \hdashline
+		\multicolumn{2}{c}{\qquad \textbf{Now, have data for $u,v,w,\omega_1,\omega_2,\omega_3$ for the current time step in spectral space}}\\ \hdashline
 		\qquad statistics,  vorticity at wall: \textbf{Wx0}, \textbf{Wz0}, \textbf{WxL}, \textbf{WzL}, velocity gradient tensor&1191-1403 \\
-		\qquad save data& 1405-1414\\
+		\qquad Save \textbf{u1c} ($u$), \textbf{u2c} ($v$), \textbf{u3c} ($w$), \textbf{o1c} ($\omega_1$), \textbf{o2c} ($\omega_2$), \textbf{o3c} ($\omega_3$) to buffer& 1405-1414\\
 		\qquad IFT to physical space \textbf{u1c} $\rightarrow$\textbf{u1r} ...&1419- 1426\\
 		\qquad more statistics&1436-1469\\
 		\qquad CFL&1473-1492\\
@@ -506,8 +565,9 @@ All matrix input \textbf{phic, ome2c, rhvc, rhgc, ome1c} and matrix output \text
 		\qquad FFT to Fourier space \textbf{u1r} $\rightarrow$\textbf{u1c} ...&1526-1528\\
 		\qquad save 00 mode of forcing: \textbf{rf0u} = $H_1(0,0)$,	\textbf{rf0w} = $H_3(0,0)$&1533-1534\\
 		\qquad compute \textbf{ome1c} = $\frac{\p H_1}{\p x} + \frac{\p H_3}{\p z}$, \textbf{rhgc} =  $-\frac{\p H_3}{\p x} + \frac{\p H_1}{\p z}$, \textbf{rhvc} = $\paren{\frac{\p^2}{\p x^2}+\frac{\p^2}{\p z^2}} H_2$&1540-1563\\
-		\qquad save vorticity forcing ($h_g$)&1571-1574\\
+		\qquad Save vorticity forcing \textbf{rhgc} ($h_g$) to buffer&1571-1574\\
 		\textbf{END For}& 1577\\
+		
 		more statistics&1586-1595\\
 		Update \textbf{Deltat} and \textbf{dtr}&1599-1617\\
 		exchange \textbf{rf0u} and \textbf{rf0w} with all processors, with NaN detection before and after&1626-1681\\\hline
@@ -528,7 +588,8 @@ Used for performing the time stepping
 		Description& Line \\ \hline
 		\textbf{for} each time step \textbf{do} &179\\
 		\qquad velocity gradient tensor and visualization (old code)&195-218\\
-		\qquad \textbf{If} the previous step saved data to buffer, then write data to h5 file& 221-239\\
+		\qquad \textbf{If} the previous step saved data to buffer, then write data to h5 file& 221-234\\
+		\qquad \textbf{If} condition for \textbf{istep} or \textbf{time} is satisfied, change \textbf{collectFlowfield} to 1&235-239\\
 		\qquad \textbf{If} the previous step is multiplier of \textbf{nimag}, then write restart file& 242-383\\ \hdashline
 		
 		\qquad \textbf{If} first time step: &389\\
@@ -549,7 +610,7 @@ Used for performing the time stepping
 		\qquad \qquad Change \textbf{dvordy}, \textbf{hv}, \textbf{hg} from $k_x-k_z$ planes to $k_x-y$ planes&585-593\\
 		\qquad \qquad Compute $y$ derivative \textbf{dvordy}:  $\frac{\p}{\p y} \paren{\tfrac{\p H_1}{\p x} + \tfrac{\p H_3}{\p z}}$&596-601\\
 		\qquad \qquad Compute \textbf{hv}:  $\paren{\tfrac{\p^2}{\p x^2}+\tfrac{\p^2}{\p z^2}}H_2-\frac{\p}{\p y} \paren{\tfrac{\p H_1}{\p x} + \tfrac{\p H_3}{\p z}}$&604-616\\
-		\qquad \qquad Save \textbf{hv} to buffer&619-629
+		\qquad \qquad Save velocity forcing \textbf{hv} ($h_v$) to buffer&619-629
 		\end{tabular} 
 \end{table}
 \newpage
@@ -560,7 +621,7 @@ Used for performing the time stepping
 		\qquad \qquad Compute RHS forcing for $u_{00}$: \textbf{rf0u}; for $w_{00}$: \textbf{rf0w}; for $\omega_3$: \textbf{hg}; for $\phi$: \textbf{hv}&\multirow{2}{*}{632-669}\\ 
 		\qquad \qquad \eqref{eq:u00p},\eqref{eq:w00p},\eqref{eq:ome},\eqref{eq:phip}&\\
 		\qquad \qquad Set BC&672-672\\
-		\qquad \qquad Save wall acceleration&679-712\\
+		\qquad \qquad Compute and save wall acceleration to buffer&679-712\\
 		\qquad \qquad Advance \textbf{phiwk}: $\phi$, \textbf{hg}: $v$, \textbf{hv}: $dv/dy$, \textbf{vorwk}: $\omega_2$ using \textbf{lapsov}&715-762\\
 		\qquad \qquad Advance \textbf{u00wk}: $u_{00}$, \textbf{w00wk}: $w_{00}$ with constant mass flux using \textbf{Lapv1}&765-810\\
 		\qquad \qquad Compute $y$ derivative \textbf{rf0u}: ${\tfrac{d}{dy} u(0,0) = - \omega_3(0,0)}$, \textbf{rf0w}: ${\tfrac{d}{dy} w(0,0) = + \omega_1(0,0)}$&812-821\\

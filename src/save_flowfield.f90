@@ -9,6 +9,7 @@ module save_flowfield
         bufferSpanwiseVelocity(0:mx1,0:mz1,myp)
     complex(kind=sp) :: bufferStreamwiseVorticity(0:mx1,0:mz1,myp), bufferWallnormalVorticity(0:mx1,0:mz1,myp), &
         bufferSpanwiseVorticity(0:mx1,0:mz1,myp)
+    complex(kind=sp) :: bufferPhi(0:mx1,0:mz1,myp)
     complex(kind=sp) :: bufferForcingVelocity(0:mx1,0:mz1,myp), bufferForcingVorticity(0:mx1,0:mz1,myp)
     complex(kind=sp) :: xAccelerationBottomWall(0:mx1,0:mz1), xAccelerationTopWall(0:mx1,0:mz1), &
         yAccelerationBottomWall(0:mx1,0:mz1), yAccelerationTopWall(0:mx1,0:mz1), &
@@ -19,6 +20,7 @@ module save_flowfield
     character(:), allocatable :: baseFileNameWithPath
     public :: initialize_save_flowfield, assess_whether_to_collect_flowfield, &
         save_velocity_at_wallparallel_plane_to_buffer, save_vorticity_at_wallparallel_plane_to_buffer, &
+        save_phi_at_wallparallel_plane_to_buffer, &
         save_velocity_forcing_to_buffer, save_vorticity_forcing_at_plane_to_buffer, &
         write_flowfield_to_hdf_file, collectFlowfield, assess_whether_to_collect_wall_velocity, collectWallVelocity, &
         save_velocity_bottom_wall_to_buffer, save_velocity_top_wall_to_buffer, compute_acceleration_bottom_wall, &
@@ -44,6 +46,7 @@ contains
         bufferStreamwiseVorticity = (0.0_sp, 0.0_sp)
         bufferWallnormalVorticity = (0.0_sp, 0.0_sp)
         bufferSpanwiseVorticity = (0.0_sp, 0.0_sp)
+        bufferPhi = (0.0_sp, 0.0_sp)
         bufferForcingVelocity = (0.0_sp, 0.0_sp)
         bufferForcingVorticity = (0.0_sp, 0.0_sp)
         xAccelerationBottomWall = (0.0_sp, 0.0_sp)
@@ -146,6 +149,13 @@ contains
         deallocate(workBuffer)
     end subroutine
 
+    subroutine save_phi_at_wallparallel_plane_to_buffer(Phi, indexDataPlane, indexStartingPlaneProcessor)
+        complex(kind=sp), intent(in) :: Phi(0:mx1,0:mz1)
+        integer, intent(in) :: indexDataPlane, indexStartingPlaneProcessor
+        call save_data_wallparallel_plane_to_buffer(Phi, indexDataPlane, &
+            indexStartingPlaneProcessor, bufferPhi)
+    end subroutine
+
     subroutine save_data_wallparallel_plane_to_buffer(dataAtWallparallelPlane, indexDataPlane, &
         indexStartingPlaneProcessor, dataBuffer)
         complex(kind=sp), intent(in) :: dataAtWallparallelPlane(:,:)
@@ -216,6 +226,8 @@ contains
         call write_velocity_fields_to_hdf_file(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
             referenceReynoldsNumber, bulkVelocity)
         call write_vorticity_fields_to_hdf_file(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
+            referenceReynoldsNumber, bulkVelocity)
+        call write_phi_fields_to_hdf_file(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
             referenceReynoldsNumber, bulkVelocity)
         call write_forcing_fields_to_hdf_file(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
             referenceReynoldsNumber, bulkVelocity)
@@ -337,6 +349,28 @@ contains
         call write_real_buffer_with_attributes_to_hdf_file(idGroup, real(bufferSpanwiseVorticity), 'o3RealPart', &
             indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
         call write_real_buffer_with_attributes_to_hdf_file(idGroup, aimag(bufferSpanwiseVorticity), 'o3ImaginaryPart', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        call h5gclose_f(idGroup, hdfError)
+    end subroutine
+
+    subroutine write_phi_fields_to_hdf_file(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
+        referenceReynoldsNumber, bulkVelocity)
+        integer(kind=hid_t), intent(in) :: idFile
+        integer, intent(in) :: indexStartingPlaneProcessor, indexEndingPlaneProcessor
+        real(kind=sp), intent(in) :: time, referenceReynoldsNumber
+        real(kind=dp), intent(in) :: bulkVelocity
+        integer(kind=hid_t) :: idGroup
+        character(:), allocatable :: groupName
+        integer :: hdfError
+        groupName = 'phiFieldsFourier'
+        call h5gcreate_f(idFile, groupName, idGroup, hdfError)
+        ! the following write is parallel, therefore no flush is required
+        ! hdf5 has no built-in complex datatype. We therefore write the real and imaginary part of each vorticity
+        ! component as separate data set.
+        ! phi
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, real(bufferPhi), 'phiRealPart', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, aimag(bufferPhi), 'phiImaginaryPart', &
             indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
         call h5gclose_f(idGroup, hdfError)
     end subroutine
