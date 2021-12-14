@@ -18,10 +18,6 @@ c/*............................................c/*
       use boundary_planes, only: uWallBottom, uWallTop, vWallBottom,
      &  vWallTop, wWallBottom, wWallTop
       use wall_roughness, only: set_wall_roughness
-      use velocity_gradient_tensor, only: collectData,
-     &  allocate_data_buffers, deallocate_data_buffers,
-     &  write_velocity_gradient_tensor, write_velocity_fields,
-     &  collectionFrequencyInTimesteps, fileNrVisualization
       use save_flowfield, only: assess_whether_to_collect_flowfield_dt,
      &  assess_whether_to_collect_flowfield,
      &  write_flowfield_to_hdf_file, collectFlowfield,
@@ -191,31 +187,6 @@ c/********************************************************************/
          if (mod(istep-1,ntimes) .eq.0 .and.nstart.ne.0) then
             istati=1
          endif
-
-c     -----------------------------------------------------------------
-         ! velocity gradient tensor and visualization
-         ! if collected, write velocity gradient tensor and
-         ! visualization data to file
-         if(collectData) then
-             ! careful: you have to call write_velocity_fields before
-             ! write_velocity_gradient_tensor. The latter has a nasty
-             ! side effect (reallocates the velocity arrays) that has
-             ! to be fixed
-             call write_velocity_fields(myid, jbeg, jend, filstt, 
-     &           fileNrVisualization, alp, bet, y, time)
-             call write_velocity_gradient_tensor(myid, filstt, 
-     &           fileNrVisualization, alp, bet, y, jbeg, jend)
-             call deallocate_data_buffers(myid)
-             collectData = .false.
-             fileNrVisualization = fileNrVisualization + 1
-         endif
-         ! velocity gradient tensor and visualization data is collected
-         ! and written whenever we write a restart file
-         if(mod(istep, collectionFrequencyInTimesteps) == 0) then
-             call allocate_data_buffers(jb, je, myid)
-             collectData = .true.
-         endif
-c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
@@ -988,8 +959,6 @@ c/********************************************************************/
      .     work2,sp,myid,rkstep, 
      .     u1r,u2r,u3r,o1r,o2r,o3r, 
      .     u1c,u2c,u3c,o1c,o2c,o3c )
-      use velocity_gradient_tensor, only: collectData,
-     &  compute_velocity_gradient_tensor, save_velocity_fields
       use save_flowfield, only: collectFlowfield,
      &  save_velocity_at_wallparallel_plane_to_buffer,
      &  save_vorticity_at_wallparallel_plane_to_buffer,
@@ -1416,15 +1385,6 @@ c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
-c     compute velocity gradient tensor
-         if(collectData .and. rkstep==1) then
-             call compute_velocity_gradient_tensor(u1c, u2c, u3c,
-     &           o1c, o3c, xalp, xbet, j, jb)
-         endif
-c     -----------------------------------------------------------------
-
-
-c     -----------------------------------------------------------------
 c     save velocity and vorticity fields if required
          ! note: the forcing fields are saved elsewhere, see
          ! save_vorticity_forcing_at_plane_to_buffer (in hvhg)
@@ -1452,10 +1412,6 @@ c     Move everything to Physical x - Physical z
          call fourxz(o1c,o1r,1,1) !omega_1
          call fourxz(o2c,o2r,1,1) !omega_2
          call fourxz(o3c,o3r,1,1) !omega_3
-         ! collect visualization data
-         if (collectData .and. rkstep==1) then
-             call save_velocity_fields(j, jb, u2r)
-         endif
 c     -----------------------------------------------------------------
 
 
