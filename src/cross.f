@@ -190,19 +190,7 @@ c/********************************************************************/
 
 
 c     -----------------------------------------------------------------
-c     Save flowfields
-         if (collectFlowfield) then
-           ! data collected at the previous timestep is written at the
-           ! subsequent timestep. time-Deltat corresponds to the time
-           ! at which the data was collected
-           if (myid .eq. 0) then
-326          format(a22,i5,a7,(d14.6))
-             write(*,326) '    Saving Data, Step ', istep-1, ', Time ', 
-     &           time-Deltat
-           endif
-           call write_flowfield_to_hdf_file(alp, bet, y, jb, je, 
-     &         xalp, xbet, time-Deltat, Re, massu0)
-         endif
+c     Assess whether it to save flow field or not
          call assess_whether_to_collect_flowfield_dt(time)
          ! call assess_whether_to_collect_flowfield(istep)
          call assess_whether_to_collect_wall_velocity(istep)
@@ -790,6 +778,23 @@ c     -----------------------------------------------------------------
 c/********************************************************************/
 c/*     Runge-Kutta third order Complete                             */
 c/********************************************************************/
+
+
+c     -----------------------------------------------------------------
+c     Write Flowfield from buffer to h5 file
+         if (collectFlowfield) then
+           ! data collected at the previous timestep is written at the
+           ! subsequent timestep. time-Deltat corresponds to the time
+           ! at which the data was collected
+           if (myid .eq. 0) then
+326          format(a22,i5,a7,(d14.6))
+             write(*,326) '    Saving Data, Step ', istep, ', Time ', 
+     &           time
+           endif
+           call write_flowfield_to_hdf_file(alp, bet, y, jb, je, 
+     &         xalp, xbet, time, Re, massu0)
+         endif
+c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
