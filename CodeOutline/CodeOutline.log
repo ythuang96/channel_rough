@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (MiKTeX 21.10) (preloaded format=pdflatex 2021.11.12)  13 DEC 2021 12:00
+This is pdfTeX, Version 3.141592653-2.6-1.40.23 (MiKTeX 21.10) (preloaded format=pdflatex 2021.11.12)  14 DEC 2021 16:09
 entering extended mode
 **./CodeOutline.tex
 (CodeOutline.tex
@@ -964,28 +964,33 @@ Overfull \hbox (35.58083pt too wide) in paragraph at lines 501--535
  [][] 
  []
 
-[10] [11]
-Overfull \hbox (37.10368pt too wide) in paragraph at lines 551--575
+[10]
+Overfull \hbox (57.26237pt too wide) in paragraph at lines 540--558
  [][] 
  []
 
-[12]
-Overfull \hbox (46.78459pt too wide) in paragraph at lines 587--615
+[11] [12]
+Overfull \hbox (37.10368pt too wide) in paragraph at lines 574--598
  [][] 
  []
 
 [13]
-Overfull \hbox (46.78459pt too wide) in paragraph at lines 620--636
+Overfull \hbox (46.78459pt too wide) in paragraph at lines 610--638
  [][] 
  []
 
-[14] (CodeOutline.aux)
+[14]
+Overfull \hbox (46.78459pt too wide) in paragraph at lines 643--659
+ [][] 
+ []
+
+[15] (CodeOutline.aux)
 Package rerunfilecheck Info: File `CodeOutline.out' has not changed.
 (rerunfilecheck)             Checksum: 98671C910D9EF6F87F2885F45DBB5399;2356.
  ) 
 Here is how much of TeX's memory you used:
- 22312 strings out of 478907
- 418511 string characters out of 2848063
+ 22314 strings out of 478907
+ 418534 string characters out of 2848063
  744498 words of memory out of 3000000
  39804 multiletter control sequences out of 15000+600000
  413468 words of font info for 64 fonts, out of 8000000 for 9000
@@ -1004,9 +1009,9 @@ ograms/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/Michael Huang/A
 ppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/User
 s/Michael Huang/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cm
 sy8.pfb>
-Output written on CodeOutline.pdf (14 pages, 305913 bytes).
+Output written on CodeOutline.pdf (15 pages, 307261 bytes).
 PDF statistics:
- 272 PDF objects out of 1000 (max. 8388607)
- 75 named destinations out of 1000 (max. 500000)
+ 277 PDF objects out of 1000 (max. 8388607)
+ 77 named destinations out of 1000 (max. 500000)
  147 words of extra memory for PDF output out of 10000 (max. 10000000)
 
