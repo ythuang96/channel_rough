@@ -31,7 +31,7 @@ contains
         character(len=*), intent(in) :: runNameWithPath
         integer :: mpiRank, mpiError
         integer, parameter :: mpiMaster = 0
-        samplingFrequencyInTimesteps = 300
+        samplingFrequencyInTimesteps = 1
         !samplingPeriod = 0.0899_sp  ! corresponds to approx tUc/h = 0.1 @ ReTau=660
         !samplingPeriod = 0.09782_sp  ! corresponds to approx tUc/h = 0.1 @ Smooth wall Retau=550
         samplingPeriod = 0.09475_sp  ! corresponds to approx tUc/h = 0.1 @ kz = 3 Retau=550

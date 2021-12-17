@@ -191,8 +191,8 @@ c/********************************************************************/
 
 c     -----------------------------------------------------------------
 c     Assess whether it to save flow field or not
-         call assess_whether_to_collect_flowfield_dt(time)
-         ! call assess_whether_to_collect_flowfield(istep)
+         ! call assess_whether_to_collect_flowfield_dt(time)
+         call assess_whether_to_collect_flowfield(istep)
          call assess_whether_to_collect_wall_velocity(istep)
          ! end save flowfields
 c     -----------------------------------------------------------------

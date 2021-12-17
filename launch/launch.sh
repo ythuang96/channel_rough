@@ -20,7 +20,7 @@ Re=8850
 # write a restart file every nimag
 nimag=15000
 # total time steps, must be multiple of nimag + 1
-nstep=300
+nstep=10
 # time step to update CFL and write to .cf
 # no larger thatn 10
 nhist=5
@@ -60,7 +60,7 @@ then
   # save files so that run can be repeated if needed
   cp ./launch.sh $runFolder
   cp ../build/channel $runFolder
-  cp ../src/ctes3D $runFolder
+  cp -r ../src $runFolder/src
   cp hre.dat $runFolder
   cd $runFolder
 
