@@ -372,13 +372,17 @@ so that the desired constant mass flux is satisfied.
 \begin{table}[H]
 	\centering 
 	\renewcommand{\arraystretch}{1.5} 
-	\begin{tabular}{c|c|c|m{8cm}}
+	\begin{tabular}{c|c|c|m{7cm}}
 		Variable&Value&Size&Description \\ \hline
 		alp, bet& 0.5, 1.0&& Lowest $k_x$, $k_z$ wavenumbers\\ \hline
 		mgalx, mgalz, my& 768, 768, 232&& Number of physical space coordinates \\
 		mx, mz& 512, 511&& Number of wavenumbers\\ \hdashline
 		mgalx1, mgalz1& mgalx-1, mgalz-1&&\\
-		mx1, my1, mz1&mx/2-1, my-1, mz-1&&\\ \hline
+		mx1, my1, mz1&mx/2-1, my-1, mz-1&&\\ \hdashline
+		jb, je& & &$y$ start and end index for this processor \\
+		kb, ke& & &$k_z$ start and end index for this processor \\
+		mmy, mmz&je-jb+1, ke-kb+1& &number of $y$ and $k_z$ grid points for this processor\\
+		nbuffsize&mx*max(mmy*mz,mmz*my)&&buffer size for \textbf{phi}, \textbf{vor}, \textbf{phiwk}, \textbf{vorwk}, \textbf{dvordy}, \textbf{hv}, \textbf{hg}, which are matrices that involves a change between $k_x-k_z$ plane and $k_x-y$ planes\\ \hline		
 		xalp&	&0:mx1	&Complex streamwize wavenumber $ik_x$\\			
 		xbet&	&0:mz1	&Complex spanwize wavenumber $ik_z$\\		\hline
 		alp2& - xalp$^2$ &0:mx1& $k_x^2$ (Note that xalp contains $i$)\\
@@ -658,6 +662,8 @@ Used for performing the time stepping
 	\end{tabular} 
 \end{table}
 
+
+Note: matrices \textbf{phi}, \textbf{vor}, \textbf{phiwk}, \textbf{vorwk}, \textbf{dvordy}, \textbf{hv}, \textbf{hg}, which are matrices that involves a change between $k_x-k_z$ plane and $k_x-y$ planes are allocated in main.f with sizes \textbf{nbuffsize}, and passed to cross1 as input. \textbf{nbuffsize} = mx*max(mmy*mz, mmz*my), which is sufficiently sized for data in both configurations.
 
 
 
