@@ -968,7 +968,11 @@ c/********************************************************************/
      &  save_velocity_at_wallparallel_plane_to_buffer,
      &  save_vorticity_at_wallparallel_plane_to_buffer,
      &  save_phi_at_wallparallel_plane_to_buffer,
-     &  save_vorticity_forcing_at_plane_to_buffer
+     &  save_vorticity_forcing_at_plane_to_buffer,
+     &  save_velocity_at_wallparallel_plane_to_buffer_phys,
+     &  save_vorticity_at_wallparallel_plane_to_buffer_phys,
+     &  save_yderivatives_at_wallparallel_plane_to_buffer,
+     &  save_H_at_wallparallel_plane_to_buffer
       implicit none
       include "ctes3D"
       include "mpif.h"
@@ -1101,6 +1105,14 @@ c     -----------------------------------------------------------------
 
 c     Loop over y planes
       DO J = JB,JE
+
+c     -----------------------------------------------------------------
+c     save y derivatives
+         if (collectFlowfield .and. rkstep==1) then
+            call save_yderivatives_at_wallparallel_plane_to_buffer(
+     &         rhvc(0,0,j), ome1c(0,0,j), j, jb)
+         endif
+c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
@@ -1417,6 +1429,13 @@ c     Move everything to Physical x - Physical z
          call fourxz(o1c,o1r,1,1) !omega_1
          call fourxz(o2c,o2r,1,1) !omega_2
          call fourxz(o3c,o3r,1,1) !omega_3
+
+         if (collectFlowfield .and. rkstep==1) then
+            call save_velocity_at_wallparallel_plane_to_buffer_phys(
+     &         u1r, u2r, u3r, j, jb)
+            call save_vorticity_at_wallparallel_plane_to_buffer_phys(
+     &         o1r, o2r, o3r, j, jb)
+         endif
 c     -----------------------------------------------------------------
 
 
@@ -1505,6 +1524,11 @@ c     FFT2 of H to Fourier x - Fourier z
          call fourxz(u2c,u2r,-1,1)
          ! H2
          call fourxz(u3c,u3r,-1,1)
+         
+         if (collectFlowfield .and. rkstep==1) then
+            call save_H_at_wallparallel_plane_to_buffer(u2c,
+     &         u3c, u1c, j, jb)
+         endif
 c     -----------------------------------------------------------------
 
 

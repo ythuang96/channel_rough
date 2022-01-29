@@ -6,7 +6,7 @@
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
 # Run Settings -----------------------------------------------------------------------------------
-runName=kz3_8_test  # must not exist yet in runFolder
+runName=kz3_8_rk1_2  # must not exist yet in runFolder
 runTime=1:00:00  # format: hh:mm:ss (Millikan/Richardson)
 jobDependency="none"  # jobid of run (Millikan/Richardson) for dependency condition
 # jobDependency is optional, put "none" if not needed
@@ -20,7 +20,7 @@ Re=8850
 # write a restart file every nimag
 nimag=15000
 # total time steps, must be multiple of nimag + 1
-nstep=10
+nstep=3
 # time step to update CFL and write to .cf
 # no larger thatn 10
 nhist=5

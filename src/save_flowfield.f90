@@ -5,32 +5,69 @@ module save_flowfield
     implicit none
     private
     include 'ctes3D'
+    ! Buffer for Fourier space velocity and vorticity
     complex(kind=sp) :: bufferStreamwiseVelocity(0:mx1,0:mz1,myp), bufferWallnormalVelocity(0:mx1,0:mz1,myp), &
         bufferSpanwiseVelocity(0:mx1,0:mz1,myp)
     complex(kind=sp) :: bufferStreamwiseVorticity(0:mx1,0:mz1,myp), bufferWallnormalVorticity(0:mx1,0:mz1,myp), &
         bufferSpanwiseVorticity(0:mx1,0:mz1,myp)
+    ! Buffer for Fourier space phi = nabla^2 v
     complex(kind=sp) :: bufferPhi(0:mx1,0:mz1,myp)
+
+    ! Buffer for Fourier space dvdy and do2dy
+    complex(kind=sp) :: bufferdvdy(0:mx1,0:mz1,myp), bufferdo2dy(0:mx1,0:mz1,myp)
+    ! Buffer for Fourier space H1, H2, H3
+    complex(kind=sp) :: bufferH1(0:mx1,0:mz1,myp), bufferH2(0:mx1,0:mz1,myp), bufferH3(0:mx1,0:mz1,myp)
+
+    ! Buffer for Fourier space non-linear forcing
     complex(kind=sp) :: bufferForcingVelocity(0:mx1,0:mz1,myp), bufferForcingVorticity(0:mx1,0:mz1,myp)
+
+    ! Buffer for Fourier space wall acceleration
     complex(kind=sp) :: xAccelerationBottomWall(0:mx1,0:mz1), xAccelerationTopWall(0:mx1,0:mz1), &
         yAccelerationBottomWall(0:mx1,0:mz1), yAccelerationTopWall(0:mx1,0:mz1), &
         zAccelerationBottomWall(0:mx1,0:mz1), zAccelerationTopWall(0:mx1,0:mz1)
+
+    ! Buffer for physical space variables
+    real(kind=sp) :: bufferUPhys(mgalx+2,mgalz,myp), bufferVPhys(mgalx+2,mgalz,myp), bufferWPhys(mgalx+2,mgalz,myp)
+    real(kind=sp) :: buffero1Phys(mgalx+2,mgalz,myp), buffero2Phys(mgalx+2,mgalz,myp), buffero3Phys(mgalx+2,mgalz,myp)
+
+    ! Other parameters
     logical :: collectFlowfield, collectWallVelocity
     integer :: samplingFrequencyInTimesteps, fileNumber
     real(kind=sp) :: samplingPeriod, timeLastSample
     character(:), allocatable :: baseFileNameWithPath
-    public :: initialize_save_flowfield, assess_whether_to_collect_flowfield, &
-        save_velocity_at_wallparallel_plane_to_buffer, save_vorticity_at_wallparallel_plane_to_buffer, &
-        save_phi_at_wallparallel_plane_to_buffer, &
-        save_velocity_forcing_to_buffer, save_vorticity_forcing_at_plane_to_buffer, &
-        write_flowfield_to_hdf_file, collectFlowfield, assess_whether_to_collect_wall_velocity, collectWallVelocity, &
-        save_velocity_bottom_wall_to_buffer, save_velocity_top_wall_to_buffer, compute_acceleration_bottom_wall, &
-        compute_acceleration_top_wall, assess_whether_to_collect_flowfield_dt
+
+    ! Public Variables
+    public :: collectFlowfield, collectWallVelocity
+
+    ! Public Subroutines
+    ! Initialize
+    public :: initialize_save_flowfield
+    ! Determine whether to collect flowfield or not
+    public :: assess_whether_to_collect_flowfield, assess_whether_to_collect_flowfield_dt, assess_whether_to_collect_wall_velocity
+    ! Save Fourier data at a single plane to buffer
+    public :: save_velocity_at_wallparallel_plane_to_buffer, save_vorticity_at_wallparallel_plane_to_buffer, &
+        save_phi_at_wallparallel_plane_to_buffer, save_yderivatives_at_wallparallel_plane_to_buffer, &
+        save_H_at_wallparallel_plane_to_buffer
+    ! Save Physical Data at a single plane to buffer
+    public :: save_velocity_at_wallparallel_plane_to_buffer_phys, save_vorticity_at_wallparallel_plane_to_buffer_phys
+    ! Save Fourier Forcing Data at a single plane to buffer
+    public :: save_velocity_forcing_to_buffer, save_vorticity_forcing_at_plane_to_buffer
+    ! Save top and bottom wall velocity to buffer for computing wall acceleration
+    public :: save_velocity_bottom_wall_to_buffer, save_velocity_top_wall_to_buffer
+    ! Compute wall acceleration at top and bottom wall
+    public :: compute_acceleration_bottom_wall, compute_acceleration_top_wall
+    ! Write Data to HDF file
+    public :: write_flowfield_to_hdf_file
 
 contains
+    ! ***********************************************************************************************************************************
+    ! Initialize
     subroutine initialize_save_flowfield(runNameWithPath)
         character(len=*), intent(in) :: runNameWithPath
         integer :: mpiRank, mpiError
         integer, parameter :: mpiMaster = 0
+
+        ! Set Sampling parameters
         samplingFrequencyInTimesteps = 1
         !samplingPeriod = 0.0899_sp  ! corresponds to approx tUc/h = 0.1 @ ReTau=660
         !samplingPeriod = 0.09782_sp  ! corresponds to approx tUc/h = 0.1 @ Smooth wall Retau=550
@@ -40,6 +77,8 @@ contains
         fileNumber = 1
         timeLastSample = 0.0_sp
         baseFileNameWithPath = trim(adjustl(runNameWithPath)) // '_flowfield.'
+
+        ! Initialize Fourier Buffers
         bufferStreamwiseVelocity = (0.0_sp, 0.0_sp)
         bufferWallnormalVelocity = (0.0_sp, 0.0_sp)
         bufferSpanwiseVelocity = (0.0_sp, 0.0_sp)
@@ -49,19 +88,41 @@ contains
         bufferPhi = (0.0_sp, 0.0_sp)
         bufferForcingVelocity = (0.0_sp, 0.0_sp)
         bufferForcingVorticity = (0.0_sp, 0.0_sp)
+        bufferdvdy = (0.0_sp, 0.0_sp)
+        bufferdo2dy = (0.0_sp, 0.0_sp)
+        bufferH1 = (0.0_sp, 0.0_sp)
+        bufferH2 = (0.0_sp, 0.0_sp)
+        bufferH3 = (0.0_sp, 0.0_sp)
+
+        ! Initialize Physical Buffers
+        bufferUPhys = 0.0_sp;
+        bufferVPhys = 0.0_sp;
+        bufferWPhys = 0.0_sp;
+        buffero1Phys = 0.0_sp;
+        buffero2Phys = 0.0_sp;
+        buffero3Phys = 0.0_sp;
+
+        ! Initialize Acceleration Buffers
         xAccelerationBottomWall = (0.0_sp, 0.0_sp)
         xAccelerationTopWall = (0.0_sp, 0.0_sp)
         yAccelerationBottomWall = (0.0_sp, 0.0_sp)
         yAccelerationTopWall = (0.0_sp, 0.0_sp)
         zAccelerationBottomWall = (0.0_sp, 0.0_sp)
         zAccelerationTopWall = (0.0_sp, 0.0_sp)
+        
+        ! Write sampling information
         call MPI_Comm_rank(MPI_COMM_WORLD, mpiRank, mpiError)
         if (mpiRank == mpiMaster) then
             write(*,'(a45,i4)') 'sampling frequency flow field in timesteps: ', samplingFrequencyInTimesteps
             write(*,'(a18,f6.4)') 'sampling period: ', samplingPeriod
         endif
     end subroutine
+    ! ***********************************************************************************************************************************
 
+
+    ! ***********************************************************************************************************************************
+    ! Determine whether to collect flowfield or not
+    ! Based on step number or based on time
     subroutine assess_whether_to_collect_flowfield(timeStepNr)
         integer, intent(in) :: timeStepNr
         if (mod(timeStepNr,samplingFrequencyInTimesteps) == 0) then
@@ -93,7 +154,11 @@ contains
             collectWallVelocity = .false.
         endif
     end subroutine
+    ! ***********************************************************************************************************************************
 
+
+    ! ***********************************************************************************************************************************
+    ! Save Fourier data at a single plane to buffer
     subroutine save_velocity_at_wallparallel_plane_to_buffer(streamwiseVelocity, wallnormalVelocity, &
         spanwiseVelocity, indexDataPlane, indexStartingPlaneProcessor)
         complex(kind=sp), intent(in) :: streamwiseVelocity(:,:), wallnormalVelocity(:,:), spanwiseVelocity(:,:)
@@ -118,6 +183,67 @@ contains
             indexStartingPlaneProcessor, bufferSpanwiseVorticity)
     end subroutine
 
+    subroutine save_phi_at_wallparallel_plane_to_buffer(Phi, indexDataPlane, indexStartingPlaneProcessor)
+        complex(kind=sp), intent(in) :: Phi(0:mx1,0:mz1)
+        integer, intent(in) :: indexDataPlane, indexStartingPlaneProcessor
+        call save_data_wallparallel_plane_to_buffer(Phi, indexDataPlane, &
+            indexStartingPlaneProcessor, bufferPhi)
+    end subroutine
+
+    subroutine save_yderivatives_at_wallparallel_plane_to_buffer(dvdy, do2dy, &
+        indexDataPlane, indexStartingPlaneProcessor)
+        complex(kind=sp), intent(in) :: dvdy(0:mx1,0:mz1), do2dy(0:mx1,0:mz1)
+        integer, intent(in) :: indexDataPlane, indexStartingPlaneProcessor
+        call save_data_wallparallel_plane_to_buffer(dvdy, indexDataPlane, &
+            indexStartingPlaneProcessor, bufferdvdy)
+        call save_data_wallparallel_plane_to_buffer(do2dy, indexDataPlane, &
+            indexStartingPlaneProcessor, bufferdo2dy)
+    end subroutine
+
+    subroutine save_H_at_wallparallel_plane_to_buffer(H1, H2, &
+        H3, indexDataPlane, indexStartingPlaneProcessor)
+        complex(kind=sp), intent(in) :: H1(:,:), H2(:,:), H3(:,:)
+        integer, intent(in) :: indexDataPlane, indexStartingPlaneProcessor
+        call save_data_wallparallel_plane_to_buffer(H1, indexDataPlane, &
+            indexStartingPlaneProcessor, bufferH1)
+        call save_data_wallparallel_plane_to_buffer(H2, indexDataPlane, &
+            indexStartingPlaneProcessor, bufferH2)
+        call save_data_wallparallel_plane_to_buffer(H3, indexDataPlane, &
+            indexStartingPlaneProcessor, bufferH3)
+    end subroutine
+    ! ***********************************************************************************************************************************
+
+
+    ! ***********************************************************************************************************************************
+    ! Save Physical Data at a single plane to buffer
+    subroutine save_velocity_at_wallparallel_plane_to_buffer_phys(streamwiseVelocity, wallnormalVelocity, &
+        spanwiseVelocity, indexDataPlane, indexStartingPlaneProcessor)
+        real(kind=sp), intent(in) :: streamwiseVelocity(:,:), wallnormalVelocity(:,:), spanwiseVelocity(:,:)
+        integer, intent(in) :: indexDataPlane, indexStartingPlaneProcessor
+        call save_data_wallparallel_plane_to_buffer_phys(streamwiseVelocity, indexDataPlane, &
+            indexStartingPlaneProcessor, bufferUPhys)
+        call save_data_wallparallel_plane_to_buffer_phys(wallnormalVelocity, indexDataPlane, &
+            indexStartingPlaneProcessor, bufferVPhys)
+        call save_data_wallparallel_plane_to_buffer_phys(spanwiseVelocity, indexDataPlane, &
+            indexStartingPlaneProcessor, bufferWPhys)
+    end subroutine
+
+    subroutine save_vorticity_at_wallparallel_plane_to_buffer_phys(streamwiseVorticity, wallnormalVorticity, &
+        spanwiseVorticity, indexDataPlane, indexStartingPlaneProcessor)
+        real(kind=sp), intent(in) :: streamwiseVorticity(:,:), wallnormalVorticity(:,:), spanwiseVorticity(:,:)
+        integer, intent(in) :: indexDataPlane, indexStartingPlaneProcessor
+        call save_data_wallparallel_plane_to_buffer_phys(streamwiseVorticity, indexDataPlane, &
+            indexStartingPlaneProcessor, buffero1Phys)
+        call save_data_wallparallel_plane_to_buffer_phys(wallnormalVorticity, indexDataPlane, &
+            indexStartingPlaneProcessor, buffero2Phys)
+        call save_data_wallparallel_plane_to_buffer_phys(spanwiseVorticity, indexDataPlane, &
+            indexStartingPlaneProcessor, buffero3Phys)
+    end subroutine
+    ! ***********************************************************************************************************************************
+
+
+    ! ***********************************************************************************************************************************
+    ! Save Fourier Forcing Data at a single plane to buffer
     subroutine save_vorticity_forcing_at_plane_to_buffer(forcingVorticity, indexDataPlane, indexStartingPlaneProcessor)
         complex(kind=sp), intent(in) :: forcingVorticity(:,:)
         integer, intent(in) :: indexDataPlane, indexStartingPlaneProcessor
@@ -148,14 +274,12 @@ contains
         enddo
         deallocate(workBuffer)
     end subroutine
+    ! ***********************************************************************************************************************************
 
-    subroutine save_phi_at_wallparallel_plane_to_buffer(Phi, indexDataPlane, indexStartingPlaneProcessor)
-        complex(kind=sp), intent(in) :: Phi(0:mx1,0:mz1)
-        integer, intent(in) :: indexDataPlane, indexStartingPlaneProcessor
-        call save_data_wallparallel_plane_to_buffer(Phi, indexDataPlane, &
-            indexStartingPlaneProcessor, bufferPhi)
-    end subroutine
 
+    ! ***********************************************************************************************************************************
+    ! Save data at a single wall parallel plane to buffer
+    ! A complex version and a real version
     subroutine save_data_wallparallel_plane_to_buffer(dataAtWallparallelPlane, indexDataPlane, &
         indexStartingPlaneProcessor, dataBuffer)
         complex(kind=sp), intent(in) :: dataAtWallparallelPlane(:,:)
@@ -168,6 +292,22 @@ contains
         dataBuffer(:,:,indexDataBuffer) = dataAtWallparallelPlane
     end subroutine
 
+    subroutine save_data_wallparallel_plane_to_buffer_phys(dataAtWallparallelPlane, indexDataPlane, &
+        indexStartingPlaneProcessor, dataBuffer)
+        real(kind=sp), intent(in) :: dataAtWallparallelPlane(:,:)
+        integer, intent(in) :: indexDataPlane, indexStartingPlaneProcessor
+        real(kind=sp), intent(out) :: dataBuffer(:,:,:)
+        integer :: indexDataBuffer
+        ! each processor operates on a subset of wallparallel planes, starting at the plane with index indexStartingPlaneProcessor
+        ! to store the data in the buffer, we have to translate the global indexDataPlane to a local indexDataBuffer
+        indexDataBuffer = indexDataPlane - indexStartingPlaneProcessor + 1
+        dataBuffer(:,:,indexDataBuffer) = dataAtWallparallelPlane
+    end subroutine
+    ! ***********************************************************************************************************************************
+
+
+    ! ***********************************************************************************************************************************
+    ! Save top and bottom wall velocity to buffer for computing wall acceleration
     subroutine save_velocity_bottom_wall_to_buffer(xVelocityBottomWall, yVelocityBottomWall, &
         zVelocityBottomWall)
         complex(kind=sp), intent(in) :: xVelocityBottomWall(:,:), yVelocityBottomWall(:,:), zVelocityBottomWall(:,:)
@@ -186,7 +326,11 @@ contains
         yAccelerationTopWall = yVelocityTopWall
         zAccelerationTopWall = zVelocityTopWall
     end subroutine
+    ! ***********************************************************************************************************************************
 
+
+    ! ***********************************************************************************************************************************
+    ! Compute wall acceleration at top and bottom wall
     subroutine compute_acceleration_bottom_wall(xVelocityBottomWall, yVelocityBottomWall, zVelocityBottomWall, deltaT)
         complex(kind=sp), intent(in) :: xVelocityBottomWall(:,:), yVelocityBottomWall(:,:), zVelocityBottomWall(:,:)
         real(kind=sp) :: deltaT
@@ -206,7 +350,11 @@ contains
         yAccelerationTopWall = (yVelocityTopWall - yAccelerationTopWall) / deltaT
         zAccelerationTopWall = (zVelocityTopWall - zAccelerationTopWall) / deltaT
     end subroutine
+    ! ***********************************************************************************************************************************
 
+
+    ! ***********************************************************************************************************************************
+    ! Write Data to HDF file
     subroutine write_flowfield_to_hdf_file(fundamentalWavenumberX, fundamentalWavenumberZ, yCoordinateVector, &
         indexStartingPlaneProcessor, indexEndingPlaneProcessor, wavenumberVectorX, wavenumberVectorZ, time, &
         referenceReynoldsNumber, bulkVelocity)
@@ -220,23 +368,40 @@ contains
         integer(kind=hid_t) :: idFile
         call h5open_f(hdfError)
         call open_parallel_hdf_file(idFile)
+        ! Write coordinate and wavenumber
         call write_coordinate_vectors_to_hdf_file(idFile, fundamentalWavenumberX, fundamentalWavenumberZ, &
             yCoordinateVector)
         call write_wavenumber_vectors_to_hdf_file(idFile, wavenumberVectorX, wavenumberVectorZ)
+        ! Write Fourier data
         call write_velocity_fields_to_hdf_file(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
             referenceReynoldsNumber, bulkVelocity)
         call write_vorticity_fields_to_hdf_file(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
             referenceReynoldsNumber, bulkVelocity)
         call write_phi_fields_to_hdf_file(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
             referenceReynoldsNumber, bulkVelocity)
+        call write_yderivative_fields_to_hdf_file(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
+            referenceReynoldsNumber, bulkVelocity)
+        call write_H_fields_to_hdf_file(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
+            referenceReynoldsNumber, bulkVelocity)
         call write_forcing_fields_to_hdf_file(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
             referenceReynoldsNumber, bulkVelocity)
+        ! Write Physical data
+        call write_velocity_fields_to_hdf_file_phys(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
+        referenceReynoldsNumber, bulkVelocity)
+        call write_vorticity_fields_to_hdf_file_phys(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
+        referenceReynoldsNumber, bulkVelocity)
+        ! Write Acceleration data
         call write_wall_acceleration_to_hdf_file(idFile)
+        ! Complete
         call close_parallel_hdf_file(idFile)
         call h5close_f(hdfError)
         call update_module_variables
     end subroutine
+    ! ***********************************************************************************************************************************
 
+
+    ! ***********************************************************************************************************************************
+    ! Open and write coordinate and wavenumbers
     subroutine open_parallel_hdf_file(idFile)
         integer(kind=hid_t), intent(out) :: idFile
         integer(kind=hid_t) :: idPropertyList
@@ -288,7 +453,11 @@ contains
         call write_1d_array_to_hdf_file(aimag(wavenumberVectorZ), 'zWavenumberVector', idGroup)
         call h5gclose_f(idGroup, hdfError)
     end subroutine
+    ! ***********************************************************************************************************************************
 
+
+    ! ***********************************************************************************************************************************
+    ! Write Fourier Data to HDF File
     subroutine write_velocity_fields_to_hdf_file(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
         referenceReynoldsNumber, bulkVelocity)
         integer(kind=hid_t), intent(in) :: idFile
@@ -375,6 +544,65 @@ contains
         call h5gclose_f(idGroup, hdfError)
     end subroutine
 
+    subroutine write_yderivative_fields_to_hdf_file(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
+        referenceReynoldsNumber, bulkVelocity)
+        integer(kind=hid_t), intent(in) :: idFile
+        integer, intent(in) :: indexStartingPlaneProcessor, indexEndingPlaneProcessor
+        real(kind=sp), intent(in) :: time, referenceReynoldsNumber
+        real(kind=dp), intent(in) :: bulkVelocity
+        integer(kind=hid_t) :: idGroup
+        character(:), allocatable :: groupName
+        integer :: hdfError
+        groupName = 'yderivativeFieldsFourier'
+        call h5gcreate_f(idFile, groupName, idGroup, hdfError)
+        ! the following write is parallel, therefore no flush is required
+        ! hdf5 has no built-in complex datatype. We therefore write the real and imaginary part of each velocity
+        ! component as separate data set.
+        ! dvdy
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, real(bufferdvdy), 'dvdyRealPart', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, aimag(bufferdvdy), 'dvdyImaginaryPart', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        ! do2dy
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, real(bufferdo2dy), 'do2dyRealPart', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, aimag(bufferdo2dy), 'do2dyImaginaryPart', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        call h5gclose_f(idGroup, hdfError)
+    end subroutine
+
+    subroutine write_H_fields_to_hdf_file(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
+        referenceReynoldsNumber, bulkVelocity)
+        integer(kind=hid_t), intent(in) :: idFile
+        integer, intent(in) :: indexStartingPlaneProcessor, indexEndingPlaneProcessor
+        real(kind=sp), intent(in) :: time, referenceReynoldsNumber
+        real(kind=dp), intent(in) :: bulkVelocity
+        integer(kind=hid_t) :: idGroup
+        character(:), allocatable :: groupName
+        integer :: hdfError
+        groupName = 'HFieldsFourier'
+        call h5gcreate_f(idFile, groupName, idGroup, hdfError)
+        ! the following write is parallel, therefore no flush is required
+        ! hdf5 has no built-in complex datatype. We therefore write the real and imaginary part of each vorticity
+        ! component as separate data set.
+        ! H1
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, real(bufferH1), 'H1RealPart', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, aimag(bufferH1), 'H1ImaginaryPart', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        ! H2
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, real(bufferH2), 'H2RealPart', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, aimag(bufferH2), 'H2ImaginaryPart', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        ! H3
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, real(bufferH3), 'H3RealPart', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, aimag(bufferH3), 'H3ImaginaryPart', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        call h5gclose_f(idGroup, hdfError)
+    end subroutine
+
     subroutine write_forcing_fields_to_hdf_file(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
         referenceReynoldsNumber, bulkVelocity)
         integer(kind=hid_t), intent(in) :: idFile
@@ -402,7 +630,67 @@ contains
             referenceReynoldsNumber, bulkVelocity)
         call h5gclose_f(idGroup, hdfError)
     end subroutine
+    ! ***********************************************************************************************************************************
 
+
+    ! ***********************************************************************************************************************************
+    ! Write Physical Data to HDF File
+    subroutine write_velocity_fields_to_hdf_file_phys(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
+        referenceReynoldsNumber, bulkVelocity)
+        integer(kind=hid_t), intent(in) :: idFile
+        integer, intent(in) :: indexStartingPlaneProcessor, indexEndingPlaneProcessor
+        real(kind=sp), intent(in) :: time, referenceReynoldsNumber
+        real(kind=dp), intent(in) :: bulkVelocity
+        integer(kind=hid_t) :: idGroup
+        character(:), allocatable :: groupName
+        integer :: hdfError
+        groupName = 'velocityFieldsPhysical'
+        call h5gcreate_f(idFile, groupName, idGroup, hdfError)
+        ! the following write is parallel, therefore no flush is required
+        ! hdf5 has no built-in complex datatype. We therefore write the real and imaginary part of each velocity
+        ! component as separate data set.
+        ! streamwise velocity
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, bufferUPhys, 'uPhys', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        ! wallnormal velocity
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, bufferVPhys, 'vPhys', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        ! spanwise velocity
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, bufferWPhys, 'wPhys', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        call h5gclose_f(idGroup, hdfError)
+    end subroutine
+
+    subroutine write_vorticity_fields_to_hdf_file_phys(idFile, indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, &
+        referenceReynoldsNumber, bulkVelocity)
+        integer(kind=hid_t), intent(in) :: idFile
+        integer, intent(in) :: indexStartingPlaneProcessor, indexEndingPlaneProcessor
+        real(kind=sp), intent(in) :: time, referenceReynoldsNumber
+        real(kind=dp), intent(in) :: bulkVelocity
+        integer(kind=hid_t) :: idGroup
+        character(:), allocatable :: groupName
+        integer :: hdfError
+        groupName = 'vorticityFieldsPhysical'
+        call h5gcreate_f(idFile, groupName, idGroup, hdfError)
+        ! the following write is parallel, therefore no flush is required
+        ! hdf5 has no built-in complex datatype. We therefore write the real and imaginary part of each vorticity
+        ! component as separate data set.
+        ! streamwise vorticity
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, buffero1Phys, 'o1Phys', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        ! wallnormal vorticity
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, buffero2Phys, 'o2Phys', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        ! spanwise vorticity
+        call write_real_buffer_with_attributes_to_hdf_file(idGroup, buffero3Phys, 'o3Phys', &
+            indexStartingPlaneProcessor, indexEndingPlaneProcessor, time, referenceReynoldsNumber, bulkVelocity)
+        call h5gclose_f(idGroup, hdfError)
+    end subroutine
+    ! ***********************************************************************************************************************************
+
+
+    ! ***********************************************************************************************************************************
+    ! Write Acceleration Data to HDF File
     subroutine write_wall_acceleration_to_hdf_file(idFile)
         integer(kind=hid_t), intent(in) :: idFile
         integer(kind=hid_t) :: idGroup
@@ -437,33 +725,11 @@ contains
         call write_real_2d_buffer_to_hdf_file(real(zAccelerationTopWall), 'zAccelerationTopRealPart', idFileOrGroup)
         call write_real_2d_buffer_to_hdf_file(aimag(zAccelerationTopWall), 'zAccelerationTopImaginaryPart', idFileOrGroup)
     end subroutine
+    ! ***********************************************************************************************************************************
 
-    subroutine write_real_2d_buffer_to_hdf_file(dataArray, nameDataArray, idFileOrGroup)
-        real(kind=sp), intent(in) :: dataArray(:,:)
-        character(len=*), intent(in) :: nameDataArray
-        integer(kind=hid_t), intent(in) :: idFileOrGroup
-        integer, parameter :: rank = 2
-        integer(kind=hsize_t) :: dataDimensions(rank)
-        integer(kind=hid_t) :: idDataSpace, idDataSet
-        integer :: hdfError, mpiRank, mpiError
-        integer, parameter :: mpiMaster = 0
-        dataDimensions(1) = size(dataArray, 1)
-        dataDimensions(2) = size(dataArray, 2)
-        ! for a parallel hdf file, dataspace and dataset creation are collective functions, i.e. all processes
-        ! of the communicator must call them, even if some processors don't write
-        call h5screate_simple_f(rank, dataDimensions, idDataSpace, hdfError)
-        call h5dcreate_f(idFileOrGroup, nameDataArray, H5T_IEEE_F32LE, idDataSpace, idDataSet, hdfError)
-        call MPI_Comm_rank(MPI_COMM_WORLD, mpiRank, mpiError)
-        ! the data transfer can be independent, here only the master writes data
-        if (mpiRank == mpiMaster) then
-            call h5dwrite_f(idDataSet, H5T_NATIVE_REAL, dataArray, dataDimensions, hdfError)
-        endif
-        call h5dclose_f(idDataSet, hdfError)
-        call h5sclose_f(idDataSpace, hdfError)
-        ! flush buffer to disk. Not flushing buffers may lead to corrupted hdf5 files
-        call h5fflush_f(idFileOrGroup, H5F_SCOPE_GLOBAL_F, hdfError)
-    end subroutine
 
+    ! ***********************************************************************************************************************************
+    ! Close Files
     subroutine close_parallel_hdf_file(idFile)
         integer(kind=hid_t), intent(in) :: idFile
         integer :: hdfError
@@ -474,7 +740,11 @@ contains
         fileNumber = fileNumber + 1
         collectFlowfield = .false.
     end subroutine
+    ! ***********************************************************************************************************************************
 
+
+    ! ***********************************************************************************************************************************
+    ! Low level write data to HDF file
     subroutine write_streamwise_coordinate_vector_to_hdf_file(fundamentalWavenumberX, idFileOrGroup)
         ! the streamwise coordinate is denoted by x below
         real(kind=sp), intent(in) :: fundamentalWavenumberX
@@ -583,6 +853,36 @@ contains
         call h5fflush_f(idFileOrGroup, H5F_SCOPE_GLOBAL_F, hdfError)
     end subroutine
 
+    subroutine write_real_2d_buffer_to_hdf_file(dataArray, nameDataArray, idFileOrGroup)
+        real(kind=sp), intent(in) :: dataArray(:,:)
+        character(len=*), intent(in) :: nameDataArray
+        integer(kind=hid_t), intent(in) :: idFileOrGroup
+        integer, parameter :: rank = 2
+        integer(kind=hsize_t) :: dataDimensions(rank)
+        integer(kind=hid_t) :: idDataSpace, idDataSet
+        integer :: hdfError, mpiRank, mpiError
+        integer, parameter :: mpiMaster = 0
+        dataDimensions(1) = size(dataArray, 1)
+        dataDimensions(2) = size(dataArray, 2)
+        ! for a parallel hdf file, dataspace and dataset creation are collective functions, i.e. all processes
+        ! of the communicator must call them, even if some processors don't write
+        call h5screate_simple_f(rank, dataDimensions, idDataSpace, hdfError)
+        call h5dcreate_f(idFileOrGroup, nameDataArray, H5T_IEEE_F32LE, idDataSpace, idDataSet, hdfError)
+        call MPI_Comm_rank(MPI_COMM_WORLD, mpiRank, mpiError)
+        ! the data transfer can be independent, here only the master writes data
+        if (mpiRank == mpiMaster) then
+            call h5dwrite_f(idDataSet, H5T_NATIVE_REAL, dataArray, dataDimensions, hdfError)
+        endif
+        call h5dclose_f(idDataSet, hdfError)
+        call h5sclose_f(idDataSpace, hdfError)
+        ! flush buffer to disk. Not flushing buffers may lead to corrupted hdf5 files
+        call h5fflush_f(idFileOrGroup, H5F_SCOPE_GLOBAL_F, hdfError)
+    end subroutine
+    ! ***********************************************************************************************************************************
+
+
+    ! ***********************************************************************************************************************************
+    ! HDF Attributes
     subroutine add_single_precision_attribute_to_data_set(idFileOrGroup, dataSetName, attribute, attributeName)
         integer(kind=hid_t), intent(in) :: idFileOrGroup
         character(len=*), intent(in) :: dataSetName, attributeName
@@ -641,7 +941,11 @@ contains
         call h5sclose_f(idAttributeSpace, hdfError)
         call h5dclose_f(idDataSet, hdfError)
     end subroutine
+    ! ***********************************************************************************************************************************
 
+
+    ! ***********************************************************************************************************************************
+    ! Manage HDF file
     subroutine create_disk_dataspace(idDiskSpace, dataBuffer)
         integer(kind=hid_t), intent(out) :: idDiskSpace
         real(kind=sp), intent(in) :: dataBuffer(:,:,:)
@@ -737,5 +1041,6 @@ contains
         integer :: hdfError
         call h5sclose_f(idMemorySpace, hdfError)
     end subroutine
+    ! ***********************************************************************************************************************************
 
 end module save_flowfield
