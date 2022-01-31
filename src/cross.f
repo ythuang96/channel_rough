@@ -20,13 +20,13 @@ c/*............................................c/*
       use wall_roughness, only: set_wall_roughness
       use save_flowfield, only: assess_whether_to_collect_flowfield_dt,
      &  assess_whether_to_collect_flowfield,
-     &  write_flowfield_to_hdf_file, collectFlowfield,
-     &  save_velocity_forcing_to_buffer, collectWallVelocity,
-     &  assess_whether_to_collect_wall_velocity,
-     &  save_velocity_bottom_wall_to_buffer,
-     &  save_velocity_top_wall_to_buffer,
-     &  compute_acceleration_bottom_wall,
-     &  compute_acceleration_top_wall
+     &  write_flowfield_to_hdf_file, collectFlowfield
+c    &  save_velocity_forcing_to_buffer, collectWallVelocity,
+c    &  assess_whether_to_collect_wall_velocity,
+c    &  save_velocity_bottom_wall_to_buffer,
+c    &  save_velocity_top_wall_to_buffer,
+c    &  compute_acceleration_bottom_wall,
+c    &  compute_acceleration_top_wall
 
       implicit none
       include "mpif.h"
@@ -193,7 +193,7 @@ c     -----------------------------------------------------------------
 c     Assess whether it to save flow field or not
          ! call assess_whether_to_collect_flowfield_dt(time)
          call assess_whether_to_collect_flowfield(istep)
-         call assess_whether_to_collect_wall_velocity(istep)
+c        call assess_whether_to_collect_wall_velocity(istep)
          ! end save flowfields
 c     -----------------------------------------------------------------
 
@@ -576,9 +576,9 @@ c     Save v velocity forcing if required
             ! save_velocity_at_wallparallel_plane_to_buffer
             ! save_vorticity_at_wallparallel_plane_to_buffer
             ! save_vorticity_forcing_at_plane_to_buffer
-            if (collectFlowfield .and. rkstep==1) then
-              call save_velocity_forcing_to_buffer(hv, jb, je)
-            endif
+c           if (collectFlowfield .and. rkstep==1) then
+c             call save_velocity_forcing_to_buffer(hv, jb, je)
+c           endif
 c     -----------------------------------------------------------------
 
 
@@ -644,24 +644,24 @@ c     not computed correctly!
             ! to compute acceleration
 
             ! Save wall velocity at previous time step
-            if(collectWallVelocity .and. (.not. collectFlowfield)) then
-              if(rkstep == 1) then
-                call save_velocity_bottom_wall_to_buffer(uWallBottom,
-     &            vWallBottom, wWallBottom)
-                call save_velocity_top_wall_to_buffer(uWallTop,
-     &            vWallTop, wWallTop)
-              endif
-            endif
-            ! data collection timestep: compute acceleration from
-            ! previous velocity and current velocity
-            if(collectWallVelocity .and. collectFlowfield) then
-              if(rkstep == 1) then
-                call compute_acceleration_bottom_wall(uWallBottom,
-     &            vWallBottom, wWallBottom, Deltat)
-                call compute_acceleration_top_wall(uWallTop,
-     &            vWallTop, wWallTop, Deltat)
-              endif
-            endif
+c           if(collectWallVelocity .and. (.not. collectFlowfield)) then
+c             if(rkstep == 1) then
+c               call save_velocity_bottom_wall_to_buffer(uWallBottom,
+c    &            vWallBottom, wWallBottom)
+c               call save_velocity_top_wall_to_buffer(uWallTop,
+c    &            vWallTop, wWallTop)
+c             endif
+c           endif
+c           ! data collection timestep: compute acceleration from
+c           ! previous velocity and current velocity
+c           if(collectWallVelocity .and. collectFlowfield) then
+c             if(rkstep == 1) then
+c               call compute_acceleration_bottom_wall(uWallBottom,
+c    &            vWallBottom, wWallBottom, Deltat)
+c               call compute_acceleration_top_wall(uWallTop,
+c    &            vWallTop, wWallTop, Deltat)
+c             endif
+c           endif
 c     -----------------------------------------------------------------
 
 
@@ -966,13 +966,13 @@ c/********************************************************************/
      .     u1c,u2c,u3c,o1c,o2c,o3c )
       use save_flowfield, only: collectFlowfield,
      &  save_velocity_at_wallparallel_plane_to_buffer,
-     &  save_vorticity_at_wallparallel_plane_to_buffer,
-     &  save_phi_at_wallparallel_plane_to_buffer,
-     &  save_vorticity_forcing_at_plane_to_buffer,
-     &  save_velocity_at_wallparallel_plane_to_buffer_phys,
-     &  save_vorticity_at_wallparallel_plane_to_buffer_phys,
-     &  save_yderivatives_at_wallparallel_plane_to_buffer,
-     &  save_H_at_wallparallel_plane_to_buffer
+     &  save_vorticity_at_wallparallel_plane_to_buffer
+c    &  save_phi_at_wallparallel_plane_to_buffer,
+c    &  save_vorticity_forcing_at_plane_to_buffer,
+c    &  save_velocity_at_wallparallel_plane_to_buffer_phys,
+c    &  save_vorticity_at_wallparallel_plane_to_buffer_phys,
+c    &  save_yderivatives_at_wallparallel_plane_to_buffer,
+c    &  save_H_at_wallparallel_plane_to_buffer
       implicit none
       include "ctes3D"
       include "mpif.h"
@@ -1108,10 +1108,10 @@ c     Loop over y planes
 
 c     -----------------------------------------------------------------
 c     save y derivatives
-         if (collectFlowfield .and. rkstep==1) then
-            call save_yderivatives_at_wallparallel_plane_to_buffer(
-     &         rhvc(0,0,j), ome1c(0,0,j), j, jb)
-         endif
+c        if (collectFlowfield .and. rkstep==1) then
+c           call save_yderivatives_at_wallparallel_plane_to_buffer(
+c    &         rhvc(0,0,j), ome1c(0,0,j), j, jb)
+c        endif
 c     -----------------------------------------------------------------
 
 
@@ -1411,8 +1411,8 @@ c     save velocity and vorticity fields if required
      &         u2c, u3c, j, jb)
             call save_vorticity_at_wallparallel_plane_to_buffer(o1c,
      &         o2c, o3c, j, jb)
-            call save_phi_at_wallparallel_plane_to_buffer(
-     &         phic(0,0,j), j, jb)
+c           call save_phi_at_wallparallel_plane_to_buffer(
+c    &         phic(0,0,j), j, jb)
          endif
 c     -----------------------------------------------------------------
 
@@ -1430,12 +1430,12 @@ c     Move everything to Physical x - Physical z
          call fourxz(o2c,o2r,1,1) !omega_2
          call fourxz(o3c,o3r,1,1) !omega_3
 
-         if (collectFlowfield .and. rkstep==1) then
-            call save_velocity_at_wallparallel_plane_to_buffer_phys(
-     &         u1r, u2r, u3r, j, jb)
-            call save_vorticity_at_wallparallel_plane_to_buffer_phys(
-     &         o1r, o2r, o3r, j, jb)
-         endif
+c        if (collectFlowfield .and. rkstep==1) then
+c           call save_velocity_at_wallparallel_plane_to_buffer_phys(
+c    &         u1r, u2r, u3r, j, jb)
+c           call save_vorticity_at_wallparallel_plane_to_buffer_phys(
+c    &         o1r, o2r, o3r, j, jb)
+c        endif
 c     -----------------------------------------------------------------
 
 
@@ -1525,10 +1525,10 @@ c     FFT2 of H to Fourier x - Fourier z
          ! H2
          call fourxz(u3c,u3r,-1,1)
          
-         if (collectFlowfield .and. rkstep==1) then
-            call save_H_at_wallparallel_plane_to_buffer(u2c,
-     &         u3c, u1c, j, jb)
-         endif
+c        if (collectFlowfield .and. rkstep==1) then
+c           call save_H_at_wallparallel_plane_to_buffer(u2c,
+c    &         u3c, u1c, j, jb)
+c        endif
 c     -----------------------------------------------------------------
 
 
@@ -1582,10 +1582,10 @@ c     Save vorticity forcing if required
          ! save_velocity_at_wallparallel_plane_to_buffer (in hvhg)
          ! save_vorticity_at_wallparallel_plane_to_buffer (in hvhg)
          ! save_velocity_forcing_to_buffer (in cross1)
-         if (collectFlowfield .and. rkstep==1) then
-           call save_vorticity_forcing_at_plane_to_buffer(rhgc(:,:,j),
-     &       j, jb)
-         endif
+c        if (collectFlowfield .and. rkstep==1) then
+c          call save_vorticity_forcing_at_plane_to_buffer(rhgc(:,:,j),
+c    &       j, jb)
+c        endif
 c     -----------------------------------------------------------------
 
 
