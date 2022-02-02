@@ -57,6 +57,11 @@ stringToReplace_FixTimeStep="FixTimeStep_set_by_launchscript"
 
 if [[ ! -e $runFolder ]]  # only if run name does not exist yet (avoid data loss)
 then
+  # Change to the directory this script is located 
+  # Since all the directories below are relative paths
+  SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+  cd $SCRIPT_DIR
+  
   # recompile script
   cd ../build/
   make
