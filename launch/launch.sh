@@ -24,8 +24,15 @@ nstep=3
 # time step to update CFL and write to .cf
 # no larger thatn 10
 nhist=5
-# CFL condition, no larger than 1.5
+
+# Time Stepping prameters
+#  Adaptive time stepping:
+#    Set CFL to non zero ( no larger than 1.5 ), and FixTimeStep to zero
+#  Constant time stepping:
+#    Set CFL to zero, and FixTimeStep to desired value
+#
 CFL=1.0 
+FixTimeStep=0
 
 # Run Settings -----------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
@@ -46,6 +53,7 @@ stringToReplace_nstep="nstep_set_by_launchscript"
 stringToReplace_nimag="nimag_set_by_launchscript"
 stringToReplace_nhist="nhist_set_by_launchscript"
 stringToReplace_CFL="CFL_set_by_launchscript"
+stringToReplace_FixTimeStep="FixTimeStep_set_by_launchscript"
 
 if [[ ! -e $runFolder ]]  # only if run name does not exist yet (avoid data loss)
 then
@@ -73,6 +81,7 @@ then
   sed -i "s|$stringToReplace_nimag|$nimag|g" hre.dat
   sed -i "s|$stringToReplace_nhist|$nhist|g" hre.dat
   sed -i "s|$stringToReplace_CFL|$CFL|g" hre.dat
+  sed -i "s|$stringToReplace_FixTimeStep|$FixTimeStep|g" hre.dat
 
   echo "Submitting job to Richardson Cluster"
   # write a job.sh script for sbatch to submit job

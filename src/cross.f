@@ -65,8 +65,8 @@ c    &  compute_acceleration_top_wall
      .     istati,ntimes,nacum,nstart
       save /statis/
       
-      real*4 Deltat,CFL,time,dtr
-      common /tem/ Deltat,CFL,time,dtr
+      real*4 Deltat,CFL,time,dtr,FixTimeStep
+      common /tem/ Deltat,CFL,time,dtr,FixTimeStep
       save   /tem/
       
       integer nimag,nstep,nhist,ihist,icfl
@@ -993,8 +993,8 @@ c    &  save_H_at_wallparallel_plane_to_buffer
       real*4 sp(0:mx1,0:nz1,7,jspbb:jspe)
       
       
-      real*4 Deltat,CFL,time,dtr
-      common /tem/ Deltat,CFL,time,dtr
+      real*4 Deltat,CFL,time,dtr,FixTimeStep
+      common /tem/ Deltat,CFL,time,dtr,FixTimeStep
       save /tem/
       
       real*8  fmap,y2
@@ -1622,7 +1622,13 @@ c     Computes Deltat
          
          if (reigmx1.lt.1e-1)  uggg=1
          
-         Deltat=CFL/reigmx1
+         if (CFL.ne.0 .and. FixTimeStep.eq.0) then
+            ! Case of adaptive time stepping
+            Deltat=CFL/reigmx1
+         else if (CFL.eq.0 .and. FixTimeStep.ne.0) then
+            ! Case of fixed time stepping
+            Deltat=FixTimeStep
+         endif
          dtr=Re/Deltat
          
          if (uggg.ne.0) then

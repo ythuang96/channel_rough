@@ -30,9 +30,14 @@ CC  1:tanh
 CC  2:sin           gamma
       2             0.93
 CC
-CC  CFL
-CC   *
-    CFL_set_by_launchscript
+CC  Time Stepping prameters
+CC  Adaptive time stepping:
+CC    Set CFL to non zero ( <= 1.5 ), and FixTimeStep to zero
+CC  Constant time stepping:
+CC    Set CFL to zero, and FixTimeStep to desired value
+CC          CFL                            FixTimeStep
+CC           *                                  *
+    CFL_set_by_launchscript    FixTimeStep_set_by_launchscript
 CC
 CC  first     0/1            # steps
 CC  output    0 do nothing   between

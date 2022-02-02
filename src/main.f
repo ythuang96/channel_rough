@@ -217,8 +217,8 @@ c ====================================================================
 
       real*4  Ree,alpe,bete,ce,xx
 
-      real*4 Deltat,CFL,time,dtr
-      common /tem/ Deltat,CFL,time,dtr
+      real*4 Deltat,CFL,time,dtr,FixTimeStep
+      common /tem/ Deltat,CFL,time,dtr,FixTimeStep
       save /tem/
 
       integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz
@@ -456,8 +456,8 @@ c/********************************************************************/
       common /mesh/ gamma,imesh
       save /mesh/
       
-      real*4 Deltat,CFL,time,dtr
-      common /tem/ Deltat,CFL,time,dtr
+      real*4 Deltat,CFL,time,dtr,FixTimeStep
+      common /tem/ Deltat,CFL,time,dtr,FixTimeStep
       save /tem/
       
       real*4 uampl,vampl,wampl,vspeed
@@ -677,8 +677,8 @@ c/********************************************************************/
       common /fis/ Re,alp,bet,a0,y(my),hy(my),fmap(my),y2(my)
       save   /fis/
 
-      real*4 Deltat,CFL,time,dtr
-      common /tem/ Deltat,CFL,time,dtr
+      real*4 Deltat,CFL,time,dtr,FixTimeStep
+      common /tem/ Deltat,CFL,time,dtr,FixTimeStep
       save /tem/
 
       integer iinp,iout,id22,isn,ispf
@@ -750,7 +750,7 @@ c                           /* reads in data                       */
 
 967      read(19,'(a)') text
          if(text(1:2).eq.'CC') goto 967
-         read(text,*) dat(6) 
+         read(text,*) dat(6), dat(12)
 
 968      read(19,'(a)') text
          if(text(1:2).eq.'CC') goto 968
@@ -775,7 +775,7 @@ c                           /* reads in data                       */
          close(19)
 
          do iproc=1,numerop-1
-            call MPI_SEND(dat,11,MPI_REAL,iproc,
+            call MPI_SEND(dat,12,MPI_REAL,iproc,
      &                 iproc,MPI_COMM_WORLD,ierr)
             call MPI_SEND(idat,19,MPI_INTEGER,iproc,
      &                 iproc,MPI_COMM_WORLD,ierr)
@@ -789,7 +789,7 @@ c                           /* reads in data                       */
 
       else
 
-         call MPI_RECV(dat,11,MPI_REAL,0,
+         call MPI_RECV(dat,12,MPI_REAL,0,
      &                MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
          call MPI_RECV(idat,19,MPI_INTEGER,0,
      &                 MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
@@ -813,6 +813,7 @@ c                           /* reads in data                       */
       vampl = dat(9)
       wampl = dat(10)
       vspeed= dat(11) -a0      ! To compensate the movement of the wall
+      FixTimeStep = dat(12)
       
        
 
@@ -1022,7 +1023,26 @@ c --------------  write header for output -------------
 
          write(*,'(a10,i6,a9,i6,a9,i5)')
      .     'nstep =',nstep,'nimag =',nimag,'nhist =',nhist
-         write(*,'(a10,e10.4,a8,f5.2)') '  CFL =',CFL
+
+         if (CFL.ne.0 .and. FixTimeStep.eq.0) then
+            ! Case of adaptive time stepping
+            write(*,*)
+            write(*,'(a23)') 'Adaptive time stepping:'
+            write(*,'(a16,e10.4)') '    CFL = ',CFL
+         else if (CFL.eq.0 .and. FixTimeStep.ne.0) then
+            ! Case of fixed time stepping
+            write(*,*)
+            write(*,'(a23)') 'Constant time stepping:'
+            write(*,'(a16,e10.4)') '  FixTimeStep = ',FixTimeStep
+         else 
+            ! Case of incorrect input
+            ! print error message and exit
+            write(*,*)
+            write(*,'(a44)') 
+     &         'Incorrect CFL or FixTimeStep Input. Exiting.'
+            stop 
+         endif
+
          write(*,*)
          write(*,'(a6,3f8.3,a7,f8.3)')
      .   'vwall',uampl,vampl,wampl,'vspeed',vspeed+a0
