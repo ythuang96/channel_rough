@@ -99,7 +99,7 @@ then
 
   echo "#SBATCH -n $mpiProcessors --tasks-per-node=24" >> job.sh
   echo "#SBATCH -t $runTime" >> job.sh
-  echo "#SBATCH --mem-per-cpu=5300M" >> job.sh
+  echo "#SBATCH --mem-per-cpu=5000M" >> job.sh
 
   if [[ $jobDependency != "none" ]]; then
     echo "#SBATCH --dependency=aftercorr:$jobDependency" >> job.sh
