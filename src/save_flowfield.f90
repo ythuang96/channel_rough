@@ -128,7 +128,9 @@ contains
     ! Based on step number or based on time
     subroutine assess_whether_to_collect_flowfield(timeStepNr)
         integer, intent(in) :: timeStepNr
-        if (mod(timeStepNr,samplingFrequencyInTimesteps) == 0) then
+        if ( (mod(timeStepNr  ,samplingFrequencyInTimesteps) == 0) .or.  &
+            ((mod(timeStepNr-1,samplingFrequencyInTimesteps) == 0) .and. (timeStepNr.ne.1)) ) then
+            ! "Double-Pulse" Case
             collectFlowfield = .true.
         else
             collectFlowfield = .false.
