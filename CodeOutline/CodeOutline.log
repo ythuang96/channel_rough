@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (MiKTeX 21.10) (preloaded format=pdflatex 2021.11.12)  6 JAN 2022 10:34
+This is pdfTeX, Version 3.141592653-2.6-1.40.23 (MiKTeX 21.10) (preloaded format=pdflatex 2021.11.12)  16 FEB 2022 17:25
 entering extended mode
 **./CodeOutline.tex
 (CodeOutline.tex
@@ -929,12 +929,12 @@ Overfull \hbox (37.99297pt too wide) in paragraph at lines 94--112
 
 {C:/Users/Michael Huang/AppData/Local/MiKTeX/pdftex/config/pdftex.map}]
 [2] [3] [4] [5]
-<DNS3.png, id=129, 663.98062pt x 432.11438pt>
+<DNS3.png, id=133, 663.98062pt x 432.11438pt>
 File: DNS3.png Graphic file (type png)
 <use DNS3.png>
 Package pdftex.def Info: DNS3.png  used on input line 350.
 (pdftex.def)             Requested size: 352.31624pt x 229.28326pt.
-<DNS4.png, id=131, 656.4525pt x 308.15125pt>
+<DNS4.png, id=135, 656.4525pt x 308.15125pt>
 File: DNS4.png Graphic file (type png)
 <use DNS4.png>
 Package pdftex.def Info: DNS4.png  used on input line 355.
@@ -994,15 +994,25 @@ Overfull \hbox (46.78459pt too wide) in paragraph at lines 647--663
  [][] 
  []
 
-[16] (CodeOutline.aux)
+<DNSTime.png, id=219, 5681.225pt x 1666.225pt>
+File: DNSTime.png Graphic file (type png)
+<use DNSTime.png>
+Package pdftex.def Info: DNSTime.png  used on input line 672.
+(pdftex.def)             Requested size: 352.31624pt x 103.32521pt.
+<DNSSaving.png, id=220, 3121.6625pt x 6042.575pt>
+File: DNSSaving.png Graphic file (type png)
+<use DNSSaving.png>
+Package pdftex.def Info: DNSSaving.png  used on input line 679.
+(pdftex.def)             Requested size: 281.85585pt x 545.56013pt.
+[16 <./DNSTime.png>] [17 <./DNSSaving.png>] [18] (CodeOutline.aux)
 Package rerunfilecheck Info: File `CodeOutline.out' has not changed.
-(rerunfilecheck)             Checksum: 98671C910D9EF6F87F2885F45DBB5399;2356.
+(rerunfilecheck)             Checksum: F902D4F4A3137D16CB7B5C1F5BF0EB1F;2443.
  ) 
 Here is how much of TeX's memory you used:
- 22315 strings out of 478907
- 418541 string characters out of 2848063
- 744498 words of memory out of 3000000
- 39804 multiletter control sequences out of 15000+600000
+ 22335 strings out of 478907
+ 418839 string characters out of 2848063
+ 744493 words of memory out of 3000000
+ 39817 multiletter control sequences out of 15000+600000
  413468 words of font info for 64 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  73i,14n,81p,838b,779s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -1019,9 +1029,9 @@ ograms/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/Michael Huang/A
 ppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/User
 s/Michael Huang/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cm
 sy8.pfb>
-Output written on CodeOutline.pdf (16 pages, 309516 bytes).
+Output written on CodeOutline.pdf (18 pages, 755501 bytes).
 PDF statistics:
- 281 PDF objects out of 1000 (max. 8388607)
- 78 named destinations out of 1000 (max. 500000)
- 147 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 300 PDF objects out of 1000 (max. 8388607)
+ 83 named destinations out of 1000 (max. 500000)
+ 165 words of extra memory for PDF output out of 10000 (max. 10000000)
 

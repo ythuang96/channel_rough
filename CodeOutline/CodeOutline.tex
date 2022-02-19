@@ -666,6 +666,39 @@ Used for performing the time stepping
 Note: matrices \textbf{phi}, \textbf{vor}, \textbf{phiwk}, \textbf{vorwk}, \textbf{dvordy}, \textbf{hv}, \textbf{hg}, which are matrices that involves a change between $k_x-k_z$ plane and $k_x-y$ planes are allocated in main.f with sizes \textbf{nbuffsize}, and passed to cross1 as input. \textbf{nbuffsize} = mx*max(mmy*mz, mmz*my), which is sufficiently sized for data in both configurations.
 
 
+\section{DNS Time}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\textwidth]{DNSTime.png}
+\end{figure}
+
+At $istep = n$, the code propagates from $t = (n-1)\Delta t$ to $t = n \Delta t$, all the data written at this step, including restart, h5, and txt file are all data at $t = (n-1)\Delta t$. 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\textwidth]{DNSSaving.png}
+\end{figure}
+\newpage
+For run parameters:\\
+$nstep = 10001$,\\
+$nimag = 10000$, (save restart at $istep = 10001$)\\
+save h5 at $istep = 50k \text{ or } 50k+1, k = 1,2,\dots,200$
+
+First Run:\\
+Start with $t = 0$\\
+Snapshots saved at: $[49, 99, \dots, 9999] \Delta t$ and $[50, 100, \dots, 10000] \Delta t$\\
+Restart saved at: $10000\Delta t$\\
+Last line of txt file: $istep = 10001, t = 10000\Delta t$
+
+Second Run:\\
+Start with $t = 10000\Delta t$\\
+Snapshots saved at: $[10049, 10099, \dots, 19999] \Delta t$ and  $[10050, 10100, \dots, 20000] \Delta t$\\
+Restart saved at: $20000\Delta t$\\
+Last line of txt file: $istep = 10001, t = 10000\Delta t$
+
+
+
+
 
 \end{document}
 
