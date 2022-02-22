@@ -93,21 +93,18 @@ Yuting Huang\par
 	\renewcommand{\arraystretch}{1.4} 
 	\begin{tabular}{l|l|l}
 		File&Line& \\ \hline
-		\multirow{2}{*}{save\_flowfield.f90}&32&\textbf{SamplingFrequencyInTimesteps} (fix step sampling)\\
-		&33-35&\textbf{samplingPeriod} (fix time sampling)\\ \hline
+		\multirow{2}{*}{save\_flowfield.f90}&74&\textbf{SamplingFrequencyInTimesteps} (fix step sampling)\\
+		&75-76&\textbf{samplingPeriod} (fix time sampling)\\ \hline
 		
-		\multirow{2}{*}{cross.f}&235&fix time sampling\\
-		&236&fix step sampling\\ \hline
+		\multirow{2}{*}{cross.f}&194&fix time sampling\\
+		&195&fix step sampling\\ \hline
 		
 		\multirow{2}{*}{wall\_roughness.f90}&7-8&\textbf{disturbanceU}, \textbf{disturbanceV}\\
 		&11-12&\textbf{targetWavenumberX}, \textbf{absoluteValueTargetWavenumberZ} \\ \hline
-		
-		\multirow{6}{*}{launch.sh}&9&\textbf{runName}\\
-		&10-11&\textbf{runTime}, \textbf{jobDependency}\\
 		&15&\textbf{inputFile}\\
 		&19&\textbf{Re}\\
 		&21,23,26&\textbf{nimag}, \textbf{nstep}, \textbf{nhist}\\
-		&28&\textbf{CFL}\\ \hline		
+		&34,35&\textbf{CFL} or \textbf{FixTimeStep}\\ \hline		
 	\end{tabular} 
 \end{table} 
 
