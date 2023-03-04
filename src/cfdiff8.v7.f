@@ -41,7 +41,6 @@ c************************************************
       endif
 
       if (p.eq.1) then          !!! malla tangente hiperbolica
-         write(*,*) 'generating tanh mesh'
          do j=1,n
             h(j)=tanh(c*(2d0*(j-1)/(n-1)-1d0))/tanh(c)
             h2(j)=tanh(c*(2d0*float(j-1)/float(n-1)-1d0))/tanh(c)
@@ -50,7 +49,6 @@ c************************************************
       endif
 
       if (p.eq.2) then          !!! malla tipo seno
-         write(*,*) 'generating sen mesh'
          do j=1,n
             h(j) = sin(c*(2d0*(j-1)/(n-1)-1d0)*pi/2d0)/sin(c*pi/2d0)
             h2(j)= sin(c*(2d0*float(j-1)/float(n-1)-1d0)*pi2/2d0)/

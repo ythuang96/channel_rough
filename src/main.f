@@ -84,8 +84,6 @@ c                              /*   initializes everything    */
          stop
       endif
 
-      write(*,*) 'MPI enviroment initialized ..',myid
-
 c--------------- initializes commons and things
 
       call initcr(myid)
@@ -175,7 +173,6 @@ c     clean up the save_flowfield module (deallocate variables)
      &              MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
 
             imess=istat(MPI_TAG)
-            write(*,*) 'process',imess,'over'
             newtag=100
             call MPI_SEND(1.,1,MPI_REAL,imess,
      &                newtag,MPI_COMM_WORLD,ierr)
@@ -188,10 +185,6 @@ c     clean up the save_flowfield module (deallocate variables)
          call MPI_RECV(val,1,MPI_REAL,master,
      &              MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
          if(istat(MPI_TAG).eq.100) goto 200
-
-      else
-
-         write(*,*) 'process',master,'over'
 
       endif
 
@@ -855,9 +848,6 @@ c     ===============================================
       kb=kbeg(myid) ! z start index for this processor
       ke=kend(myid) ! y end index for this processor
 
-      write(*,*) 'pointers: ',myid,' jb,je,my=',jb,je,my
-      write(*,*) 'pointers: ',myid,' kb,ke,mz=',kb,ke,mz
-
       mmz = ke-kb+1 ! number of y and z points for each processor
       mmy = je-jb+1
 
@@ -959,8 +949,6 @@ c --------------  prepare spectra -----
       jspb = jspbeg(myid)
       jspe = jspend(myid)
 
-      write(*,*) 'jspb',jspb,'jspe',jspe,'myid',myid
-
 
 c ------------------ Re/dt --------------------------------
       dtr  = Re     !!!! initialize, just in case
@@ -1022,6 +1010,11 @@ c --------------  write header for output -------------
      .                    'mgalx =',mgalx,'mgalz =',mgalz,'my =',my
          write(*,'(a8,i5,a8,i5,a8,i5)')
      .                    'mx =',mx,'mz =',mz
+         if (imesh .eq. 1) then
+            write(*,*) 'generating tanh mesh'
+         else if (imesh .eq. 2) then
+            write(*,*) 'generating sen mesh'
+         endif
          write(*,*)
 
          write(*,'(a10,i6,a9,i6,a9,i5)')
@@ -1036,7 +1029,7 @@ c --------------  write header for output -------------
             ! Case of fixed time stepping
             write(*,*)
             write(*,'(a23)') 'Constant time stepping:'
-            write(*,'(a16,e10.4)') '  FixTimeStep = ',FixTimeStep
+            write(*,'(a16,e12.7)') '  FixTimeStep = ',FixTimeStep
          else
             ! Case of incorrect input
             ! print error message and exit
