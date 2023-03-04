@@ -16,6 +16,7 @@ LDFLAGS = $(INCLUDEPATH) -w -O1
 objects = modules.v7.o \
 	  types.o \
 	  boundary_planes.o \
+	  h5save.o \
 	  save_flowfield.o \
 	  wall_roughness.o \
 	  cfdiff8.v7.o \
@@ -38,6 +39,8 @@ channel : $(objects)
 	$(FC) $(FFLAGS) $< -o $@
 # free-form source files
 %.o : %.f90 ctes3D
+	$(FC) $(FFLAGS) -ffree-form $< -o $@
+%.o : %.f03 ctes3D
 	$(FC) $(FFLAGS) -ffree-form $< -o $@
 # clean compiled files. -rm tells make to continue despite of errors
 .PHONY : clean

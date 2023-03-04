@@ -6,7 +6,7 @@ c/*    la vorticidad y la laplaciana de la velocidad en la dire-     */
 c/*    ccion normal a la pared, Kim, Moin y Moser (1987).            */
 c/*                                                                  */
 c/*       tocado j.jimenez (1/92)                                    */
-c/*       hundido j.c.a. (1/01) 
+c/*       hundido j.c.a. (1/01)
 c/*                                                                  */
 c/*     generates new output files (with dimensions )                */
 c/*       head =(time,Re,alp,bet,a0,mx,my,mz)
@@ -19,9 +19,10 @@ c/*                                                                  */
 c/*    This version uses CFD in y (o. flores 06)                     */
 ccccc VERSION for  MPI  !!!!                                    ccccccc
 c/********************************************************************/
-      use save_flowfield, only: initialize_save_flowfield
+      use save_flowfield, only: initialize_save_flowfield_module,
+     &  cleanup_save_flowfield_module
       use wall_roughness, only: initialize_wall_roughness
-      implicit none 
+      implicit none
       include "mpif.h"
       include "ctes3D"
 
@@ -35,10 +36,10 @@ c/********************************************************************/
       integer ihv,ihg,iphiwk,ivorwk,irf0u,irf0w,iu00wk,iw00wk,idvordy,
      .        ichwk,nstr
       integer itags,newtag,imess,i
-      real*4 val 
+      real*4 val
 
       integer nacumsp,jsp,jsptot,jspiproc,jspend,jspbeg,jspb,jspe,jspbb
-       
+
       integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz
       common /point /jbeg(0:numerop-1),jend(0:numerop-1),
      .               kbeg(0:numerop-1),kend(0:numerop-1),
@@ -53,7 +54,7 @@ c/********************************************************************/
       integer nspsize
       real*4, allocatable:: sp(:)
 
-      real*8 fmap, y2 
+      real*8 fmap, y2
       real*4  Re, alp, bet, a0, y, hy
       common /fis/ Re,alp,bet,a0,y(my),hy(my),fmap(my),y2(my)
       save   /fis/
@@ -85,13 +86,13 @@ c                              /*   initializes everything    */
 
       write(*,*) 'MPI enviroment initialized ..',myid
 
-c--------------- initializes commons and things 
+c--------------- initializes commons and things
 
       call initcr(myid)
- 
+
 c--------------  allocates spectra
-    
-      jspbb = jspb 
+
+      jspbb = jspb
       if (jspe.lt.jspb) jspbb=jspe
       nspsize = (mx1+1)*(nz1+1)*7*(jspe-jspbb+1)
 
@@ -99,8 +100,8 @@ c--------------  allocates spectra
 
 c--------------- allocates buffers
 
-      nbuffsize = mx*max(mmy*mz,mmz*my) 
-      nwkasize  = 6*nbuffsize + 2*4*my 
+      nbuffsize = mx*max(mmy*mz,mmz*my)
+      nwkasize  = 6*nbuffsize + 2*4*my
 
 c ----------  storage for the pressure
       allocate(vor(nbuffsize))
@@ -121,16 +122,16 @@ c      write(*,*) 'going to read file ...'
 c      write(*,*) '... file read'
 
       ! initialize custom modules
-      call initialize_save_flowfield(filstt)
+      call initialize_save_flowfield_module(filstt)
       call initialize_wall_roughness(xalp, xbet)
 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 c                    /* start time advancement  */
 
- 
+
       irf0u   = 1
-      irf0w   = irf0u   + 2*my 
+      irf0w   = irf0u   + 2*my
       iu00wk  = irf0w   + 2*my
       iw00wk  = iu00wk  + 2*my
       ihv     = iw00wk  + 2*my
@@ -156,6 +157,8 @@ c                    /* start time advancement  */
 
 
 c                    /* finalize procedure      */
+c     clean up the save_flowfield module (deallocate variables)
+      call cleanup_save_flowfield_module
 
       master=0
       if (myid.ne.0) then
@@ -273,22 +276,22 @@ c      ---------------  read from file and distribute
          !read(iinp,rec=1) time,Ree,alpe,bete,a0e,mxe,mye,mze
          read(iinp,rec=1) xx,Ree,alpe,bete,a0e,mxe,mye,mze
 
-         write(*,*) 
-         write(*,*) 'reading input file ...' 
+         write(*,*)
+         write(*,*) 'reading input file ...'
          write(*,*) 'time=',time,Ree,alpe,bete,a0e,mxe,mye,mze
          write(*,*) 'mesh:',ce,pe
          write(*,*)
          ntotr=2*mxe*mze
-         close(iinp)  
-         
-         !!!!!! time = 0.   !!!!!!!!!!  ACHTUNG 
-       
+         close(iinp)
+
+         !!!!!! time = 0.   !!!!!!!!!!  ACHTUNG
+
          open(iinp,file=filinp,status='unknown',form='unformatted',
      &        access='direct',recl=ntotr*iwd)
 c     Read 00 mode from restart file
          read(iinp,rec=1) xx,xx,xx,xx,xx,i,i,i,i,xx,
-     &        i,i,xx,xx,xx,xx,(wk1(j),j=1,2*mye) 
-      
+     &        i,i,xx,xx,xx,xx,(wk1(j),j=1,2*mye)
+
 
 
 c     ------ Organize 00 modes and send to all slaves--------------
@@ -313,7 +316,7 @@ c     ------ Organize 00 modes and send to all slaves--------------
 
 c         -----Read and organize other modes, for master node -----
          mmy2 = min(je,mye)-jb+1
-c         write(*,*) 'master reads its data' 
+c         write(*,*) 'master reads its data'
          do j=1,mmy2
             read(iinp,rec=j+jb) (wk1(i),i=1,ntotr)
             call assign(wk1,vor(1,1,j),phi(1,1,j),mx,mz,mxe,mze)
@@ -322,7 +325,7 @@ c         write(*,*) 'master reads its data'
 c     --Read and organize other modes, and send to all slaves -----
          do iproc=1,numerop-1
 
-c            write(*,*)'master reads proc no',iproc,' data and send them' 
+c            write(*,*)'master reads proc no',iproc,' data and send them'
 
             do j=jbeg(iproc),min(jend(iproc),mye)
                read(iinp,rec=j+1) (wk1(i),i=1,ntotr)
@@ -417,9 +420,9 @@ c/*    single  jjs  4/01/01                                          */
 c/********************************************************************/
       subroutine escru(vor,phi,u00,w00,sp,j1,j2,iproc,iopt,jjsp,
      .     uwallb,uwallt,vwallb,vwallt,wwallb,wwallt,uBulk)
-      
+
       implicit none
-      
+
       include "ctes3D"
       integer iproc,iopt,j1,j2
       real*4 vor(mx,mz,j1:j2),phi(mx,mz,j1:j2)
@@ -428,15 +431,15 @@ c/********************************************************************/
       real*4 vwallb(mx,mz),vwallt(mx,mz)
       real*4 wwallb(mx,mz),wwallt(mx,mz)
       real*8 uBulk
-      
+
       integer i,j,k,jjsp
-      
+
       character*3 ext1
       character*4 ext2
       character*104 fnameima,fnamespe,fnamesta
-      
+
       real*4 timed,Reed,alped,beted,a0ed
-      
+
       real*8  fac
       real*8  um,vm,wm,up,vp,wp,w1m,w2m,w3m,w1p,w2p,w3p,uvr,uwr,vwr,
      .     Wx0a,Wz0a,ep,uuv,wwv,vvv
@@ -450,42 +453,42 @@ c/********************************************************************/
      .     Wx0a,Wz0a,
      .     istati,ntimes,nacum,nstart
       save /statis/
-      
+
       real*4 gamma
       integer imesh
       common /mesh/ gamma,imesh
       save /mesh/
-      
+
       real*4 Deltat,CFL,time,dtr,FixTimeStep
       common /tem/ Deltat,CFL,time,dtr,FixTimeStep
       save /tem/
-      
+
       real*4 uampl,vampl,wampl,vspeed
       integer mxwall,mzwall
       common /boundary/ uampl,vampl,wampl,vspeed,mxwall,mzwall
       save /boundary/
-      
-      real*8 fmap,y2 
+
+      real*8 fmap,y2
       real*4  Re,alp,bet,a0,y,hy
       common /fis/ Re,alp,bet,a0,y(my),hy(my),fmap(my),y2(my)
       save   /fis/
-      
+
       integer iinp,iout,id22,isn,ispf
       character*100 filinp,filout,filstt
       common /ficheros/ iinp,iout,id22,isn,ispf,
      .     filinp,filout,filstt
       save /ficheros/
-      
+
 c----------------now
       integer nacumsp,jsptot,jsp,jspend,jspbeg,jspiproc,jspb,jspe,jspbb
-      
+
       common/spectra/   nacumsp,jsp(my),
      .     jsptot(2*nspec+1),jspiproc(2*nspec+1),
      .     jspbeg(0:numerop-1), jspend(0:numerop-1),
      .     jspb,jspe,jspbb
       save/spectra/
       real*4 sp(0:mx1,0:nz1,7)
-      
+
       integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz
       common /point /jbeg(0:numerop-1),jend(0:numerop-1),
      .     kbeg(0:numerop-1),kend(0:numerop-1),
@@ -493,52 +496,52 @@ c----------------now
       save /point/
 
       integer numberOfStatisticalQuantities
-      
-      
+
+
       if (iopt.eq.1) then
 c--------phi, vor
-         
+
          if(iproc.eq.0) then    !!!!! coming from node 0
 c            /* start writing image */
             if(id22.gt.999.or.id22.lt.0) then
                write(*,*) 'number of images out of range'
                stop
             endif
-            
+
             write(ext1,'(i3.3)') id22
             fnameima=filout(1:index(filout,' ')-1)//'.'//ext1
-            
+
             open (iout,file=fnameima,status='unknown',
      &           form='unformatted',access='direct',recl=mx*mz*2*iwd)
-            
+
                                 !! rewind(iout)
             write(*,*) j1,j2, 'in escru image',fnameima
             write(iout,rec=1) time,Re,alp,bet,a0,mx,my,mz,imesh,gamma,
      &           mxwall,mzwall,uampl,vampl,wampl,vspeed,
      &           (real(u00(j)),real(w00(j)),j=1,my)
-            
+
             do j=j1,j2
-               write(iout,rec=j+1) 
+               write(iout,rec=j+1)
      &              ((vor(i,k,j),phi(i,k,j),i=1,mx),k=1,mz)
             enddo
-            
-            
+
+
 c     /*       write statistics       */
             if (nstart.ne.0.and.nacum.ne.0) then
-               
+
                write(*,*) 'stat esc', nstart,nacum
                timed = time
                Reed  = Re
                alped = alp
                beted = bet
                a0ed  = a0
-               
+
                fac = 1./dble(mgalx*mgalz)
 
                ! number of statistical quantities written to record (r1)
                ! below
                numberOfStatisticalQuantities = 19
-               
+
                write(ext1,'(i3.3)') id22
                fnamesta=filstt(1:index(filstt,' ')-1)//'.'//ext1//'.sta'
                open (isn,file=fnamesta,status='unknown',
@@ -555,42 +558,42 @@ c     /*       write statistics       */
      &              wwv(j)*fac,vvv(j)*fac,j=1,my)
                write(isn) (y(j),j=1,my)
                write(isn) (fmap(j),j=1,my)
-               
+
             endif
-            
+
          else
             write(*,*) j1,j2, 'in escru image'
-            
+
             do j=j1,j2
-               write(iout,rec=j+1) 
+               write(iout,rec=j+1)
      &              ((vor(i,k,j),phi(i,k,j),i=1,mx),k=1,mz)
             enddo
-            
+
          endif
-         
+
          if(iproc.eq.numerop-1) then
 c     last node writes boundaries!!
-            write(iout,rec=my+2) 
+            write(iout,rec=my+2)
      &           ((uwallb(i,k),uwallt(i,k),i=1,mx),k=1,mz)
-            write(iout,rec=my+3) 
+            write(iout,rec=my+3)
      &           ((vwallb(i,k),vwallt(i,k),i=1,mx),k=1,mz)
-            write(iout,rec=my+4) 
+            write(iout,rec=my+4)
      &           ((wwallb(i,k),wwallt(i,k),i=1,mx),k=1,mz)
-            
-            
+
+
             write(*,*) 'closing files'
             close(iout)
             close(isn )
          endif
-         
+
       endif
-      
+
       if (iopt.eq.2) then
-         
+
          if (nstart.ne.0.and.nacumsp.ne.0) then
 c     /*       write spectra        */
             if (jjsp.eq.1) then
-               
+
                write(ext1,'(i3.3)') id22
                fnamespe=filstt(1:index(filstt,' ')-1)//'.'//ext1//'.spe'
                open (ispf,file=fnamespe,status='unknown',
@@ -599,35 +602,35 @@ c     /*       write spectra        */
                write(ispf) time,Re, alp, bet, mx,my,mz,nspec+1,
      &              nacumsp
                write(ispf) (jsptot(j), j=1,nspec+1)
-               
+
                write(*,*) 'escribe espectro, proc ',iproc,
      &              'jj= ',jjsp
-               
+
                do k=1,7
                   write(ispf) (sp(i,0,k),
      &                 i=0,(mx1+1)*(nz1+1) - 1)
-               enddo        
-               
+               enddo
+
             else
-               
+
                write(*,*) 'escribe espectro, proc ',iproc,
      &              'jj= ',jjsp
                do k=1,7
                   write(ispf) (sp(i,0,k),
      &                 i=0,(mx1+1)*(nz1+1) - 1)
-               enddo        
-               
-            endif        
-            
+               enddo
+
+            endif
+
             if (jjsp.eq.nspec+1) then
                write(*,*) 'closing files'
                close(ispf)
             endif
-            
+
          endif
-         
+
       endif
-      
+
 
       end
 
@@ -642,7 +645,7 @@ c/********************************************************************/
       subroutine initcr(myid)
       use matrices
 
-      implicit none 
+      implicit none
       include "mpif.h"
       include "ctes3D"
 
@@ -698,7 +701,7 @@ c/********************************************************************/
       save /MPI_datatype/
 
       integer nacumsp,jsp,jsptot,jspiproc,jspend,jspbeg,jspb,jspe,jspbb
-       
+
       common/spectra/   nacumsp,jsp(my),
      .                  jsptot(2*nspec+1),jspiproc(2*nspec+1),
      .                  jspbeg(0:numerop-1), jspend(0:numerop-1),
@@ -806,7 +809,7 @@ c                           /* reads in data                       */
       Re    = dat(1)
       alp   = dat(2)
       bet   = dat(3)
-      a0    = dat(4) 
+      a0    = dat(4)
       cfl   = dat(6)
       gamma = dat(7)
       uampl = dat(8)
@@ -814,8 +817,8 @@ c                           /* reads in data                       */
       wampl = dat(10)
       vspeed= dat(11) -a0      ! To compensate the movement of the wall
       FixTimeStep = dat(12)
-      
-       
+
+
 
 
       imesh  = idat(1)
@@ -827,13 +830,13 @@ c                           /* reads in data                       */
       id22   = idat(12)
       nstart = idat(13)
       ntimes = idat(14)
-      
+
       iinp=32                       !! file numbers
       ispf=35
       istati=0
       isn=33
       iout=31
- 
+
 c ---------------  compute y coordinates, pointers and
 c ---------------  modes values for FOURIER
       call malla(my,imesh,gamma,y,fmap,y2)
@@ -843,7 +846,7 @@ c ---------------  modes values for FOURIER
 c     ===============================================
 c     This function divides the y and z grid for all
 c     the processors
-c     jbeg, kbeg are arrays with the y,z start index 
+c     jbeg, kbeg are arrays with the y,z start index
 c     for each processor
 c     jend, kend are the end index
 c     ===============================================
@@ -871,7 +874,7 @@ c    ------------  initializes fast fourier transforms and CFDiff ----
          do i=1,5
            prem1(i,j)= d11(j,i)
            dt12(i,j) = d12(j,i)
-           dt21(i,j) = d21(j,i) 
+           dt21(i,j) = d21(j,i)
            dt22(i,j) = d22(j,i)
          enddo
       enddo
@@ -938,21 +941,21 @@ c --------------  prepare spectra -----
          enddo
       enddo
 
-      do i=0,numerop-1 
+      do i=0,numerop-1
          do j=1,2*nspec+1
             do jj=jspbeg(i),jspend(i)
                if (j.eq.jj) jspiproc(j) = i
             enddo
          enddo
-      enddo 
+      enddo
 
       do j=1,my
-         jsp(j) = 0    
+         jsp(j) = 0
          do jj = 1,2*nspec+1
             if (jsptot(jj).eq.j) jsp(j) = 1
          enddo
       enddo
- 
+
       jspb = jspbeg(myid)
       jspe = jspend(myid)
 
@@ -1034,13 +1037,13 @@ c --------------  write header for output -------------
             write(*,*)
             write(*,'(a23)') 'Constant time stepping:'
             write(*,'(a16,e10.4)') '  FixTimeStep = ',FixTimeStep
-         else 
+         else
             ! Case of incorrect input
             ! print error message and exit
             write(*,*)
-            write(*,'(a44)') 
+            write(*,'(a44)')
      &         'Incorrect CFL or FixTimeStep Input. Exiting.'
-            stop 
+            stop
          endif
 
          write(*,*)
@@ -1063,7 +1066,7 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c          single jjs 4/01/01, rewritten jjs 28/01/01
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     organize the data read from the restart file and puts 
+c     organize the data read from the restart file and puts
 c     into vor and phi for each y plane
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       implicit none
@@ -1085,8 +1088,8 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
             phi(i,k)=work(2,i,k)
          enddo
       enddo
-      
-      
+
+
       do k=1,klen-1
          k1 = k + kini1
          k2 = k + kini2
@@ -1095,10 +1098,10 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
             phi(i,k2)=work(2,i,k1)
          enddo
       enddo
-      
-      
+
+
       end
-      
+
       subroutine sendsta(myid)
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c          single jjs 4/01/01
@@ -1125,12 +1128,12 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
      .     Wx0a,Wz0a,
      .     istati,ntimes,nacum,nstart
       save/statis/
-      
+
       if(myid.ne.0) then
-         
+
          ipo=jb
          leng=mmy
-         
+
          call MPI_SEND(um(ipo),leng,MPI_DOUBLE_PRECISION,0,
      &        myid,MPI_COMM_WORLD,ierr)
          call MPI_SEND(vm(ipo),leng,MPI_DOUBLE_PRECISION,0,
@@ -1170,11 +1173,11 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
          call MPI_SEND(vvv(ipo),leng,MPI_DOUBLE_PRECISION,0,
      &        myid,MPI_COMM_WORLD,ierr)
       else
-         
+
          do iproc=1,numerop-1
             ipo=jbeg(iproc)
             leng=jend(iproc)-jbeg(iproc)+1
-            
+
             call MPI_RECV(um(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
      &           iproc,MPI_COMM_WORLD,istat,ierr)
             call MPI_RECV(vm(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
@@ -1214,67 +1217,67 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
             call MPI_RECV(vvv(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
      &           iproc,MPI_COMM_WORLD,istat,ierr)
          enddo
-         
+
       endif
-      
+
       end
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       subroutine genexp
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     computes wavenumbers and fourier indices
-c     
+c
 c     updated j.j.s.     22/12/00
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-      implicit none 
+      implicit none
       include "ctes3D"
-      
+
       real*4  Re,alp,bet,a0,y,hy
       common /fis/ Re,alp,bet,a0,y(my),hy(my)
       save   /fis/
-      
+
       integer iax,icx
       real alp2,bet2
       complex*8    xalp, xbet
       common /wave/ xalp(0:mx1),xbet(0:mz1),alp2(0:mx1),bet2(0:mz1),
      >     iax(mx),icx(0:mz1)
       save /wave/
-      
+
       real zero
       integer i,j,k
-      
+
       zero = 0e0
-      
+
       do 10 k=0,nz1
          xbet(k) = cmplx(zero,bet*k)
          icx(k) = k
  10   continue
-      
+
       do 20 k=nz1+1,mz1
          xbet(k) = cmplx(zero ,-bet*(mz1+1-k))
  20   continue
-      
+
       do 30 k=1,nz1
          icx(mz-k) = k
  30   continue
-      
+
       do 40 i=0,mx1
          iax(2*i+1) = i
          iax(2*i+2) = i
  40   continue
-      
+
       do i=0,mx1
          xalp(i) = cmplx(zero ,alp*i)
       enddo
-      
+
       do i=0,mx1
          alp2(i) = -xalp(i)**2
       enddo
-      
+
       do j=0,mz1
          bet2(j) = -xbet(j)**2
       enddo
-      
+
       end
-      
-      
+
+

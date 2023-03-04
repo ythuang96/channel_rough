@@ -18,23 +18,16 @@ c/*............................................c/*
       use boundary_planes, only: uWallBottom, uWallTop, vWallBottom,
      &  vWallTop, wWallBottom, wWallTop
       use wall_roughness, only: set_wall_roughness
-      use save_flowfield, only: assess_whether_to_collect_flowfield_dt,
-     &  assess_whether_to_collect_flowfield,
-     &  write_flowfield_to_hdf_file, collectFlowfield
-c    &  save_velocity_forcing_to_buffer, collectWallVelocity,
-c    &  assess_whether_to_collect_wall_velocity,
-c    &  save_velocity_bottom_wall_to_buffer,
-c    &  save_velocity_top_wall_to_buffer,
-c    &  compute_acceleration_bottom_wall,
-c    &  compute_acceleration_top_wall
-
+      use save_flowfield, only: collectFlowfield, write_h5,
+     &  assess_whether_to_collect_flowfield_step,
+     &  assess_whether_to_collect_flowfield_time
       implicit none
       include "mpif.h"
       include "ctes3D"
-      
+
       real*4  c1,c2,c3
       parameter(c1=  1./3. ,c2=  1./2. ,c3=  1.  )
-      
+
       integer myid,iproc,leng,leng1,leng2,istep
       integer irun,rkstep,i,ii,k,kk,j,jj,i1,k1,k2,
      .     ipo1,ipo2,ipo3,ipo4,ipo
@@ -45,13 +38,13 @@ c    &  compute_acceleration_top_wall
       real*8  H00u,H00w
       real*8  massu0,massw0,massu,massw
       real*8  massu1,massu2,massw1,massw2,cteu,ctew
-      
+
       integer istat(MPI_STATUS_SIZE),ierr
-      
+
       real*4  ener,Wx0,Wz0,WxL,WzL,uv0,uvL
       common /diag/ ener(9),Wx0,Wz0,WxL,WzL,uv0,uvL
       save   /diag/
-      
+
       real*8  um,vm,wm,up,vp,wp,w1m,w2m,w3m,w1p,w2p,w3p,uvr,uwr,vwr,
      .     ep,uuv,wwv,vvv,Wx0a,Wz0a
       integer istati,ntimes,nacum,nstart
@@ -64,44 +57,44 @@ c    &  compute_acceleration_top_wall
      .     Wx0a,Wz0a,
      .     istati,ntimes,nacum,nstart
       save /statis/
-      
+
       real*4 Deltat,CFL,time,dtr,FixTimeStep
       common /tem/ Deltat,CFL,time,dtr,FixTimeStep
       save   /tem/
-      
+
       integer nimag,nstep,nhist,ihist,icfl
       common /timacc/ nimag,nstep,nhist,ihist,icfl
       save   /timacc/
-      
+
       real*8  fmap,y2
       real*4  Re,alp,bet,a0,y,hy
       common /fis/ Re,alp,bet,a0,y(my),hy(my),fmap(my),y2(my)
       save   /fis/
-      
+
       integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz
       common /point /jbeg(0:numerop-1),jend(0:numerop-1),
      .     kbeg(0:numerop-1),kend(0:numerop-1),
      .     jb,je,kb,ke,mmy,mmz
       save   /point/
-      
+
       integer iinp,iout,id22,isn,ispf
       character*100 filinp,filout,filstt
       common /ficheros/ iinp,iout,id22,isn,ispf,
      .     filinp,filout,filstt
       save /ficheros/
       character*104 fname
-      
-      
+
+
       real*4 hg (0:2*my-1,0:mx1,kb:ke),vorwk(0:2*my-1,0:mx1,kb:ke),
      .     hv (0:2*my-1,0:mx1,kb:ke),phiwk(0:2*my-1,0:mx1,kb:ke),
      .     phi(0:2*my-1,0:mx1,kb:ke),vor  (0:2*my-1,0:mx1,kb:ke),
      .     dvordy(0:2*my-1,0:mx1,kb:ke)
       real*4 chwk(*),work(20*my)
-      
+
       real*8 u00(0:*),w00(0:*)
       real*8 rf0u(0:*),u00wk(0:*),
      .     rf0w(0:*),w00wk(0:*)
-      
+
       complex*8     xalp, xbet
       real*4        alp2,bet2
       integer       iax,icx
@@ -110,57 +103,57 @@ c    &  compute_acceleration_top_wall
       save   /wave/
       real*4 dkx2,dkz2
       complex*8 dkx,dkz,dkk
-      
+
       real*4 c(3)
       data c/c1,c2,c3/
       save c
-      
+
       integer nacumsp,jsp,jsptot,jspiproc,jspend,jspbeg,jspb,jspe,jspbb
       common/spectra/   nacumsp,jsp(my),
      .     jsptot(2*nspec+1),jspiproc(2*nspec+1),
      .     jspbeg(0:numerop-1), jspend(0:numerop-1),
      .     jspb,jspe,jspbb
       save/spectra/
-      
+
       real*4 sp  (0:mx1,0:nz1,7,jspbb:jspe),
      .     spwk(0:mx1,0:nz1,7,1:*)
-      
-      
+
+
       real*4 uampl,vampl,wampl,vspeed
       integer mxwall,mzwall
       common /boundary/ uampl,vampl,wampl,vspeed,mxwall,mzwall
       save /boundary/
-      
+
       real*4 u1r,u2r,u3r,o1r,o2r,o3r
-      common /planes/ 
+      common /planes/
      .     u1r(mgalx+2,mgalz),u2r(mgalx+2,mgalz),u3r(mgalx+2,mgalz),
      .     o1r(mgalx+2,mgalz),o2r(mgalx+2,mgalz),o3r(mgalx+2,mgalz)
       save/planes/
-      
+
       real*4 trp
       real*8 trp2
       common /mass/ trp(0:my1),trp2(0:my1)
       save /mass/
-      
-      
+
+
       character*3 ext,ext1
-      
+
       real*8 commtimer,transtimer,totaltimer
       common/timers/ commtimer, transtimer, totaltimer
       save/timers/
       real*8 iter_time,write_time,laps_time,comm_time
 
-      comm_time = 0D0 
+      comm_time = 0D0
       commtimer=0.0D0
       transtimer=0.0D0
       totaltimer=0.0D0
-      
+
       ihist    = 0
       istati   = 0
-      
+
       irun   = 0                ! first time step is special in tim3rkp
       icfl   = 1                ! first time step always needs a step size
-      
+
       if(myid.eq.0) then
          write(ext1,'(i3.3)') id22
          fname=filstt(1:index(filstt,' ')-1)//'.'//ext1//'.cf'
@@ -173,17 +166,17 @@ c/********************************************************************/
 c/*     THIS IS THE TIME LOOP                                        */
 c/********************************************************************/
       do istep=1,nstep
-         
+
          if (myid.eq.0) then
             totaltimer = totaltimer-MPI_WTIME()
             iter_time=-MPI_WTIME()
          endif
-         
+
          if (mod(istep-1,nhist) .eq. 0) then
             ihist=1
             icfl= 1
          endif
-         
+
          if (mod(istep-1,ntimes) .eq.0 .and.nstart.ne.0) then
             istati=1
          endif
@@ -191,9 +184,8 @@ c/********************************************************************/
 
 c     -----------------------------------------------------------------
 c     Assess whether it to save flow field or not
-         ! call assess_whether_to_collect_flowfield_dt(time)
-         call assess_whether_to_collect_flowfield(istep)
-c        call assess_whether_to_collect_wall_velocity(istep)
+         ! call assess_whether_to_collect_flowfield_time(time)
+         call assess_whether_to_collect_flowfield_step(istep)
          ! end save flowfields
 c     -----------------------------------------------------------------
 
@@ -201,18 +193,18 @@ c     -----------------------------------------------------------------
 c     -----------------------------------------------------------------
 c     write restart file
          if (mod(istep-1,nimag) .eq. 0 .and. istep.ne.1) then
-            
+
             if (myid.eq.0) then
                write_time = -MPI_WTIME()
                write(*,*) time, vWallBottom(mxwall,mzwall),
      &             vWallTop(mxwall, mzwall)
             endif
-            
+
             ! procedure to receive all the slices and stats
             call sendsta(myid)
             call chjik2ikj(phi,phi,dvordy,dvordy,myid)
             call chjik2ikj(vor,vor,dvordy,dvordy,myid)
-            
+
             do j=0,mx*max(mmy*mz,mmz*my)
                chwk(1+j)        = vor(j,0,kb)
                dvordy(j,0,kb) = phi(j,0,kb)
@@ -229,14 +221,14 @@ c     write restart file
                call escru(chwk,dvordy,u00,w00,spwk,jb,je,0,1,1,
      .              uWallBottom,uWallTop,vWallBottom,vWallTop,
      .              wWallBottom,wWallTop,massu0)
-               
+
                ! then receives everything from everybody
                do iproc=1,numerop-1
-                  
+
                   leng=(jend(iproc)-jbeg(iproc)+1)*mx*mz
                   call MPI_RECV(chwk,leng,MPI_REAL,
      &                 iproc,iproc,MPI_COMM_WORLD,istat,ierr)
-                  
+
                   call MPI_RECV(dvordy,leng,MPI_REAL,
      &                 iproc,iproc,MPI_COMM_WORLD,istat,ierr)
                   ! and writes it
@@ -245,98 +237,98 @@ c     write restart file
      &                 uWallBottom,uWallTop,vWallBottom,vWallTop,
      &                 wWallBottom,wWallTop,massu0)
                enddo
-            endif 
-            
+            endif
+
             ! Spectra
             do j=2*nspec+1,nspec+1,-1
                jj = 2*nspec+2 - j
-               
+
                ! upper half sends spectra
                if (myid.eq.jspiproc(j).and.
      &              myid.ne.jspiproc(jj)) then
-                  
+
                   leng = (mx1+1)*(nz1+1)*7
-                  
+
                   call MPI_SEND(sp(0,0,1,j),leng,MPI_REAL,
      &                 jspiproc(jj),0,MPI_COMM_WORLD,ierr)
-                  
+
                endif
-               
+
                ! lower half receives upper half spectra and computes average
                if (myid.eq.jspiproc(jj)) then
-                  
+
                   leng = (mx1+1)*(nz1+1)*7
                   leng1 = (mx1+1)*(nz1+1)*3
                   leng2 = (mx1+1)*(nz1+1)*4
-                  
+
                   if (jspiproc(j).ne.myid) then
-                     
+
                      call MPI_RECV(spwk(0,0,1,1),leng,MPI_REAL,
      &                    jspiproc(j),0,MPI_COMM_WORLD,istat,ierr)
 
                   else
-                     
+
                      do i=0,leng-1
                         spwk(i,0,1,1) = sp (i,0,1,j)
                      enddo
-                     
+
                   endif
-                  
+
                   ! velocity spectra are symmetric
                   do i = 0,leng1-1
                      spwk(i,0,1,1) =.5*(spwk(i,0,1,1) + sp(i,0,1,jj))
                   enddo
-                  
+
                   ! velocity cospectra are skew-symmetric
                   do i = leng1,leng2-1
                      spwk(i,0,1,1) =.5*(-spwk(i,0,1,1) + sp(i,0,1,jj))
                   enddo
-                  
+
                   ! vorticity spectra are symmetric
                   do i = leng2,leng-1
                      spwk(i,0,1,1) =.5*(spwk(i,0,1,1) + sp(i,0,1,jj))
                   enddo
-                  
+
                   ! everybody sends data to the master
                   if(myid.ne.0) then
-                     
+
                      ! only lower half sends averaged spectra to the master
                      leng = (mx1+1)*(nz1+1)*7
                      call MPI_SEND(spwk,leng,MPI_REAL,
      &                    0,myid,MPI_COMM_WORLD,ierr)
-                     
+
                   else
                      ! the master first writes its stuff
                      call escru(chwk,dvordy,u00,w00,spwk,jb,je,0,2,jj,
      .                    uWallBottom,uWallTop,vWallBottom,vWallTop,
      .                    wWallBottom,wWallTop,massu0)
                   endif
-               endif 
-               
+               endif
+
                if (myid.eq.0.and.jspiproc(jj).ne.myid) then
                   ! then receives everything from everybody
                   leng = (mx1+1)*(nz1+1)*7
                   call MPI_RECV(spwk,leng,MPI_REAL,jspiproc(jj),
      &                 jspiproc(jj),MPI_COMM_WORLD,istat,ierr)
-                  
+
                   ! and writes it
                   call escru(chwk,dvordy,u00,w00,spwk,jbeg(iproc),
      &                 jend(iproc),iproc,2,jj,
      &                 uWallBottom,uWallTop,vWallBottom,vWallTop,
      &                 wWallBottom,wWallTop,massu0)
-                  
+
                endif
             enddo
-            
-            
+
+
             call chikj2jik(phi,phi,dvordy,dvordy,myid)
             call chikj2jik(vor,vor,dvordy,dvordy,myid)
-            
+
             if (myid.eq.0) then
                write(*,*) 'time write:',MPI_WTIME()+write_time
                id22 = id22+1
             endif
-            
+
          endif
 c     finished writing image
 c     -----------------------------------------------------------------
@@ -346,9 +338,9 @@ c/********************************************************************/
 c/*     Special treatment for first time step                        */
 c/********************************************************************/
          if(irun.eq.0) then
-            
+
             irun = 1
-            
+
 c     -----------------------------------------------------------------
            ! all processors have explicitly set the time to zero, so
            ! this step can be skipped
@@ -440,8 +432,8 @@ c     compute u mass flux
                massu0 = massu0 + trp2(j)*u00(j)
             enddo
 
-            ! target mass flux, historical Madrid value 
-            massu0 = .8987636566162d0 
+            ! target mass flux, historical Madrid value
+            massu0 = .8987636566162d0
             if(myid.eq.0) then
                write (*,*) 'mass flux:',massu0,massw0
             endif
@@ -452,8 +444,8 @@ c     -----------------------------------------------------------------
 c/********************************************************************/
 c/*     End special first step                                       */
 c/********************************************************************/
-         
-         
+
+
 c/********************************************************************/
 c/*     Runge-Kutta third order                                      */
 c/********************************************************************/
@@ -503,16 +495,16 @@ c     Compute non-linear terms
             ! phiwk, vorwk, hv, hg, dvordy, work are inputs
             ! u1r, u2r ... are all work variables
             call hvhg(phiwk,vorwk,hv,hg,rf0u,
-     .           rf0w,dvordy,work,sp,myid,rkstep, 
-     .           u1r,u2r,u3r,o1r,o2r,o3r, 
+     .           rf0w,dvordy,work,sp,myid,rkstep,
+     .           u1r,u2r,u3r,o1r,o2r,o3r,
      .           u1r,u2r,u3r,o1r,o2r,o3r)
             ! Ouputs:
             ! hv    : (d^2/dx^2 + d^2/dz^2) H2
             ! hg    : - d H3/dx + d H1/dz
             ! rf0u  : H1(kx=kz=0)
             ! rf0w  : H3(kx=kz=0)
-            ! dvordy: + d H1/dx + d H3/dz 
-            ! 
+            ! dvordy: + d H1/dx + d H3/dz
+            !
             ! The 3 matrices are kx-kz-y
             ! with each processor containing a few kx-kz planes
 c     -----------------------------------------------------------------
@@ -570,19 +562,6 @@ c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
-c     Save v velocity forcing if required
-            ! note: the velocity, vorticity and vorticity forcing
-            ! fields are saved in subroutine hvhg, see
-            ! save_velocity_at_wallparallel_plane_to_buffer
-            ! save_vorticity_at_wallparallel_plane_to_buffer
-            ! save_vorticity_forcing_at_plane_to_buffer
-c           if (collectFlowfield .and. rkstep==1) then
-c             call save_velocity_forcing_to_buffer(hv, jb, je)
-c           endif
-c     -----------------------------------------------------------------
-
-
-c     -----------------------------------------------------------------
 c     Compute the RHS forcing for u00, w00, omega3, phi
             ! gamma_s * Deltat
             r1=c(rkstep)*Deltat
@@ -602,7 +581,7 @@ c     Compute the RHS forcing for u00, w00, omega3, phi
                   enddo
                enddo
             enddo
-            
+
             ! Re/ ( gamma_s * Deltat )
             dtr1=dtr/c(rkstep)
             ! Apply the scalar multiplier
@@ -623,45 +602,9 @@ c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
-c     Update boundary condition for the viscous time step 
+c     Update boundary condition for the viscous time step
             call set_wall_roughness(uWallBottom, uWallTop, vWallBottom,
      &          vWallTop)
-c     -----------------------------------------------------------------
-
-
-c     -----------------------------------------------------------------
-c     Save wall acceleration
-c     Note that when sampling based on time, the acceleration is
-c     not computed correctly!
-            ! note: the velocity, vorticity and vorticity forcing
-            ! fields are saved in subroutine hvhg, see:
-            ! save_velocity_at_wallparallel_plane_to_buffer
-            ! save_vorticity_at_wallparallel_plane_to_buffer
-            ! save_vorticity_forcing_at_plane_to_buffer
-            ! the velocity forcing is saved above, see
-            ! save_velocity_forcing_to_buffer
-            ! time step before data collection: save previous velocity
-            ! to compute acceleration
-
-            ! Save wall velocity at previous time step
-c           if(collectWallVelocity .and. (.not. collectFlowfield)) then
-c             if(rkstep == 1) then
-c               call save_velocity_bottom_wall_to_buffer(uWallBottom,
-c    &            vWallBottom, wWallBottom)
-c               call save_velocity_top_wall_to_buffer(uWallTop,
-c    &            vWallTop, wWallTop)
-c             endif
-c           endif
-c           ! data collection timestep: compute acceleration from
-c           ! previous velocity and current velocity
-c           if(collectWallVelocity .and. collectFlowfield) then
-c             if(rkstep == 1) then
-c               call compute_acceleration_bottom_wall(uWallBottom,
-c    &            vWallBottom, wWallBottom, Deltat)
-c               call compute_acceleration_top_wall(uWallTop,
-c    &            vWallTop, wWallTop, Deltat)
-c             endif
-c           endif
 c     -----------------------------------------------------------------
 
 
@@ -670,7 +613,7 @@ c     Advance phi, v, dv/dy, omega2
             do k=kb,ke ! Loop over the assigned kz of this processor
                k1 = icx(k-1)
                do i=0,mx1 ! Loop over all kx
-                  
+
                   rk = bet2(k1)+alp2(i) ! kx^2 + kz^2
                   rk2 = dtr1+rk ! kx^2 + kz^2 + Re/( gamma_s * Deltat )
 
@@ -696,7 +639,7 @@ c     Advance phi, v, dv/dy, omega2
                   !bct   = (0.0, 0.0)
                   !bcbdv = (0.0, 0.0)
                   !bctdv = (0.0, 0.0)
-                  
+
                   ! Solve for phi, v, dv/dy, omega2 at the next RK step
                   ! for each kx, kz wavenumbers
                   call lapsov(phiwk(0,i,k),hg(0,i,k),hv(0,i,k),
@@ -721,11 +664,11 @@ c     Advance kx = kz = 0 modes of u and w
             ! Solve [d/dt - 1/Re * d^2/dy^2] u = H1(00)
             bcbr = 0d0
             bctr = 0d0
-            rk = dtr1 
+            rk = dtr1
             call Lapv1(rf0u,u00wk,rk,bcbr,bctr)
             call Lapv1(rf0w,w00wk,rk,bcbr,bctr)
             ! The solution is u00wk and w00wk
-            
+
             ! Velocity with constant RHS forcing
             ! Solve [d/dt - 1/Re * d^2/dy^2] u = constant
             bcbr = 0d0
@@ -733,12 +676,12 @@ c     Advance kx = kz = 0 modes of u and w
             do j=0,my1
                rf0u(j) = -dtr1
                rf0w(j) = -dtr1
-            enddo 
+            enddo
             rk = dtr1
             call Lapv1(rf0u,rf0u,rk,bcbr,bctr)
             call Lapv1(rf0w,rf0w,rk,bcbr,bctr)
             ! The solution is rf0u and rf0w
-            
+
             ! Compute the mass flux for the two solutions
             ! integrate in y
             massu1=0d0
@@ -751,7 +694,7 @@ c     Advance kx = kz = 0 modes of u and w
                massu2 = massu2 + trp2(j)*rf0u(j)
                massw2 = massw2 + trp2(j)*rf0w(j)
             enddo
-            
+
             ! Linearly conbine the two solutions
             ! to get constant mass flux
             ! massu0, massw0 is the target mass flux
@@ -761,11 +704,11 @@ c     Advance kx = kz = 0 modes of u and w
                u00wk(j) = u00wk(j) + cteu*rf0u(j)
                w00wk(j) = w00wk(j) + ctew*rf0w(j)
             enddo
-            
+
             ! Compute the derivatives of u00 and w00
             call deryr(u00wk,rf0u,my)
             call deryr(w00wk,rf0w,my)
-            
+
             ! u00wk: the kx = kz = 0 u mode
             ! w00wk: the kx = kz = 0 w mode
             ! rf0u : d/dy of u00
@@ -773,7 +716,7 @@ c     Advance kx = kz = 0 modes of u and w
 c     Advance kx = kz = 0 modes of u and w complete
 c     -----------------------------------------------------------------
 
-            
+
          ENDDO
 c/********************************************************************/
 c/*     Runge-Kutta third order Complete                             */
@@ -788,11 +731,10 @@ c     Write Flowfield from buffer to h5 file
            ! at which the data was collected
            if (myid .eq. 0) then
 326          format(a22,i5,a7,(d14.6))
-             write(*,326) '    Saving Data, Step ', istep, ', Time ', 
+             write(*,326) '    Saving Data, Step ', istep, ', Time ',
      &           time
            endif
-           call write_flowfield_to_hdf_file(alp, bet, y, jb, je, 
-     &         xalp, xbet, time, Re, massu0)
+           call write_h5(alp, bet, y, xalp, xbet, time, Re, massu0)
          endif
 c     -----------------------------------------------------------------
 
@@ -826,7 +768,7 @@ c     WxL, WzL, uvL
             if (myid.eq.numerop-1) then
                chwk (1) = WxL
                chwk (2) = WzL
-               chwk (3) = uvL 
+               chwk (3) = uvL
                call MPI_SEND(chwk,3,MPI_REAL,
      &              0,0,MPI_COMM_WORLD,ierr)
             endif
@@ -845,42 +787,42 @@ c     -----------------------------------------------------------------
 c     -----------------------------------------------------------------
 c     Master writes history record
          if(myid.eq.0) then
-            
-            
+
+
             reynota=0.5*re*re*(abs(wz0/re+uv0)
      .           +abs(wzl/re+uvL))
-            
+
             ! mass flux in u and w
             massu = massu1 +cteu*massu2
             massw = massw1 +ctew*massw2
-            
+
             ! write histroy record
             if (ihist.eq.1) then
                tmp=my1/2
-               
+
  325           format(a10,i5,9(d14.6))
                write(*,325) 'Time Step ', istep,time,-1.*Wz0,WzL,
      .              sqrt(reynota),Deltat,
      .              u00(floor(tmp))*Re/sqrt(reynota),
      .              massw,uv0,uvL
-               
+
  324           format(17(d22.14))
                write(39,324) time,-1.*Wz0,WzL,sqrt(reynota),ener,
      .              u00(floor(tmp))*Re/sqrt(reynota),massw
                call flush(39)
             endif
-            
+
             ! switch to new .cf file
-            if (mod(istep-1,nimag).eq.0 .and. 
+            if (mod(istep-1,nimag).eq.0 .and.
      &           istep.ne.1 .and. istep.ne.nstep) then
-               
+
                close(39)
                write(ext1,'(i3.3)') id22
                fname=filstt(1:index(filstt,' ')-1)//'.'//ext1//'.cf'
                write (*,*) fname
                open(39,file=fname,status='unknown')
             endif
-            
+
          endif
 c     -----------------------------------------------------------------
 
@@ -927,7 +869,7 @@ c     Master writes data about the total computation time
          print *,"Aver time per step: ",totaltimer/nstep
       end if
 c     -----------------------------------------------------------------
-      
+
       end
 
 
@@ -961,63 +903,56 @@ c/*                                                                  */
 c/********************************************************************/
       subroutine hvhg(phic,ome2c,rhvc,rhgc,
      .     rf0u,rf0w,ome1c,
-     .     work2,sp,myid,rkstep, 
-     .     u1r,u2r,u3r,o1r,o2r,o3r, 
+     .     work2,sp,myid,rkstep,
+     .     u1r,u2r,u3r,o1r,o2r,o3r,
      .     u1c,u2c,u3c,o1c,o2c,o3c )
       use save_flowfield, only: collectFlowfield,
-     &  save_velocity_at_wallparallel_plane_to_buffer,
-     &  save_vorticity_at_wallparallel_plane_to_buffer
-c    &  save_phi_at_wallparallel_plane_to_buffer,
-c    &  save_vorticity_forcing_at_plane_to_buffer,
-c    &  save_velocity_at_wallparallel_plane_to_buffer_phys,
-c    &  save_vorticity_at_wallparallel_plane_to_buffer_phys,
-c    &  save_yderivatives_at_wallparallel_plane_to_buffer,
-c    &  save_H_at_wallparallel_plane_to_buffer
+     &  save_plane_data_to_buffer
       implicit none
       include "ctes3D"
       include "mpif.h"
-      
+
       integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz
       common /point /jbeg(0:numerop-1),jend(0:numerop-1),
      .     kbeg(0:numerop-1),kend(0:numerop-1),
      .     jb,je,kb,ke,mmy,mmz
       save   /point/
-      
+
       integer nacumsp,jsp,jsptot,jspiproc,jspend,jspbeg,jspb,jspe,jspbb
-      
+
       common/spectra/   nacumsp,jsp(my),
      .     jsptot(2*nspec+1),jspiproc(2*nspec+1),
      .     jspbeg(0:numerop-1), jspend(0:numerop-1),
      .     jspb,jspe,jspbb
       save/spectra/
       real*4 sp(0:mx1,0:nz1,7,jspbb:jspe)
-      
-      
+
+
       real*4 Deltat,CFL,time,dtr,FixTimeStep
       common /tem/ Deltat,CFL,time,dtr,FixTimeStep
       save /tem/
-      
+
       real*8  fmap,y2
       real*4  Re,alp,bet,a0,y,hy
       common /fis/ Re,alp,bet,a0,y(my),hy(my),fmap(my),y2(my)
       save   /fis/
-      
+
       integer nimag,nstep,nhist,ihist,icfl
       common /timacc/ nimag,nstep,nhist,ihist,icfl
       save   /timacc/
-      
+
       integer iax,icx
       real alp2,bet2
       complex*8    xalp, xbet
       common /wave/ xalp(0:mx1),xbet(0:mz1),alp2(0:mx1),bet2(0:mz1),
      .     iax(mx),icx(0:mz1)
       save /wave/
-      
+
       real*4 uner(9)
       real*4  ener,Wx0,Wz0,WxL,WzL,uv0,uvL
       common /diag/ ener(9),Wx0,Wz0,WxL,WzL,uv0,uvL
       save   /diag/
-      
+
       real*8 um,vm,wm,up,vp,wp,w1m,w2m,w3m,w1p,w2p,w3p,uvr,uwr,vwr,
      .     ep,uuv,wwv,vvv,Wx0a,Wz0a
       integer istati,ntimes,nacum,nstart
@@ -1030,27 +965,27 @@ c    &  save_H_at_wallparallel_plane_to_buffer
      .     Wx0a,Wz0a,
      .     istati,ntimes,nacum,nstart
       save /statis/
-      
+
       complex*8 phic (0:mx1,0:mz1,jb:*),
      .     ome1c(0:mx1,0:mz1,jb:*),
      .     ome2c(0:mx1,0:mz1,jb:*),
      .     rhgc (0:mx1,0:mz1,jb:*),
      .     rhvc (0:mx1,0:mz1,jb:*)
-      
+
       real*8 rf0u(*),rf0w(*)
       real*4 work2(*)
-      
+
 c---------------6 * (mgalx+2)  * mgalz planes
-      
-      
-      real*4 
+
+
+      real*4
      &     u1r(mgalx+2,mgalz),u2r(mgalx+2,mgalz),u3r(mgalx+2,mgalz),
      &     o1r(mgalx+2,mgalz),o2r(mgalx+2,mgalz),o3r(mgalx+2,mgalz)
-      
+
       complex*8
      &     u1c(0:mx1,0:mz1),u2c(0:mx1,0:mz1),u3c(0:mx1,0:mz1),
      &     o1c(0:mx1,0:mz1),o2c(0:mx1,0:mz1),o3c(0:mx1,0:mz1)
-      
+
       complex*8 dk
       real*4 dk2
       integer myid,rkstep
@@ -1060,20 +995,20 @@ c---------------6 * (mgalx+2)  * mgalz planes
       integer mmyr
       integer iproc,pproc
       integer pnodes
-      
+
       real*4 cflx,cfly,cflz,hxalp,hzalp,hyy,cfl0,reigmx1
       integer uggg
       real*8 aa
       complex*16 cc
-      
+
       real*4 temp
-      
+
       integer ilocalu,ilocalw,icount
-      
+
       ipo1 = 1    + my
       ipo2 = ipo1 + my
       ipo3 = ipo2 + my
-      
+
 c     -----------------------------------------------------------------
 c     at this point:
 c     rhv   is dv / dy
@@ -1081,7 +1016,7 @@ c     rhg   is v
 c     phic  is nabla^2(v)
 c     ome1c is d(omega_2)/dy
 c     ome2  is omega_2
-c     All Fourier x -Fourier z -Physical y 
+c     All Fourier x -Fourier z -Physical y
 c     -----------------------------------------------------------------
 
 
@@ -1090,14 +1025,14 @@ c     Initialize variables out of the y loop
       do kk=1,9
          uner(kk) = 0.
       enddo
-      
+
       iy = jspb
-      
+
       cflx = 0.
       cfly = 0.
       cflz = 0.
       cfl0 = 0.
-      
+
       hxalp=alp*mx*0.5
       hzalp=bet*mz*0.5
 c     -----------------------------------------------------------------
@@ -1105,15 +1040,6 @@ c     -----------------------------------------------------------------
 
 c     Loop over y planes
       DO J = JB,JE
-
-c     -----------------------------------------------------------------
-c     save y derivatives
-c        if (collectFlowfield .and. rkstep==1) then
-c           call save_yderivatives_at_wallparallel_plane_to_buffer(
-c    &         rhvc(0,0,j), ome1c(0,0,j), j, jb)
-c        endif
-c     -----------------------------------------------------------------
-
 
 c     -----------------------------------------------------------------
 c     computes omega_1 (o1c) and omega_3 (o3c)
@@ -1129,9 +1055,9 @@ c     except kx = 0 and kz = 0 modes
             dk  = xbet(k)
             dk2 = bet2(k)
             do i=1,mx1
-               
+
                temp = 1.0/(alp2(i) + dk2)
-               
+
                o3c(i,k) = ( ome1c(i,k,j)*dk-phic(i,k,j)*xalp(i))
      &              *temp
                o1c(i,k) = ( ome1c(i,k,j)*xalp(i) + phic(i,k,j)*dk)
@@ -1155,9 +1081,9 @@ c     except kx = 0 and kz = 0 modes
             dk  = xbet(k)
             dk2 = bet2(k)
             do i=1,mx1
-               
+
                temp = 1.0/(alp2(i) + dk2)
-               
+
                u3c(i,k) = ( rhvc(i,k,j)*dk + ome2c(i,k,j)*xalp(i) )
      &              *temp
                u1c(i,k) = ( rhvc(i,k,j)*xalp(i) - ome2c(i,k,j)*dk )
@@ -1173,7 +1099,7 @@ c     They are stacked in a column vector
          jj = j-1
          o3c(0,0) = -work2(      j)
          o1c(0,0) =  work2(ipo1+jj)
-         u1c(0,0) =  work2(ipo2+jj) 
+         u1c(0,0) =  work2(ipo2+jj)
          u3c(0,0) =  work2(ipo3+jj)
 c     -----------------------------------------------------------------
 
@@ -1239,130 +1165,130 @@ c     Collect spectra information
      &                    conjg(o3c(i,kk))
                   enddo
                enddo
-               
+
                ! Next spectra plane
                iy = iy + 1
             endif
-            
-            
+
+
             if (j.eq.je)  nacumsp = nacumsp +1
-            
+
             do kk=1,9
                ener(kk) = 0.
             enddo
-            
+
             do k=0,mz1
-               
+
                ! intensities
                aa = u1c(0,k)*conjg(u1c(0,k))
                up(j) = up(j) + aa
                ener(1)=ener(1) + aa
-               
+
                aa= u2c(0,k)*conjg(u2c(0,k))
                vp(j) = vp(j) + aa
                ener(2)=ener(2) + aa
-               
+
                aa= u3c(0,k)*conjg(u3c(0,k))
                wp(j) = wp(j) + aa
                ener(3)=ener(3) + aa
-               
+
                aa= real(u1c(0,k)*conjg(u2c(0,k)))
                uvr(j)= uvr(j) + aa
                ener(4)=ener(4) + aa
-               
+
                aa= real(u1c(0,k)*conjg(u3c(0,k)))
                uwr(j)= uwr(j) + aa
                ener(5)=ener(5) + aa
-               
+
                aa= real(u3c(0,k)*conjg(u2c(0,k)))
                vwr(j)= vwr(j) + aa
                ener(6)=ener(6) + aa
-               
+
                aa= o1c(0,k)*conjg(o1c(0,k))
                w1p(j)= w1p(j) + aa
                ener(7)=ener(7) + aa
-               
+
                aa = o2c(0,k)*conjg(o2c(0,k))
                w2p(j)= w2p(j) + aa
                ener(8)=ener(8) + aa
-               
+
                aa = o3c(0,k)*conjg(o3c(0,k))
                w3p(j)= w3p(j) + aa
                ener(9)=ener(9) + aa
-               
+
                ! dissipation
-               aa =  bet2(k) * 
+               aa =  bet2(k) *
      &              ( u1c(0,k)*conjg(u1c(0,k)) +
-     &              u2c(0,k)*conjg(u2c(0,k)) + 
+     &              u2c(0,k)*conjg(u2c(0,k)) +
      &              u3c(0,k)*conjg(u3c(0,k)) ) +
      &              rhvc(0,k,j)*conjg(rhvc(0,k,j))
-               
+
                cc = o1c(0,k) + xbet(k)*u2c(0,k)
-               aa = aa + cc*conjg(cc) 
-               cc = o3c(0,k) 
-               aa = aa + cc*conjg(cc) 
-               
+               aa = aa + cc*conjg(cc)
+               cc = o3c(0,k)
+               aa = aa + cc*conjg(cc)
+
                ep(j) = ep(j) + aa
-               
+
                do i=1,mx1
                   aa = 2.*u1c(i,k)*conjg(u1c(i,k))
                   up(j) = up(j) + aa
                   ener(1)=ener(1) + aa
-                  
+
                   aa= 2.*u2c(i,k)*conjg(u2c(i,k))
                   vp(j) = vp(j) + aa
                   ener(2)=ener(2) + aa
-                  
+
                   aa= 2.*u3c(i,k)*conjg(u3c(i,k))
                   wp(j) = wp(j) + aa
                   ener(3)=ener(3) + aa
-                  
+
                   aa= 2.*real(u1c(i,k)*conjg(u2c(i,k)))
                   uvr(j)= uvr(j) + aa
                   ener(4)=ener(4) + abs(aa)
-                  
+
                   aa= 2.*real(u1c(i,k)*conjg(u3c(i,k)))
                   uwr(j)= uwr(j) + aa
                   ener(5)=ener(5) + abs(aa)
-                  
+
                   aa= 2.*real(u3c(i,k)*conjg(u2c(i,k)))
                   vwr(j)= vwr(j) + aa
                   ener(6)=ener(6) + abs(aa)
-                  
+
                   aa= 2.*o1c(i,k)*conjg(o1c(i,k))
                   w1p(j)= w1p(j) + aa
                   ener(7)=ener(7) + aa
-                  
+
                   aa = 2.*o2c(i,k)*conjg(o2c(i,k))
                   w2p(j)= w2p(j) + aa
                   ener(8)=ener(8) + aa
-                  
+
                   aa = 2.*o3c(i,k)*conjg(o3c(i,k))
                   w3p(j)= w3p(j) + aa
                   ener(9)=ener(9) + aa
-                  
-                  aa = ( alp2(i) + bet2(k) ) * 
+
+                  aa = ( alp2(i) + bet2(k) ) *
      &                 ( u1c(i,k)*conjg(u1c(i,k)) +
-     &                 u2c(i,k)*conjg(u2c(i,k)) + 
+     &                 u2c(i,k)*conjg(u2c(i,k)) +
      &                 u3c(i,k)*conjg(u3c(i,k)) ) +
-     &                 rhvc(i,k,j)*conjg(rhvc(i,k,j) ) 
-                  
+     &                 rhvc(i,k,j)*conjg(rhvc(i,k,j) )
+
                   cc = o1c(i,k) + xbet(k)*u2c(i,k)
-                  aa = aa + cc*conjg(cc) 
-                  cc = o3c(i,k) - xalp(i)*u2c(i,k) 
                   aa = aa + cc*conjg(cc)
-                  
-                  ep(j) = ep(j) + 2.*aa 
-                  
+                  cc = o3c(i,k) - xalp(i)*u2c(i,k)
+                  aa = aa + cc*conjg(cc)
+
+                  ep(j) = ep(j) + 2.*aa
+
                enddo
             enddo
-            
+
             ! add this plane energy
             hyy = hy(j)
             do kk = 1,9
                uner(kk) = uner(kk) + ener(kk)*hyy
             enddo
-            
+
             ! means
             um(j) = um(j)+u1c(0,0)
             vm(j) = vm(j)+u2c(0,0)
@@ -1370,10 +1296,10 @@ c     Collect spectra information
             w1m(j)= w1m(j)+o1c(0,0)
             w2m(j)= w2m(j)+o2c(0,0)
             w3m(j)= w3m(j)+o3c(0,0)
-            
+
             ! update nacum just once !!!
             if (j.eq.je)   nacum = nacum+1
-            
+
             if (myid.eq.0) then
                Wx0a=Wx0a+o1c(0,0)
                Wz0a=Wz0a+o3c(0,0)
@@ -1403,25 +1329,18 @@ c     -----------------------------------------------------------------
 
 c     -----------------------------------------------------------------
 c     save velocity and vorticity fields if required
-         ! note: the forcing fields are saved elsewhere, see
-         ! save_vorticity_forcing_at_plane_to_buffer (in hvhg)
-         ! save_velocity_forcing_to_buffer (in cross1)
          if (collectFlowfield .and. rkstep==1) then
-            call save_velocity_at_wallparallel_plane_to_buffer(u1c,
-     &         u2c, u3c, j, jb)
-            call save_vorticity_at_wallparallel_plane_to_buffer(o1c,
-     &         o2c, o3c, j, jb)
-c           call save_phi_at_wallparallel_plane_to_buffer(
-c    &         phic(0,0,j), j, jb)
+            call save_plane_data_to_buffer(
+     &           u1c, u2c, u3c, o1c, o2c, o3c, j )
          endif
 c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
-c     Move everything to Physical x - Physical z 
-         
+c     Move everything to Physical x - Physical z
+
          ! substract umax/2 to u00 to increase dt !!!!
-         u1c(0,0) = u1c(0,0) - a0 
+         u1c(0,0) = u1c(0,0) - a0
          ! IFFT2
          call fourxz(u1c,u1r,1,1) ! u
          call fourxz(u2c,u2r,1,1) ! v
@@ -1429,28 +1348,21 @@ c     Move everything to Physical x - Physical z
          call fourxz(o1c,o1r,1,1) !omega_1
          call fourxz(o2c,o2r,1,1) !omega_2
          call fourxz(o3c,o3r,1,1) !omega_3
-
-c        if (collectFlowfield .and. rkstep==1) then
-c           call save_velocity_at_wallparallel_plane_to_buffer_phys(
-c    &         u1r, u2r, u3r, j, jb)
-c           call save_vorticity_at_wallparallel_plane_to_buffer_phys(
-c    &         o1r, o2r, o3r, j, jb)
-c        endif
 c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
          if (rkstep.eq.1) then
-            ! Compute triple products 
+            ! Compute triple products
             if (istati.eq.1) then
                do k = 1,mgalz
-                  do i=1,mgalx 
+                  do i=1,mgalx
                      aa = u2r(i,k)
-                     uuv(j) = uuv(j) +aa*u1r(i,k)**2  
-                     wwv(j) = wwv(j) +aa*u3r(i,k)**2  
+                     uuv(j) = uuv(j) +aa*u1r(i,k)**2
+                     wwv(j) = wwv(j) +aa*u3r(i,k)**2
                      vvv(j) = vvv(j) +aa**3
-                  enddo 
-               enddo 
+                  enddo
+               enddo
             endif
             ! Compute uv Stress at the bottom wall
             if (j.eq.1) then
@@ -1480,7 +1392,7 @@ c     -----------------------------------------------------------------
 c     -----------------------------------------------------------------
 c     CFL Condition
          uggg=0
-         
+
          if (icfl.eq.1.and.rkstep.eq.1) then
             ! hyy is y grid spacing at the current x-z plane
             hyy = hy(j)
@@ -1491,15 +1403,15 @@ c     CFL Condition
                   cflz = max(cflz,abs(u3r(i,k))*hzalp )
                enddo
             enddo
-            
+
          endif
 c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
 c     computes H = u X omega
-c     u2r = H1 = v.omega_3 - w.omega_2 
-c     u3r = H2 = w.omega_1 - u.omega_3 
+c     u2r = H1 = v.omega_3 - w.omega_2
+c     u3r = H2 = w.omega_1 - u.omega_3
 c     u1r = H3 = u.omega_2 - v.omega_1
 c     All 3 variables are physical x - physical z for one x-z plane
          do k=1,mgalz
@@ -1524,11 +1436,6 @@ c     FFT2 of H to Fourier x - Fourier z
          call fourxz(u2c,u2r,-1,1)
          ! H2
          call fourxz(u3c,u3r,-1,1)
-         
-c        if (collectFlowfield .and. rkstep==1) then
-c           call save_H_at_wallparallel_plane_to_buffer(u2c,
-c    &         u3c, u1c, j, jb)
-c        endif
 c     -----------------------------------------------------------------
 
 
@@ -1574,21 +1481,6 @@ c     Copy planes into outputs
          enddo
 c     -----------------------------------------------------------------
 
-
-c     -----------------------------------------------------------------
-c     Save vorticity forcing if required
-         ! note: the velocity, vorticity and velocity forcing fields
-         ! are saved elsewhere, see
-         ! save_velocity_at_wallparallel_plane_to_buffer (in hvhg)
-         ! save_vorticity_at_wallparallel_plane_to_buffer (in hvhg)
-         ! save_velocity_forcing_to_buffer (in cross1)
-c        if (collectFlowfield .and. rkstep==1) then
-c          call save_vorticity_forcing_at_plane_to_buffer(rhgc(:,:,j),
-c    &       j, jb)
-c        endif
-c     -----------------------------------------------------------------
-
-
 c     Finosh loop over y planes
       ENDDO
 
@@ -1604,7 +1496,7 @@ c     Adds up the total energy
       if (istati.eq.1.and.rkstep.eq.1.and.ihist.eq.1) then
          call MPI_ALLREDUCE(uner,ener,9,MPI_REAL,MPI_SUM,
      .        MPI_COMM_WORLD,ierr)
-         
+
          do i=1,9
             ener(i)=sqrt(abs(ener(i)))
          enddo
@@ -1614,14 +1506,14 @@ c     -----------------------------------------------------------------
 c     -----------------------------------------------------------------
 c     Computes Deltat
       if (icfl.eq.1.and.rkstep.eq.1) then
-         
+
          cfl0 = max(cflx,max(cfly,cflz))
-         
+
          call MPI_ALLREDUCE(cfl0,reigmx1,1,MPI_REAL,MPI_MAX,
      .        MPI_COMM_WORLD,ierr)
-         
+
          if (reigmx1.lt.1e-1)  uggg=1
-         
+
          if (CFL.ne.0 .and. FixTimeStep.eq.0) then
             ! Case of adaptive time stepping
             Deltat=CFL/reigmx1
@@ -1630,11 +1522,11 @@ c     Computes Deltat
             Deltat=FixTimeStep
          endif
          dtr=Re/Deltat
-         
+
          if (uggg.ne.0) then
             write(*,*) 'UGGG', uggg,myid,ihist,jb,je,kb,ke
          endif
-         
+
       endif
 c     -----------------------------------------------------------------
 
@@ -1659,29 +1551,29 @@ c     sends a block (jb:je) to everybody and receive from everybody
             ilocalw  =1
          endif
       enddo
-      if (ilocalu.eq.1 .OR. ilocalw.eq.1) then 
+      if (ilocalu.eq.1 .OR. ilocalw.eq.1) then
          write(*,*) 'NaN before SENDRECV in hvhg',ilocalu,ilocalw,
      .        'myid=',myid,'   count:',icount
          call system("hostname")
       endif
-      
+
       ! All processors exchange data for 00 modes
       do iproc=0,numerop-1
-         
+
          if (iproc.ne.myid) then
             mmyr=jend(iproc)-jbeg(iproc)+1
             call MPI_SENDRECV(rf0u(jb),mmy,MPI_REAL8,
      .           iproc,0,rf0u(jbeg(iproc)),
      .           mmyr,MPI_REAL8,
      .           iproc,0,MPI_COMM_WORLD,istat,ierr)
-            
+
             call MPI_SENDRECV(rf0w(jb),mmy,MPI_REAL8,
      .           iproc,0,rf0w(jbeg(iproc)),
      .           mmyr,MPI_REAL8,
      .           iproc,0,MPI_COMM_WORLD,istat,ierr)
          endif
       enddo
-      
+
       ! Check for NAN
       ilocalu =0
       ilocalw =0
@@ -1696,7 +1588,7 @@ c     sends a block (jb:je) to everybody and receive from everybody
             ilocalw  =1
          endif
       enddo
-      if (ilocalu.eq.1 .OR. ilocalw.eq.1) then 
+      if (ilocalu.eq.1 .OR. ilocalw.eq.1) then
          write(*,*) 'NaN after  SENDRECV in hvhg',ilocalu,ilocalw,
      ,        'myid=',myid,'   count:',icount
          call system("hostname")
@@ -1712,6 +1604,6 @@ c     ome1c:  dH1/dx + dH3/dz
 c     rhgc : -dH3/dx + dH1/dz
 c     rhvc : d^2H2/dx^2 + d^2H2/dz^2
 c     -----------------------------------------------------------------
-      
+
       end
-      
+
