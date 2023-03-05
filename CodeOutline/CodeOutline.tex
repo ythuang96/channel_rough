@@ -84,10 +84,25 @@ Yuting Huang\par
 
 \section{DNS Parameters and Checklist}
 \subsection{DNS Parameters}
+\begin{table}[H]
+	\centering 
+	\renewcommand{\arraystretch}{1.4} 
+	\begin{tabular}{C{4cm}|C{2cm}C{2cm}C{2cm}C{2cm}} 
+		&Smooth&$k_z=3$&$k_z=5$&$k_z=10$ \\ \hline
+		$Re_{ref}$&11300&8850&8850&8850 \\ \hline
+		Transpiration $u$&0&$+0.0058$&$+0.00605$&$+0.0065$ \\ 
+		Transpiration $v$&0&$-0.0058$&$-0.00605$&$-0.0065$ \\ \hline
+		Sampling Rate&&&$0.09 \, t_{ref}$&$0.09 \, t_{ref}$\\
+		Time Step Size&&&$0.0018$&$0.0018$ \\ 
+		Sample Every n Steps&&&50&50 \\ \hline
+		$N_{step}$&&&10001&10001 \\
+		$N_{imag}$&&&10000&10000 \\ \hline
+	\end{tabular} 
+\end{table} 
 
 
 \subsection{DNS Checklist}
-\subsubsection{Important Paramters}
+\subsubsection{Important Parameters}
 \begin{table}[H]
 	\centering 
 	\renewcommand{\arraystretch}{1.4} 
@@ -96,12 +111,12 @@ Yuting Huang\par
 		\multirow{2}{*}{save\_flowfield.f90}&74&\textbf{SamplingFrequencyInTimesteps} (fix step sampling)\\
 		&75-76&\textbf{samplingPeriod} (fix time sampling)\\ \hline
 		
-		\multirow{2}{*}{cross.f}&194&fix time sampling\\
-		&195&fix step sampling\\ \hline
+		\multirow{2}{*}{cross.f}&187&fix time sampling\\
+		&188&fix step sampling\\ \hline
 		
 		\multirow{2}{*}{wall\_roughness.f90}&7-8&\textbf{disturbanceU}, \textbf{disturbanceV}\\
 		&11-12&\textbf{targetWavenumberX}, \textbf{absoluteValueTargetWavenumberZ} \\ \hline
-		&15&\textbf{inputFile}\\
+		\multirow{4}{*}{launch.sh}&15&\textbf{inputFile}\\
 		&19&\textbf{Re}\\
 		&21,23,26&\textbf{nimag}, \textbf{nstep}, \textbf{nhist}\\
 		&34,35&\textbf{CFL} or \textbf{FixTimeStep}\\ \hline		
@@ -130,7 +145,7 @@ Yuting Huang\par
 	\end{tabular} 
 \end{table} 
 
-
+\newpage
 \section{Governing Equations}
 Rewrite the momentum equations in velocity-vorticity form
 \begin{equation}
