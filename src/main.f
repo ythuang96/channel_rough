@@ -32,11 +32,9 @@ c/********************************************************************/
       real*4, allocatable::  wk(:)
 
       integer istat(MPI_STATUS_SIZE),ierr
-      integer master,myid,iproc,numprocs
+      integer myid,numprocs
       integer ihv,ihg,iphiwk,ivorwk,irf0u,irf0w,iu00wk,iw00wk,idvordy,
      .        ichwk
-      integer itags,newtag,imess,i
-      real*4 val
 
       integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz
       common /point /jbeg(0:numerop-1),jend(0:numerop-1),
@@ -63,7 +61,8 @@ c/********************************************************************/
       save /wave/
 
 
-c     /* Initializes everything */
+c     ! ------------------------ Initializes everything ------------------------
+c     ! Initializes MPI
       call MPI_INIT(ierr)
       call MPI_COMM_RANK(MPI_COMM_WORLD,myid,ierr)
       call MPI_COMM_SIZE(MPI_COMM_WORLD,numprocs,ierr)
@@ -74,10 +73,10 @@ c     /* Initializes everything */
          stop
       endif
 
-c     /* Initializes commons and things */
+c     ! Initializes commons and things
       call initcr(myid)
 
-c--------------- allocates buffers
+c     ! Allocates buffers
       nbuffsize = mx*max(mmy*mz,mmz*my)
       nwkasize  = 6*nbuffsize + 2*4*my
 
@@ -85,24 +84,15 @@ c--------------- allocates buffers
       allocate(phi(nbuffsize))
       allocate(wk(nwkasize))
 
-
-c               /*   read input data           */
-
-c      write(*,*) 'going to read file ...'
-
+c     ! Read data from restart file
       call getfil(vor,phi,u00,w00,wk,myid)
 
-c      write(*,*) '... file read'
-
-      ! initialize custom modules
+c     ! Initialize custom modules
       call initialize_save_flowfield_module(filstt)
       call initialize_wall_roughness(xalp, xbet)
 
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
-c                    /* start time advancement  */
-
-
+c     ! ------------------------ Start time advancement ------------------------
       irf0u   = 1
       irf0w   = irf0u   + 2*my
       iu00wk  = irf0w   + 2*my
@@ -114,57 +104,26 @@ c                    /* start time advancement  */
       idvordy = ivorwk  + nbuffsize
       ichwk   = idvordy + nbuffsize
 
-      call cross1(vor,
-     .            phi,
-     .            u00,w00,
+      call cross1(vor,phi,u00,w00,
      .            wk(irf0u),wk(irf0w),wk(iu00wk),wk(iw00wk),
-     .            wk(ihv),
-     .            wk(ihg),
-     .            wk(iphiwk),
-     .            wk(ivorwk),
-     .            wk(idvordy),
-     .            wk(ichwk),
-     .            myid)
+     .            wk(ihv),wk(ihg),
+     .            wk(iphiwk),wk(ivorwk),
+     .            wk(idvordy),wk(ichwk),myid)
 
 
-
-c                    /* finalize procedure      */
-c     clean up the save_flowfield module (deallocate variables)
+c     ! -------------------------- Finalize procedure --------------------------
+c     ! Clean up the save_flowfield module (deallocate variables)
       call cleanup_save_flowfield_module
 
-      master=0
-      if (myid.ne.0) then
-
-         itags=myid
-         call MPI_SEND(1.,1,MPI_REAL,master,
-     &              itags,MPI_COMM_WORLD,ierr)
-
-      else
-
-         do iproc=1,numprocs-1
-
-            call MPI_RECV(val,1,MPI_REAL,MPI_ANY_SOURCE,
-     &              MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
-
-            imess=istat(MPI_TAG)
-            newtag=100
-            call MPI_SEND(1.,1,MPI_REAL,imess,
-     &                newtag,MPI_COMM_WORLD,ierr)
-         enddo
-
-      endif
-
-      if (myid.ne.0) then
-
-         call MPI_RECV(val,1,MPI_REAL,master,
-     &              MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
-         if(istat(MPI_TAG).eq.100) goto 200
-
-      endif
-
-200   call MPI_FINALIZE(ierr)
+c     ! Finalize MPI
+      call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+      call MPI_FINALIZE(ierr)
 
       end
+
+
+
+
 
 c ====================================================================
 c
@@ -813,16 +772,16 @@ c --------------  write header for output -------------
      .   'vwall',uampl,vampl,wampl,'vspeed',vspeed+a0
          write(*,'(a7,i4,a7,i4)') 'mxwall',mxwall,'mzwall',mzwall
          write(*,*)
-         write(*,'(a,a)')
-     .     'reading from:  ',filinp
+         write(*,'(a,a)') 'reading from:  ',filinp
          write(*,*)
-         write(*,'(a,a)')
-     .     '  write in :  ',filout
+         write(*,'(a,a)') '  write in :  ',filout
       endif
 
       end
 
-c ==============================================================
+
+
+
       subroutine assign(work,vor,phi,mx,mz,mxe,mze)
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c          single jjs 4/01/01, rewritten jjs 28/01/01
@@ -867,8 +826,6 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 
 
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       subroutine genexp
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     computes wavenumbers and fourier indices

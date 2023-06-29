@@ -155,7 +155,6 @@ c     -----------------------------------------------------------------
 c     Assess whether it to save flow field or not
          ! call assess_whether_to_collect_flowfield_time(time)
          call assess_whether_to_collect_flowfield_step(istep)
-         ! end save flowfields
 c     -----------------------------------------------------------------
 
 
@@ -674,7 +673,6 @@ c     -----------------------------------------------------------------
 c     -----------------------------------------------------------------
 c     Master writes history record
          if(myid.eq.0) then
-
 
             reynota=0.5*re*re*(abs(wz0/re+uv0)
      .           +abs(wzl/re+uvL))
