@@ -34,25 +34,15 @@ c/********************************************************************/
       integer istat(MPI_STATUS_SIZE),ierr
       integer master,myid,iproc,numprocs
       integer ihv,ihg,iphiwk,ivorwk,irf0u,irf0w,iu00wk,iw00wk,idvordy,
-     .        ichwk,nstr
+     .        ichwk
       integer itags,newtag,imess,i
       real*4 val
-
-      integer nacumsp,jsp,jsptot,jspiproc,jspend,jspbeg,jspb,jspe,jspbb
 
       integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz
       common /point /jbeg(0:numerop-1),jend(0:numerop-1),
      .               kbeg(0:numerop-1),kend(0:numerop-1),
      .               jb,je,kb,ke,mmy,mmz
       save /point/
-
-      common/spectra/   nacumsp,jsp(my),
-     .                  jsptot(2*nspec+1),jspiproc(2*nspec+1),
-     .                  jspbeg(0:numerop-1), jspend(0:numerop-1),
-     .                  jspb,jspe,jspbb
-      save/spectra/
-      integer nspsize
-      real*4, allocatable:: sp(:)
 
       real*8 fmap, y2
       real*4  Re, alp, bet, a0, y, hy
@@ -73,7 +63,7 @@ c/********************************************************************/
       save /wave/
 
 
-c                              /*   initializes everything    */
+c     /* Initializes everything */
       call MPI_INIT(ierr)
       call MPI_COMM_RANK(MPI_COMM_WORLD,myid,ierr)
       call MPI_COMM_SIZE(MPI_COMM_WORLD,numprocs,ierr)
@@ -84,32 +74,17 @@ c                              /*   initializes everything    */
          stop
       endif
 
-c--------------- initializes commons and things
-
+c     /* Initializes commons and things */
       call initcr(myid)
 
-c--------------  allocates spectra
-
-      jspbb = jspb
-      if (jspe.lt.jspb) jspbb=jspe
-      nspsize = (mx1+1)*(nz1+1)*7*(jspe-jspbb+1)
-
-      allocate(sp(nspsize))
-
 c--------------- allocates buffers
-
       nbuffsize = mx*max(mmy*mz,mmz*my)
       nwkasize  = 6*nbuffsize + 2*4*my
 
-c ----------  storage for the pressure
       allocate(vor(nbuffsize))
       allocate(phi(nbuffsize))
       allocate(wk(nwkasize))
 
-      nacumsp = 0
-      do i=1,nspsize
-         sp(i)=0.
-      enddo
 
 c               /*   read input data           */
 
@@ -146,11 +121,10 @@ c                    /* start time advancement  */
      .            wk(ihv),
      .            wk(ihg),
      .            wk(iphiwk),
-     .            wk(idvordy),
      .            wk(ivorwk),
      .            wk(idvordy),
      .            wk(ichwk),
-     .            sp,myid)
+     .            myid)
 
 
 
@@ -411,13 +385,13 @@ c/*               writes a intermediate solution                     */
 c/*                                                                  */
 c/*    single  jjs  4/01/01                                          */
 c/********************************************************************/
-      subroutine escru(vor,phi,u00,w00,sp,j1,j2,iproc,iopt,jjsp,
+      subroutine escru(vor,phi,u00,w00,j1,j2,iproc,
      .     uwallb,uwallt,vwallb,vwallt,wwallb,wwallt,uBulk)
 
       implicit none
 
       include "ctes3D"
-      integer iproc,iopt,j1,j2
+      integer iproc,j1,j2
       real*4 vor(mx,mz,j1:j2),phi(mx,mz,j1:j2)
       real*8 u00(*),w00(*)
       real*4 uwallb(mx,mz),uwallt(mx,mz)
@@ -425,27 +399,11 @@ c/********************************************************************/
       real*4 wwallb(mx,mz),wwallt(mx,mz)
       real*8 uBulk
 
-      integer i,j,k,jjsp
+      integer i,j,k
 
       character*3 ext1
       character*4 ext2
-      character*104 fnameima,fnamespe,fnamesta
-
-      real*4 timed,Reed,alped,beted,a0ed
-
-      real*8  fac
-      real*8  um,vm,wm,up,vp,wp,w1m,w2m,w3m,w1p,w2p,w3p,uvr,uwr,vwr,
-     .     Wx0a,Wz0a,ep,uuv,wwv,vvv
-      integer istati,ntimes,nacum,nstart
-      common /statis/   um(my), vm(my), wm(my),
-     .     up(my), vp(my), wp(my),
-     .     w1m(my),w2m(my),w3m(my),
-     .     w1p(my),w2p(my),w3p(my),
-     .     uvr(my),uwr(my),vwr(my),
-     .     ep(my),uuv(my),wwv(my),vvv(my),
-     .     Wx0a,Wz0a,
-     .     istati,ntimes,nacum,nstart
-      save /statis/
+      character*104 fnameima
 
       real*4 gamma
       integer imesh
@@ -472,158 +430,62 @@ c/********************************************************************/
      .     filinp,filout,filstt
       save /ficheros/
 
-c----------------now
-      integer nacumsp,jsptot,jsp,jspend,jspbeg,jspiproc,jspb,jspe,jspbb
-
-      common/spectra/   nacumsp,jsp(my),
-     .     jsptot(2*nspec+1),jspiproc(2*nspec+1),
-     .     jspbeg(0:numerop-1), jspend(0:numerop-1),
-     .     jspb,jspe,jspbb
-      save/spectra/
-      real*4 sp(0:mx1,0:nz1,7)
-
       integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz
       common /point /jbeg(0:numerop-1),jend(0:numerop-1),
      .     kbeg(0:numerop-1),kend(0:numerop-1),
      .     jb,je,kb,ke,mmy,mmz
       save /point/
 
-      integer numberOfStatisticalQuantities
 
 
-      if (iopt.eq.1) then
-c--------phi, vor
+      if(iproc.eq.0) then    !!!!! coming from node 0
+c        /* start writing image */
+         if(id22.gt.999.or.id22.lt.0) then
+            write(*,*) 'number of images out of range'
+            stop
+         endif
 
-         if(iproc.eq.0) then    !!!!! coming from node 0
-c            /* start writing image */
-            if(id22.gt.999.or.id22.lt.0) then
-               write(*,*) 'number of images out of range'
-               stop
-            endif
+         write(ext1,'(i3.3)') id22
+         fnameima=filout(1:index(filout,' ')-1)//'.'//ext1
 
-            write(ext1,'(i3.3)') id22
-            fnameima=filout(1:index(filout,' ')-1)//'.'//ext1
-
-            open (iout,file=fnameima,status='unknown',
-     &           form='unformatted',access='direct',recl=mx*mz*2*iwd)
+         open (iout,file=fnameima,status='unknown',
+     &        form='unformatted',access='direct',recl=mx*mz*2*iwd)
 
                                 !! rewind(iout)
-            write(*,*) j1,j2, 'in escru image',fnameima
-            write(iout,rec=1) time,Re,alp,bet,a0,mx,my,mz,imesh,gamma,
-     &           mxwall,mzwall,uampl,vampl,wampl,vspeed,
-     &           (real(u00(j)),real(w00(j)),j=1,my)
+         write(*,*) j1,j2, 'in escru image',fnameima
+         write(iout,rec=1) time,Re,alp,bet,a0,mx,my,mz,imesh,gamma,
+     &        mxwall,mzwall,uampl,vampl,wampl,vspeed,
+     &        (real(u00(j)),real(w00(j)),j=1,my)
 
-            do j=j1,j2
-               write(iout,rec=j+1)
-     &              ((vor(i,k,j),phi(i,k,j),i=1,mx),k=1,mz)
-            enddo
+         do j=j1,j2
+            write(iout,rec=j+1)
+     &           ((vor(i,k,j),phi(i,k,j),i=1,mx),k=1,mz)
+         enddo
 
 
-c     /*       write statistics       */
-            if (nstart.ne.0.and.nacum.ne.0) then
+      else
+         write(*,*) j1,j2, 'in escru image'
 
-               write(*,*) 'stat esc', nstart,nacum
-               timed = time
-               Reed  = Re
-               alped = alp
-               beted = bet
-               a0ed  = a0
+         do j=j1,j2
+            write(iout,rec=j+1)
+     &           ((vor(i,k,j),phi(i,k,j),i=1,mx),k=1,mz)
+         enddo
 
-               fac = 1./dble(mgalx*mgalz)
+      endif
 
-               ! number of statistical quantities written to record (r1)
-               ! below
-               numberOfStatisticalQuantities = 19
-
-               write(ext1,'(i3.3)') id22
-               fnamesta=filstt(1:index(filstt,' ')-1)//'.'//ext1//'.sta'
-               open (isn,file=fnamesta,status='unknown',
-     &              form='unformatted')
-               rewind(isn)
-               write(isn) nacum,Wx0a/nacum,Wz0a/nacum
-               write(isn) my,timed,Reed,alped,beted,a0ed
-               write(isn) numberOfStatisticalQuantities, uBulk
-               ! record (r1). Change numberOfStatisticalQuantities above
-               ! if you add/remove quantities here
-               write(isn) (um(j),vm(j),wm(j),up(j),vp(j),wp(j),
-     &              w1m(j),w2m(j),w3m(j),w1p(j),w2p(j),w3p(j),
-     &              uvr(j),uwr(j),vwr(j),ep(j),uuv(j)*fac,
-     &              wwv(j)*fac,vvv(j)*fac,j=1,my)
-               write(isn) (y(j),j=1,my)
-               write(isn) (fmap(j),j=1,my)
-
-            endif
-
-         else
-            write(*,*) j1,j2, 'in escru image'
-
-            do j=j1,j2
-               write(iout,rec=j+1)
-     &              ((vor(i,k,j),phi(i,k,j),i=1,mx),k=1,mz)
-            enddo
-
-         endif
-
-         if(iproc.eq.numerop-1) then
+      if(iproc.eq.numerop-1) then
 c     last node writes boundaries!!
-            write(iout,rec=my+2)
-     &           ((uwallb(i,k),uwallt(i,k),i=1,mx),k=1,mz)
-            write(iout,rec=my+3)
-     &           ((vwallb(i,k),vwallt(i,k),i=1,mx),k=1,mz)
-            write(iout,rec=my+4)
-     &           ((wwallb(i,k),wwallt(i,k),i=1,mx),k=1,mz)
+         write(iout,rec=my+2)
+     &        ((uwallb(i,k),uwallt(i,k),i=1,mx),k=1,mz)
+         write(iout,rec=my+3)
+     &        ((vwallb(i,k),vwallt(i,k),i=1,mx),k=1,mz)
+         write(iout,rec=my+4)
+     &        ((wwallb(i,k),wwallt(i,k),i=1,mx),k=1,mz)
 
 
-            write(*,*) 'closing files'
-            close(iout)
-            close(isn )
-         endif
-
+         write(*,*) 'closing files'
+         close(iout)
       endif
-
-      if (iopt.eq.2) then
-
-         if (nstart.ne.0.and.nacumsp.ne.0) then
-c     /*       write spectra        */
-            if (jjsp.eq.1) then
-
-               write(ext1,'(i3.3)') id22
-               fnamespe=filstt(1:index(filstt,' ')-1)//'.'//ext1//'.spe'
-               open (ispf,file=fnamespe,status='unknown',
-     &              form='unformatted')
-               rewind(ispf)
-               write(ispf) time,Re, alp, bet, mx,my,mz,nspec+1,
-     &              nacumsp
-               write(ispf) (jsptot(j), j=1,nspec+1)
-
-               write(*,*) 'escribe espectro, proc ',iproc,
-     &              'jj= ',jjsp
-
-               do k=1,7
-                  write(ispf) (sp(i,0,k),
-     &                 i=0,(mx1+1)*(nz1+1) - 1)
-               enddo
-
-            else
-
-               write(*,*) 'escribe espectro, proc ',iproc,
-     &              'jj= ',jjsp
-               do k=1,7
-                  write(ispf) (sp(i,0,k),
-     &                 i=0,(mx1+1)*(nz1+1) - 1)
-               enddo
-
-            endif
-
-            if (jjsp.eq.nspec+1) then
-               write(*,*) 'closing files'
-               close(ispf)
-            endif
-
-         endif
-
-      endif
-
 
       end
 
@@ -645,19 +507,6 @@ c/********************************************************************/
       integer myid
 
       integer istat(MPI_STATUS_SIZE),ierr
-
-      real*8  um,vm,wm,up,vp,wp,w1m,w2m,w3m,w1p,w2p,w3p,uvr,uwr,vwr,
-     .        ep,uuv,wwv,vvv,Wx0a,Wz0a
-      integer istati,ntimes,nacum,nstart
-      common /statis/   um(my), vm(my), wm(my),
-     .                  up(my), vp(my), wp(my),
-     .                  w1m(my),w2m(my),w3m(my),
-     .                  w1p(my),w2p(my),w3p(my),
-     .                  uvr(my),uwr(my),vwr(my),
-     .                  ep(my),uuv(my),wwv(my),vvv(my),
-     .                  Wx0a,Wz0a,
-     .                  istati,ntimes,nacum,nstart
-      save /statis/
 
       real*4 trp
       real*8 trp2
@@ -693,14 +542,6 @@ c/********************************************************************/
       common /MPI_datatype/myslice(0:numerop-1)
       save /MPI_datatype/
 
-      integer nacumsp,jsp,jsptot,jspiproc,jspend,jspbeg,jspb,jspe,jspbb
-
-      common/spectra/   nacumsp,jsp(my),
-     .                  jsptot(2*nspec+1),jspiproc(2*nspec+1),
-     .                  jspbeg(0:numerop-1), jspend(0:numerop-1),
-     .                  jspb,jspe,jspbb
-      save/spectra/
-
       real*4 gamma
       integer imesh
       common /mesh/ gamma,imesh
@@ -711,8 +552,8 @@ c/********************************************************************/
       common /boundary/ uampl,vampl,wampl,vspeed,mxwall,mzwall
       save /boundary/
 
-      real*4  ener,Wx0,Wz0,WxL,WzL,uv0,uvL
-      common /diag/ ener(9),Wx0,Wz0,WxL,WzL,uv0,uvL
+      real*4  Wx0,Wz0,WxL,WzL,uv0,uvL
+      common /diag/ Wx0,Wz0,WxL,WzL,uv0,uvL
       save   /diag/
 
       integer idat(30)
@@ -741,7 +582,7 @@ c                           /* reads in data                       */
          read(text,*) (idat(j),j=5,7)
 
 964      read(19,'(a)') text
-	 if(text(1:2).eq.'CC') goto 964
+         if(text(1:2).eq.'CC') goto 964
          read(text,*) idat(1),dat(7)
 
 967      read(19,'(a)') text
@@ -750,7 +591,7 @@ c                           /* reads in data                       */
 
 968      read(19,'(a)') text
          if(text(1:2).eq.'CC') goto 968
-         read(text,*) (idat(j), j=12,14)
+         read(text,*) idat(12)
 
 969      read(19,'(a)') text
          if(text(1:2).eq.'CC') goto 969
@@ -811,9 +652,6 @@ c                           /* reads in data                       */
       vspeed= dat(11) -a0      ! To compensate the movement of the wall
       FixTimeStep = dat(12)
 
-
-
-
       imesh  = idat(1)
       mxwall = idat(2)
       mzwall = idat(3)
@@ -821,12 +659,9 @@ c                           /* reads in data                       */
       nimag  = idat(6)
       nhist  = idat(7)
       id22   = idat(12)
-      nstart = idat(13)
-      ntimes = idat(14)
 
       iinp=32                       !! file numbers
       ispf=35
-      istati=0
       isn=33
       iout=31
 
@@ -912,44 +747,6 @@ c    ------------  initializes fast fourier transforms and CFDiff ----
       hy(my) = (y(my)-y(my-1))/2.5
 
 
-c --------------  prepare spectra -----
-      do j=1,nspec
-         jsptot(j)           =jspecy(j)
-         jsptot(2*nspec+2-j) = my-jspecy(j)+1
-      enddo
-      jsptot(nspec+1) = (my+1)/2
-
-      do i=0,numerop-1
-        jspbeg(i)=2*nspec+2
-         do j=2*nspec+1,1,-1
-            if (jsptot(j).ge.jbeg(i)) jspbeg(i) = j
-         enddo
-
-         jspend(i)=0
-         do j=1,2*nspec+1
-            if (jsptot(j).le.jend(i)) jspend(i) = j
-         enddo
-      enddo
-
-      do i=0,numerop-1
-         do j=1,2*nspec+1
-            do jj=jspbeg(i),jspend(i)
-               if (j.eq.jj) jspiproc(j) = i
-            enddo
-         enddo
-      enddo
-
-      do j=1,my
-         jsp(j) = 0
-         do jj = 1,2*nspec+1
-            if (jsptot(jj).eq.j) jsp(j) = 1
-         enddo
-      enddo
-
-      jspb = jspbeg(myid)
-      jspe = jspend(myid)
-
-
 c ------------------ Re/dt --------------------------------
       dtr  = Re     !!!! initialize, just in case
 
@@ -969,34 +766,6 @@ c ------------------ MPI Datatypes ------------------------
 
          endif
       enddo
-
-
-c --------------  initialize stats -------------
-
-      do j=1,my
-           um(j)  = 0.
-           vm(j)  = 0.
-           wm(j)  = 0.
-           up(j)  = 0.
-           vp(j)  = 0.
-           wp(j)  = 0.
-           uvr(j) = 0.
-           uwr(j) = 0.
-           vwr(j) = 0.
-           w1m(j) = 0.
-           w2m(j) = 0.
-           w3m(j) = 0.
-           w1p(j) = 0.
-           w2p(j) = 0.
-           w3p(j) = 0.
-           ep(j) = 0.
-           uuv(j) = 0.
-           wwv(j) = 0.
-           vvv(j) = 0.
-
-        enddo
-
-        nacum = 0
 
 c --------------  write header for output -------------
       if(myid.eq.0) then
@@ -1095,125 +864,9 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
       end
 
-      subroutine sendsta(myid)
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c          single jjs 4/01/01
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     all slaves send data to master
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-      include "mpif.h"
-      include "ctes3D"
-      integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz
-      common /point /jbeg(0:numerop-1),jend(0:numerop-1),
-     .     kbeg(0:numerop-1),kend(0:numerop-1),
-     .     jb,je,kb,ke,mmy,mmz
-      save /point/
-      real*8 um,vm,wm,up,vp,wp,w1m,w2m,w3m,w1p,w2p,w3p,
-     .     uvr,uwr,vwr,Wx0a,Wz0a,ep,uuv,wwv,vvv
-      integer istat(MPI_STATUS_SIZE)
-      common /statis/   um(my), vm(my), wm(my),
-     .     up(my), vp(my), wp(my),
-     .     w1m(my),w2m(my),w3m(my),
-     .     w1p(my),w2p(my),w3p(my),
-     .     uvr(my),uwr(my),vwr(my),
-     .     ep(my),uuv(my),wwv(my),vvv(my),
-     .     Wx0a,Wz0a,
-     .     istati,ntimes,nacum,nstart
-      save/statis/
 
-      if(myid.ne.0) then
 
-         ipo=jb
-         leng=mmy
 
-         call MPI_SEND(um(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(vm(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(wm(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(up(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(vp(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(wp(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(w1m(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(w2m(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(w3m(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(w1p(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(w2p(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(w3p(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(uvr(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(uwr(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(vwr(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(ep(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(uuv(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(wwv(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-         call MPI_SEND(vvv(ipo),leng,MPI_DOUBLE_PRECISION,0,
-     &        myid,MPI_COMM_WORLD,ierr)
-      else
-
-         do iproc=1,numerop-1
-            ipo=jbeg(iproc)
-            leng=jend(iproc)-jbeg(iproc)+1
-
-            call MPI_RECV(um(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(vm(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(wm(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(up(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(vp(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(wp(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(w1m(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(w2m(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(w3m(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(w1p(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(w2p(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(w3p(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(uvr(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(uwr(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(vwr(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(ep(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(uuv(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(wwv(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(vvv(ipo),leng,MPI_DOUBLE_PRECISION,iproc,
-     &           iproc,MPI_COMM_WORLD,istat,ierr)
-         enddo
-
-      endif
-
-      end
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       subroutine genexp

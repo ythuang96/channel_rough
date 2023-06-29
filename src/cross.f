@@ -10,11 +10,10 @@ c/*............................................c/*
      .     hv,
      .     hg,
      .     phiwk,
-     .     spwk,
      .     vorwk,
      .     dvordy,
      .     chwk,
-     .     sp,myid)
+     .     myid)
       use boundary_planes, only: uWallBottom, uWallTop, vWallBottom,
      &  vWallTop, wWallBottom, wWallTop
       use wall_roughness, only: set_wall_roughness
@@ -41,22 +40,9 @@ c/*............................................c/*
 
       integer istat(MPI_STATUS_SIZE),ierr
 
-      real*4  ener,Wx0,Wz0,WxL,WzL,uv0,uvL
-      common /diag/ ener(9),Wx0,Wz0,WxL,WzL,uv0,uvL
+      real*4  Wx0,Wz0,WxL,WzL,uv0,uvL
+      common /diag/ Wx0,Wz0,WxL,WzL,uv0,uvL
       save   /diag/
-
-      real*8  um,vm,wm,up,vp,wp,w1m,w2m,w3m,w1p,w2p,w3p,uvr,uwr,vwr,
-     .     ep,uuv,wwv,vvv,Wx0a,Wz0a
-      integer istati,ntimes,nacum,nstart
-      common /statis/   um(my), vm(my), wm(my),
-     .     up(my), vp(my), wp(my),
-     .     w1m(my),w2m(my),w3m(my),
-     .     w1p(my),w2p(my),w3p(my),
-     .     uvr(my),uwr(my),vwr(my),
-     .     ep(my),uuv(my),wwv(my),vvv(my),
-     .     Wx0a,Wz0a,
-     .     istati,ntimes,nacum,nstart
-      save /statis/
 
       real*4 Deltat,CFL,time,dtr,FixTimeStep
       common /tem/ Deltat,CFL,time,dtr,FixTimeStep
@@ -108,17 +94,6 @@ c/*............................................c/*
       data c/c1,c2,c3/
       save c
 
-      integer nacumsp,jsp,jsptot,jspiproc,jspend,jspbeg,jspb,jspe,jspbb
-      common/spectra/   nacumsp,jsp(my),
-     .     jsptot(2*nspec+1),jspiproc(2*nspec+1),
-     .     jspbeg(0:numerop-1), jspend(0:numerop-1),
-     .     jspb,jspe,jspbb
-      save/spectra/
-
-      real*4 sp  (0:mx1,0:nz1,7,jspbb:jspe),
-     .     spwk(0:mx1,0:nz1,7,1:*)
-
-
       real*4 uampl,vampl,wampl,vspeed
       integer mxwall,mzwall
       common /boundary/ uampl,vampl,wampl,vspeed,mxwall,mzwall
@@ -149,7 +124,6 @@ c/*............................................c/*
       totaltimer=0.0D0
 
       ihist    = 0
-      istati   = 0
 
       irun   = 0                ! first time step is special in tim3rkp
       icfl   = 1                ! first time step always needs a step size
@@ -177,11 +151,6 @@ c/********************************************************************/
             icfl= 1
          endif
 
-         if (mod(istep-1,ntimes) .eq.0 .and.nstart.ne.0) then
-            istati=1
-         endif
-
-
 c     -----------------------------------------------------------------
 c     Assess whether it to save flow field or not
          ! call assess_whether_to_collect_flowfield_time(time)
@@ -200,8 +169,7 @@ c     write restart file
      &             vWallTop(mxwall, mzwall)
             endif
 
-            ! procedure to receive all the slices and stats
-            call sendsta(myid)
+            ! procedure to receive all the slices
             call chjik2ikj(phi,phi,dvordy,dvordy,myid)
             call chjik2ikj(vor,vor,dvordy,dvordy,myid)
 
@@ -218,7 +186,7 @@ c     write restart file
      &              0,myid,MPI_COMM_WORLD,ierr)
             else
                ! the master first writes its stuff
-               call escru(chwk,dvordy,u00,w00,spwk,jb,je,0,1,1,
+               call escru(chwk,dvordy,u00,w00,jb,je,0,
      .              uWallBottom,uWallTop,vWallBottom,vWallTop,
      .              wWallBottom,wWallTop,massu0)
 
@@ -232,93 +200,12 @@ c     write restart file
                   call MPI_RECV(dvordy,leng,MPI_REAL,
      &                 iproc,iproc,MPI_COMM_WORLD,istat,ierr)
                   ! and writes it
-                  call escru(chwk,dvordy,u00,w00,spwk,jbeg(iproc),
-     &                 jend(iproc),iproc,1,1,
+                  call escru(chwk,dvordy,u00,w00,jbeg(iproc),
+     &                 jend(iproc),iproc,
      &                 uWallBottom,uWallTop,vWallBottom,vWallTop,
      &                 wWallBottom,wWallTop,massu0)
                enddo
             endif
-
-            ! Spectra
-            do j=2*nspec+1,nspec+1,-1
-               jj = 2*nspec+2 - j
-
-               ! upper half sends spectra
-               if (myid.eq.jspiproc(j).and.
-     &              myid.ne.jspiproc(jj)) then
-
-                  leng = (mx1+1)*(nz1+1)*7
-
-                  call MPI_SEND(sp(0,0,1,j),leng,MPI_REAL,
-     &                 jspiproc(jj),0,MPI_COMM_WORLD,ierr)
-
-               endif
-
-               ! lower half receives upper half spectra and computes average
-               if (myid.eq.jspiproc(jj)) then
-
-                  leng = (mx1+1)*(nz1+1)*7
-                  leng1 = (mx1+1)*(nz1+1)*3
-                  leng2 = (mx1+1)*(nz1+1)*4
-
-                  if (jspiproc(j).ne.myid) then
-
-                     call MPI_RECV(spwk(0,0,1,1),leng,MPI_REAL,
-     &                    jspiproc(j),0,MPI_COMM_WORLD,istat,ierr)
-
-                  else
-
-                     do i=0,leng-1
-                        spwk(i,0,1,1) = sp (i,0,1,j)
-                     enddo
-
-                  endif
-
-                  ! velocity spectra are symmetric
-                  do i = 0,leng1-1
-                     spwk(i,0,1,1) =.5*(spwk(i,0,1,1) + sp(i,0,1,jj))
-                  enddo
-
-                  ! velocity cospectra are skew-symmetric
-                  do i = leng1,leng2-1
-                     spwk(i,0,1,1) =.5*(-spwk(i,0,1,1) + sp(i,0,1,jj))
-                  enddo
-
-                  ! vorticity spectra are symmetric
-                  do i = leng2,leng-1
-                     spwk(i,0,1,1) =.5*(spwk(i,0,1,1) + sp(i,0,1,jj))
-                  enddo
-
-                  ! everybody sends data to the master
-                  if(myid.ne.0) then
-
-                     ! only lower half sends averaged spectra to the master
-                     leng = (mx1+1)*(nz1+1)*7
-                     call MPI_SEND(spwk,leng,MPI_REAL,
-     &                    0,myid,MPI_COMM_WORLD,ierr)
-
-                  else
-                     ! the master first writes its stuff
-                     call escru(chwk,dvordy,u00,w00,spwk,jb,je,0,2,jj,
-     .                    uWallBottom,uWallTop,vWallBottom,vWallTop,
-     .                    wWallBottom,wWallTop,massu0)
-                  endif
-               endif
-
-               if (myid.eq.0.and.jspiproc(jj).ne.myid) then
-                  ! then receives everything from everybody
-                  leng = (mx1+1)*(nz1+1)*7
-                  call MPI_RECV(spwk,leng,MPI_REAL,jspiproc(jj),
-     &                 jspiproc(jj),MPI_COMM_WORLD,istat,ierr)
-
-                  ! and writes it
-                  call escru(chwk,dvordy,u00,w00,spwk,jbeg(iproc),
-     &                 jend(iproc),iproc,2,jj,
-     &                 uWallBottom,uWallTop,vWallBottom,vWallTop,
-     &                 wWallBottom,wWallTop,massu0)
-
-               endif
-            enddo
 
 
             call chikj2jik(phi,phi,dvordy,dvordy,myid)
@@ -495,7 +382,7 @@ c     Compute non-linear terms
             ! phiwk, vorwk, hv, hg, dvordy, work are inputs
             ! u1r, u2r ... are all work variables
             call hvhg(phiwk,vorwk,hv,hg,rf0u,
-     .           rf0w,dvordy,work,sp,myid,rkstep,
+     .           rf0w,dvordy,work,myid,rkstep,
      .           u1r,u2r,u3r,o1r,o2r,o3r,
      .           u1r,u2r,u3r,o1r,o2r,o3r)
             ! Ouputs:
@@ -800,15 +687,16 @@ c     Master writes history record
             if (ihist.eq.1) then
                tmp=my1/2
 
+               ! write to the output txt file
  325           format(a10,i5,9(d14.6))
-               write(*,325) 'Time Step ', istep,time,-1.*Wz0,WzL,
-     .              sqrt(reynota),Deltat,
-     .              u00(floor(tmp))*Re/sqrt(reynota),
-     .              massw,uv0,uvL
-
- 324           format(17(d22.14))
-               write(39,324) time,-1.*Wz0,WzL,sqrt(reynota),ener,
-     .              u00(floor(tmp))*Re/sqrt(reynota),massw
+               write(*,325) 'Time Step ',
+     .              istep,time,-1.*Wz0,WzL,sqrt(reynota),Deltat,
+     .              u00(floor(tmp))*Re/sqrt(reynota),massw,uv0,uvL
+               ! write to cf file
+ 324           format(i5,9(d22.14))
+               write(39,324)
+     .              istep,time,-1.*Wz0,WzL,sqrt(reynota),Deltat,
+     .              u00(floor(tmp))*Re/sqrt(reynota),massw,uv0,uvL
                call flush(39)
             endif
 
@@ -834,8 +722,7 @@ c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
-c     Reset istati, icfl, ihist
-         if(istati.eq.1) istati = 0
+c     Reset icfl, ihist
          if(icfl.eq.1)   icfl   = 0
          if(ihist.eq.1)  ihist  = 0
 c     -----------------------------------------------------------------
@@ -903,7 +790,7 @@ c/*                                                                  */
 c/********************************************************************/
       subroutine hvhg(phic,ome2c,rhvc,rhgc,
      .     rf0u,rf0w,ome1c,
-     .     work2,sp,myid,rkstep,
+     .     work2,myid,rkstep,
      .     u1r,u2r,u3r,o1r,o2r,o3r,
      .     u1c,u2c,u3c,o1c,o2c,o3c )
       use save_flowfield, only: collectFlowfield,
@@ -917,16 +804,6 @@ c/********************************************************************/
      .     kbeg(0:numerop-1),kend(0:numerop-1),
      .     jb,je,kb,ke,mmy,mmz
       save   /point/
-
-      integer nacumsp,jsp,jsptot,jspiproc,jspend,jspbeg,jspb,jspe,jspbb
-
-      common/spectra/   nacumsp,jsp(my),
-     .     jsptot(2*nspec+1),jspiproc(2*nspec+1),
-     .     jspbeg(0:numerop-1), jspend(0:numerop-1),
-     .     jspb,jspe,jspbb
-      save/spectra/
-      real*4 sp(0:mx1,0:nz1,7,jspbb:jspe)
-
 
       real*4 Deltat,CFL,time,dtr,FixTimeStep
       common /tem/ Deltat,CFL,time,dtr,FixTimeStep
@@ -948,23 +825,9 @@ c/********************************************************************/
      .     iax(mx),icx(0:mz1)
       save /wave/
 
-      real*4 uner(9)
-      real*4  ener,Wx0,Wz0,WxL,WzL,uv0,uvL
-      common /diag/ ener(9),Wx0,Wz0,WxL,WzL,uv0,uvL
+      real*4  Wx0,Wz0,WxL,WzL,uv0,uvL
+      common /diag/ Wx0,Wz0,WxL,WzL,uv0,uvL
       save   /diag/
-
-      real*8 um,vm,wm,up,vp,wp,w1m,w2m,w3m,w1p,w2p,w3p,uvr,uwr,vwr,
-     .     ep,uuv,wwv,vvv,Wx0a,Wz0a
-      integer istati,ntimes,nacum,nstart
-      common /statis/   um(my), vm(my), wm(my),
-     .     up(my), vp(my), wp(my),
-     .     w1m(my),w2m(my),w3m(my),
-     .     w1p(my),w2p(my),w3p(my),
-     .     uvr(my),uwr(my),vwr(my),
-     .     ep(my),uuv(my),wwv(my),vvv(my),
-     .     Wx0a,Wz0a,
-     .     istati,ntimes,nacum,nstart
-      save /statis/
 
       complex*8 phic (0:mx1,0:mz1,jb:*),
      .     ome1c(0:mx1,0:mz1,jb:*),
@@ -990,7 +853,7 @@ c---------------6 * (mgalx+2)  * mgalz planes
       real*4 dk2
       integer myid,rkstep
       integer ipo1,ipo2,ipo3
-      integer i,j,k,jj,iy,kk,jndex
+      integer i,j,k,jj,kk,jndex
       integer istat(MPI_STATUS_SIZE),ierr
       integer mmyr
       integer iproc,pproc
@@ -1021,13 +884,6 @@ c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
-c     Initialize variables out of the y loop
-      do kk=1,9
-         uner(kk) = 0.
-      enddo
-
-      iy = jspb
-
       cflx = 0.
       cfly = 0.
       cflz = 0.
@@ -1128,188 +984,6 @@ c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
-c     Collect spectra information
-         if (istati.eq.1 .and. rkstep.eq.1) then
-            ! If my plane contains spectra information
-            if (jsp(j).eq.1) then
-               do kk = 0,mz1
-                  k = icx(kk)
-                  sp(0,k,1,iy) = sp(0,k,1,iy)+u1c(0,kk)*
-     &                 conjg(u1c(0,kk))
-                  sp(0,k,2,iy) = sp(0,k,2,iy)+u2c(0,kk)*
-     &                 conjg(u2c(0,kk))
-                  sp(0,k,3,iy) = sp(0,k,3,iy)+u3c(0,kk)*
-     &                 conjg(u3c(0,kk))
-                  sp(0,k,4,iy) = sp(0,k,4,iy)+real(u1c(0,kk)*
-     &                 conjg(u2c(0,kk)))
-                  sp(0,k,5,iy) = sp(0,k,5,iy)+o1c(0,kk)*
-     &                 conjg(o1c(0,kk))
-                  sp(0,k,6,iy) = sp(0,k,6,iy)+o2c(0,kk)*
-     &                 conjg(o2c(0,kk))
-                  sp(0,k,7,iy) = sp(0,k,7,iy)+o3c(0,kk)*
-     &                 conjg(o3c(0,kk))
-                  do i = 1,mx1
-                     sp(i,k,1,iy) = sp(i,k,1,iy)+2.*u1c(i,kk)*
-     &                    conjg(u1c(i,kk))
-                     sp(i,k,2,iy) = sp(i,k,2,iy)+2.*u2c(i,kk)*
-     &                    conjg(u2c(i,kk))
-                     sp(i,k,3,iy) = sp(i,k,3,iy)+2.*u3c(i,kk)*
-     &                    conjg(u3c(i,kk))
-                     sp(i,k,4,iy) =sp(i,k,4,iy)+2.*real(u1c(i,kk)*
-     &                    conjg(u2c(i,kk)))
-                     sp(i,k,5,iy) = sp(i,k,5,iy)+2.*o1c(i,kk)*
-     &                    conjg(o1c(i,kk))
-                     sp(i,k,6,iy) = sp(i,k,6,iy)+2.*o2c(i,kk)*
-     &                    conjg(o2c(i,kk))
-                     sp(i,k,7,iy) = sp(i,k,7,iy)+2.*o3c(i,kk)*
-     &                    conjg(o3c(i,kk))
-                  enddo
-               enddo
-
-               ! Next spectra plane
-               iy = iy + 1
-            endif
-
-
-            if (j.eq.je)  nacumsp = nacumsp +1
-
-            do kk=1,9
-               ener(kk) = 0.
-            enddo
-
-            do k=0,mz1
-
-               ! intensities
-               aa = u1c(0,k)*conjg(u1c(0,k))
-               up(j) = up(j) + aa
-               ener(1)=ener(1) + aa
-
-               aa= u2c(0,k)*conjg(u2c(0,k))
-               vp(j) = vp(j) + aa
-               ener(2)=ener(2) + aa
-
-               aa= u3c(0,k)*conjg(u3c(0,k))
-               wp(j) = wp(j) + aa
-               ener(3)=ener(3) + aa
-
-               aa= real(u1c(0,k)*conjg(u2c(0,k)))
-               uvr(j)= uvr(j) + aa
-               ener(4)=ener(4) + aa
-
-               aa= real(u1c(0,k)*conjg(u3c(0,k)))
-               uwr(j)= uwr(j) + aa
-               ener(5)=ener(5) + aa
-
-               aa= real(u3c(0,k)*conjg(u2c(0,k)))
-               vwr(j)= vwr(j) + aa
-               ener(6)=ener(6) + aa
-
-               aa= o1c(0,k)*conjg(o1c(0,k))
-               w1p(j)= w1p(j) + aa
-               ener(7)=ener(7) + aa
-
-               aa = o2c(0,k)*conjg(o2c(0,k))
-               w2p(j)= w2p(j) + aa
-               ener(8)=ener(8) + aa
-
-               aa = o3c(0,k)*conjg(o3c(0,k))
-               w3p(j)= w3p(j) + aa
-               ener(9)=ener(9) + aa
-
-               ! dissipation
-               aa =  bet2(k) *
-     &              ( u1c(0,k)*conjg(u1c(0,k)) +
-     &              u2c(0,k)*conjg(u2c(0,k)) +
-     &              u3c(0,k)*conjg(u3c(0,k)) ) +
-     &              rhvc(0,k,j)*conjg(rhvc(0,k,j))
-
-               cc = o1c(0,k) + xbet(k)*u2c(0,k)
-               aa = aa + cc*conjg(cc)
-               cc = o3c(0,k)
-               aa = aa + cc*conjg(cc)
-
-               ep(j) = ep(j) + aa
-
-               do i=1,mx1
-                  aa = 2.*u1c(i,k)*conjg(u1c(i,k))
-                  up(j) = up(j) + aa
-                  ener(1)=ener(1) + aa
-
-                  aa= 2.*u2c(i,k)*conjg(u2c(i,k))
-                  vp(j) = vp(j) + aa
-                  ener(2)=ener(2) + aa
-
-                  aa= 2.*u3c(i,k)*conjg(u3c(i,k))
-                  wp(j) = wp(j) + aa
-                  ener(3)=ener(3) + aa
-
-                  aa= 2.*real(u1c(i,k)*conjg(u2c(i,k)))
-                  uvr(j)= uvr(j) + aa
-                  ener(4)=ener(4) + abs(aa)
-
-                  aa= 2.*real(u1c(i,k)*conjg(u3c(i,k)))
-                  uwr(j)= uwr(j) + aa
-                  ener(5)=ener(5) + abs(aa)
-
-                  aa= 2.*real(u3c(i,k)*conjg(u2c(i,k)))
-                  vwr(j)= vwr(j) + aa
-                  ener(6)=ener(6) + abs(aa)
-
-                  aa= 2.*o1c(i,k)*conjg(o1c(i,k))
-                  w1p(j)= w1p(j) + aa
-                  ener(7)=ener(7) + aa
-
-                  aa = 2.*o2c(i,k)*conjg(o2c(i,k))
-                  w2p(j)= w2p(j) + aa
-                  ener(8)=ener(8) + aa
-
-                  aa = 2.*o3c(i,k)*conjg(o3c(i,k))
-                  w3p(j)= w3p(j) + aa
-                  ener(9)=ener(9) + aa
-
-                  aa = ( alp2(i) + bet2(k) ) *
-     &                 ( u1c(i,k)*conjg(u1c(i,k)) +
-     &                 u2c(i,k)*conjg(u2c(i,k)) +
-     &                 u3c(i,k)*conjg(u3c(i,k)) ) +
-     &                 rhvc(i,k,j)*conjg(rhvc(i,k,j) )
-
-                  cc = o1c(i,k) + xbet(k)*u2c(i,k)
-                  aa = aa + cc*conjg(cc)
-                  cc = o3c(i,k) - xalp(i)*u2c(i,k)
-                  aa = aa + cc*conjg(cc)
-
-                  ep(j) = ep(j) + 2.*aa
-
-               enddo
-            enddo
-
-            ! add this plane energy
-            hyy = hy(j)
-            do kk = 1,9
-               uner(kk) = uner(kk) + ener(kk)*hyy
-            enddo
-
-            ! means
-            um(j) = um(j)+u1c(0,0)
-            vm(j) = vm(j)+u2c(0,0)
-            wm(j) = wm(j)+u3c(0,0)
-            w1m(j)= w1m(j)+o1c(0,0)
-            w2m(j)= w2m(j)+o2c(0,0)
-            w3m(j)= w3m(j)+o3c(0,0)
-
-            ! update nacum just once !!!
-            if (j.eq.je)   nacum = nacum+1
-
-            if (myid.eq.0) then
-               Wx0a=Wx0a+o1c(0,0)
-               Wz0a=Wz0a+o3c(0,0)
-            endif
-         endif
-c     Complete Collect Spectra
-c     -----------------------------------------------------------------
-
-
-c     -----------------------------------------------------------------
 c     compute vorticity & Re stress at walls
          if (rkstep.eq.1) then
             ! Bottom Wall
@@ -1353,17 +1027,6 @@ c     -----------------------------------------------------------------
 
 c     -----------------------------------------------------------------
          if (rkstep.eq.1) then
-            ! Compute triple products
-            if (istati.eq.1) then
-               do k = 1,mgalz
-                  do i=1,mgalx
-                     aa = u2r(i,k)
-                     uuv(j) = uuv(j) +aa*u1r(i,k)**2
-                     wwv(j) = wwv(j) +aa*u3r(i,k)**2
-                     vvv(j) = vvv(j) +aa**3
-                  enddo
-               enddo
-            endif
             ! Compute uv Stress at the bottom wall
             if (j.eq.1) then
                uv0=0.
@@ -1490,18 +1153,6 @@ c     Things that require info from all y planes
 c     Exchange data between all processors
 c     -----------------------------------------------------------------
 
-
-c     -----------------------------------------------------------------
-c     Adds up the total energy
-      if (istati.eq.1.and.rkstep.eq.1.and.ihist.eq.1) then
-         call MPI_ALLREDUCE(uner,ener,9,MPI_REAL,MPI_SUM,
-     .        MPI_COMM_WORLD,ierr)
-
-         do i=1,9
-            ener(i)=sqrt(abs(ener(i)))
-         enddo
-      endif
-c     -----------------------------------------------------------------
 
 c     -----------------------------------------------------------------
 c     Computes Deltat

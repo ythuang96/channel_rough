@@ -39,12 +39,12 @@ CC          CFL                            FixTimeStep
 CC           *                                  *
     CFL_set_by_launchscript    FixTimeStep_set_by_launchscript
 CC
-CC  first     0/1            # steps
-CC  output    0 do nothing   between
-CC  file      1 compile      statistics
-CC  number      stat file
-CC       *         *            *
-        1           1            50
+CC  first
+CC  output
+CC  file
+CC  number
+CC       *
+        1
 CC
 CC  Boundary parameters
 CC
