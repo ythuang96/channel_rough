@@ -25,6 +25,7 @@ objects = modules.v7.o \
 	  cross.o \
 	  fou3D.o \
 	  laps.v7.o \
+	  restart_file.o \
 	  main.o \
 	  rftsingle.o
 VPATH = ../src
