@@ -20,6 +20,7 @@ c/*............................................c/*
       use save_flowfield, only: collectFlowfield, write_h5,
      &  assess_whether_to_collect_flowfield_step,
      &  assess_whether_to_collect_flowfield_time
+      use restart_file, only: write_restart_file_old
       implicit none
       include "mpif.h"
       include "ctes3D"
@@ -27,7 +28,7 @@ c/*............................................c/*
       real*4  c1,c2,c3
       parameter(c1=  1./3. ,c2=  1./2. ,c3=  1.  )
 
-      integer myid,iproc,leng,leng1,leng2,istep
+      integer myid,iproc,istep
       integer irun,rkstep,i,ii,k,kk,j,jj,i1,k1,k2,
      .     ipo1,ipo2,ipo3,ipo4,ipo
       real*4  r1, dtr1, du0,duL,tmp
@@ -94,11 +95,6 @@ c/*............................................c/*
       data c/c1,c2,c3/
       save c
 
-      real*4 uampl,vampl,wampl,vspeed
-      integer mxwall,mzwall
-      common /boundary/ uampl,vampl,wampl,vspeed,mxwall,mzwall
-      save /boundary/
-
       real*4 u1r,u2r,u3r,o1r,o2r,o3r
       common /planes/
      .     u1r(mgalx+2,mgalz),u2r(mgalx+2,mgalz),u3r(mgalx+2,mgalz),
@@ -161,62 +157,10 @@ c     -----------------------------------------------------------------
 c     -----------------------------------------------------------------
 c     write restart file
          if (mod(istep-1,nimag) .eq. 0 .and. istep.ne.1) then
-
-            if (myid.eq.0) then
-               write_time = -MPI_WTIME()
-               write(*,*) time, vWallBottom(mxwall,mzwall),
-     &             vWallTop(mxwall, mzwall)
-            endif
-
-            ! procedure to receive all the slices
-            call chjik2ikj(phi,phi,dvordy,dvordy,myid)
-            call chjik2ikj(vor,vor,dvordy,dvordy,myid)
-
-            do j=0,mx*max(mmy*mz,mmz*my)
-               chwk(1+j)        = vor(j,0,kb)
-               dvordy(j,0,kb) = phi(j,0,kb)
-            enddo
-
-            if(myid.ne.0) then
-               ! everybody sends data to the master
-               call MPI_SEND(chwk,mx*mz*mmy,MPI_REAL,
-     &              0,myid,MPI_COMM_WORLD,ierr)
-               call MPI_SEND(dvordy,mx*mz*mmy,MPI_REAL,
-     &              0,myid,MPI_COMM_WORLD,ierr)
-            else
-               ! the master first writes its stuff
-               call escru(chwk,dvordy,u00,w00,jb,je,0,
-     .              uWallBottom,uWallTop,vWallBottom,vWallTop,
-     .              wWallBottom,wWallTop,massu0)
-
-               ! then receives everything from everybody
-               do iproc=1,numerop-1
-
-                  leng=(jend(iproc)-jbeg(iproc)+1)*mx*mz
-                  call MPI_RECV(chwk,leng,MPI_REAL,
-     &                 iproc,iproc,MPI_COMM_WORLD,istat,ierr)
-
-                  call MPI_RECV(dvordy,leng,MPI_REAL,
-     &                 iproc,iproc,MPI_COMM_WORLD,istat,ierr)
-                  ! and writes it
-                  call escru(chwk,dvordy,u00,w00,jbeg(iproc),
-     &                 jend(iproc),iproc,
-     &                 uWallBottom,uWallTop,vWallBottom,vWallTop,
-     &                 wWallBottom,wWallTop,massu0)
-               enddo
-            endif
-
-
-            call chikj2jik(phi,phi,dvordy,dvordy,myid)
-            call chikj2jik(vor,vor,dvordy,dvordy,myid)
-
-            if (myid.eq.0) then
-               write(*,*) 'time write:',MPI_WTIME()+write_time
-               id22 = id22+1
-            endif
-
+            call write_restart_file_old(write_time, phi, vor,
+     .         dvordy, chwk, u00, w00, massu0, myid)
          endif
-c     finished writing image
+c       finished writing image
 c     -----------------------------------------------------------------
 
 

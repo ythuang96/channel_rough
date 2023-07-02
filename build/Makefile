@@ -22,10 +22,10 @@ objects = modules.v7.o \
 	  cfdiff8.v7.o \
 	  cftsingle.o \
 	  change.allfac.o \
+	  restart_file.o \
 	  cross.o \
 	  fou3D.o \
 	  laps.v7.o \
-	  restart_file.o \
 	  main.o \
 	  rftsingle.o
 VPATH = ../src

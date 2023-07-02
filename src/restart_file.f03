@@ -6,7 +6,7 @@ module restart_file
     private
     include 'ctes3D'
 
-    public :: read_restart_file_old
+    public :: read_restart_file_old, write_restart_file_old
 
 contains
     ! read_restart_file_old(vor,phi,u00,w00,wk1,myid)
@@ -235,6 +235,216 @@ contains
                 phi(i,k2)=work(2,i,k1)
             enddo
          enddo
+    end subroutine
+
+
+    ! Write a restart file
+    subroutine write_restart_file_old(write_time, phi, vor, dvordy, chwk, u00, w00, massu0, myid)
+        use boundary_planes, only: uWallBottom, uWallTop, vWallBottom, vWallTop, wWallBottom, wWallTop
+        implicit none
+
+        real*4 Deltat,CFL,time,dtr,FixTimeStep
+        common /tem/ Deltat,CFL,time,dtr,FixTimeStep
+        save   /tem/
+
+        integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz
+        common /point /jbeg(0:numerop-1),jend(0:numerop-1), &
+                       kbeg(0:numerop-1),kend(0:numerop-1), &
+                       jb,je,kb,ke,mmy,mmz
+        save   /point/
+
+        real*4 uampl,vampl,wampl,vspeed
+        integer mxwall,mzwall
+        common /boundary/ uampl,vampl,wampl,vspeed,mxwall,mzwall
+        save /boundary/
+
+        integer iinp,iout,id22,isn,ispf
+        character*100 filinp,filout,filstt
+        common /ficheros/ iinp,iout,id22,isn,ispf,filinp,filout,filstt
+        save /ficheros/
+
+        integer istat(MPI_STATUS_SIZE),ierr
+
+        integer myid,iproc,leng,leng1,leng2,istep
+        real*4 phi(0:2*my-1,0:mx1,kb:ke),vor(0:2*my-1,0:mx1,kb:ke)
+        real*4 dvordy(0:2*my-1,0:mx1,kb:ke)
+        real*4 chwk(*),work(20*my)
+
+        real*8 u00(0:*),w00(0:*)
+        real*8 massu0
+
+        real*8 write_time
+
+        real(kind=sp), dimension(1:mx, 1:mz) :: &
+            uWallBottom_temp, uWallTop_temp, &
+            vWallBottom_temp, vWallTop_temp, &
+            wWallBottom_temp, wWallTop_temp
+
+        integer j
+
+        ! covert complex array to real array with twice the dimension for kx
+        call c2r_array( uWallBottom, uWallBottom_temp)
+        call c2r_array( vWallBottom, vWallBottom_temp)
+        call c2r_array( wWallBottom, wWallBottom_temp)
+        call c2r_array( uWallTop   , uWallTop_temp   )
+        call c2r_array( vWallTop   , vWallTop_temp   )
+        call c2r_array( wWallTop   , wWallTop_temp   )
+
+        if (myid.eq.0) then
+            write_time = -MPI_WTIME()
+            write(*,*) time, vWallBottom(mxwall,mzwall),vWallTop(mxwall, mzwall)
+        endif
+
+        ! Change from slices of kx-y planes to slices of kx-kz planes
+        call chjik2ikj(phi,phi,dvordy,dvordy,myid)
+        call chjik2ikj(vor,vor,dvordy,dvordy,myid)
+
+        do j=0,mx*max(mmy*mz,mmz*my)
+            chwk(1+j)      = vor(j,0,kb)
+            dvordy(j,0,kb) = phi(j,0,kb)
+        enddo
+
+        if(myid.ne.0) then
+            ! everybody sends data to the master
+            call MPI_SEND(  chwk,mx*mz*mmy,MPI_REAL,0,myid,MPI_COMM_WORLD,ierr)
+            call MPI_SEND(dvordy,mx*mz*mmy,MPI_REAL,0,myid,MPI_COMM_WORLD,ierr)
+        else
+            ! the master first writes its stuff
+            call escru(chwk,dvordy,u00,w00,jb,je,0, &
+                uWallBottom_temp,uWallTop_temp, &
+                vWallBottom_temp,vWallTop_temp, &
+                wWallBottom_temp,wWallTop_temp,massu0)
+
+            ! then receives everything from everybody
+            do iproc=1,numerop-1
+
+                leng=(jend(iproc)-jbeg(iproc)+1)*mx*mz
+                call MPI_RECV(  chwk,leng,MPI_REAL,iproc,iproc,MPI_COMM_WORLD,istat,ierr)
+                call MPI_RECV(dvordy,leng,MPI_REAL,iproc,iproc,MPI_COMM_WORLD,istat,ierr)
+                ! and writes it to file
+                call escru(chwk,dvordy,u00,w00,jbeg(iproc), &
+                    jend(iproc),iproc, &
+                    uWallBottom_temp,uWallTop_temp, &
+                    vWallBottom_temp,vWallTop_temp, &
+                    wWallBottom_temp,wWallTop_temp,massu0)
+            enddo
+        endif
+
+        ! Change back to slices of kx-y planes
+        call chikj2jik(phi,phi,dvordy,dvordy,myid)
+        call chikj2jik(vor,vor,dvordy,dvordy,myid)
+
+        ! Display write timer
+        if (myid.eq.0) then
+            write(*,*) 'time write:',MPI_WTIME()+write_time
+            id22 = id22+1
+        endif
+    end subroutine
+
+
+    ! Convert a complex array to a real array with twice the size for dimension 1
+    subroutine c2r_array( array_in, array_out )
+        implicit none
+
+        complex(kind=sp), dimension(mx/2, mz), intent(in) :: array_in
+        real(kind=sp), dimension(mx, mz), intent(out) :: array_out
+
+        array_out(1:mx-1:2,:) =  real( array_in, sp )
+        array_out(2:mx:2  ,:) = aimag( array_in)
+
+    end subroutine
+
+
+    ! Write to the restart file
+    subroutine escru(vor,phi,u00,w00,j1,j2,iproc,uwallb,uwallt,vwallb,vwallt,wwallb,wwallt,uBulk)
+        implicit none
+        integer iproc,j1,j2
+        real*4 vor(mx,mz,j1:j2),phi(mx,mz,j1:j2)
+        real*8 u00(*),w00(*)
+        real*4 uwallb(mx,mz),uwallt(mx,mz)
+        real*4 vwallb(mx,mz),vwallt(mx,mz)
+        real*4 wwallb(mx,mz),wwallt(mx,mz)
+        real*8 uBulk
+
+        integer i,j,k
+
+        character*3 ext1
+        character*4 ext2
+        character*104 fnameima
+
+        real*4 gamma
+        integer imesh
+        common /mesh/ gamma,imesh
+        save /mesh/
+
+        real*4 Deltat,CFL,time,dtr,FixTimeStep
+        common /tem/ Deltat,CFL,time,dtr,FixTimeStep
+        save /tem/
+
+        real*4 uampl,vampl,wampl,vspeed
+        integer mxwall,mzwall
+        common /boundary/ uampl,vampl,wampl,vspeed,mxwall,mzwall
+        save /boundary/
+
+        real*8 fmap,y2
+        real*4  Re,alp,bet,a0,y,hy
+        common /fis/ Re,alp,bet,a0,y(my),hy(my),fmap(my),y2(my)
+        save   /fis/
+
+        integer iinp,iout,id22,isn,ispf
+        character*100 filinp,filout,filstt
+        common /ficheros/ iinp,iout,id22,isn,ispf,filinp,filout,filstt
+        save /ficheros/
+
+        integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz
+        common /point /jbeg(0:numerop-1),jend(0:numerop-1), &
+                       kbeg(0:numerop-1),kend(0:numerop-1), &
+                       jb,je,kb,ke,mmy,mmz
+        save /point/
+
+
+        if(iproc.eq.0) then    !!!!! coming from node 0
+            ! start writing image
+            if(id22.gt.999.or.id22.lt.0) then
+                write(*,*) 'number of images out of range'
+                stop
+            endif
+
+            write(ext1,'(i3.3)') id22
+            fnameima=filout(1:index(filout,' ')-1)//'.'//ext1
+
+            open (iout,file=fnameima,status='unknown', &
+                form='unformatted',access='direct',recl=mx*mz*2*iwd)
+
+            write(*,*) j1,j2, 'in escru image',fnameima
+            write(iout,rec=1) time,Re,alp,bet,a0,mx,my,mz,imesh,gamma, &
+                mxwall,mzwall,uampl,vampl,wampl,vspeed, &
+                (real(u00(j)),real(w00(j)),j=1,my)
+
+            do j=j1,j2
+                write(iout,rec=j+1)((vor(i,k,j),phi(i,k,j),i=1,mx),k=1,mz)
+            enddo
+
+
+        else
+            write(*,*) j1,j2, 'in escru image'
+
+            do j=j1,j2
+                write(iout,rec=j+1)((vor(i,k,j),phi(i,k,j),i=1,mx),k=1,mz)
+            enddo
+
+        endif
+
+        if(iproc.eq.numerop-1) then
+            ! last node writes boundaries
+            write(iout,rec=my+2)((uwallb(i,k),uwallt(i,k),i=1,mx),k=1,mz)
+            write(iout,rec=my+3)((vwallb(i,k),vwallt(i,k),i=1,mx),k=1,mz)
+            write(iout,rec=my+4)((wwallb(i,k),wwallt(i,k),i=1,mx),k=1,mz)
+
+         write(*,*) 'closing files'
+         close(iout)
+      endif
+
     end subroutine
 
 
