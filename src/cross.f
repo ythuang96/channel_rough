@@ -154,16 +154,6 @@ c     Assess whether it to save flow field or not
 c     -----------------------------------------------------------------
 
 
-c     -----------------------------------------------------------------
-c     write restart file
-         if (mod(istep-1,nimag) .eq. 0 .and. istep.ne.1) then
-            call write_restart_file_old(write_time, phi, vor,
-     .         dvordy, chwk, u00, w00, massu0, myid)
-         endif
-c       finished writing image
-c     -----------------------------------------------------------------
-
-
 c/********************************************************************/
 c/*     Special treatment for first time step                        */
 c/********************************************************************/
@@ -680,6 +670,17 @@ c     >           commtimer-comm_time,MPI_WTIME()+iter_time
             comm_time = commtimer
          end if
 c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     write restart file
+         if (mod(istep,nimag) .eq. 0) then
+            call write_restart_file_old(write_time, phi, vor,
+     .         dvordy, chwk, u00, w00, massu0, myid)
+         endif
+c       finished writing image
+c     -----------------------------------------------------------------
+
 
       ENDDO
 c/********************************************************************/
