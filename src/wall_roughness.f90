@@ -11,7 +11,12 @@ module wall_roughness
     real(kind=sp), parameter :: targetWavenumberX = 0.0_sp
     real(kind=sp), parameter :: absoluteValueTargetWavenumberZ = 3.0_sp
     integer :: idxWavenumberX, idxPosWavenumberZ, idxNegWavenumberZ
+    complex(kind=sp), dimension(0:mx1, 0:mz1) :: uWallBottom, uWallTop
+    complex(kind=sp), dimension(0:mx1, 0:mz1) :: vWallBottom, vWallTop
+    complex(kind=sp), dimension(0:mx1, 0:mz1) :: wWallBottom, wWallTop
+
     public :: initialize_wall_roughness, set_wall_roughness
+    public :: uWallBottom, uWallTop, vWallBottom, vWallTop, wWallBottom, wWallTop
 
 contains
     subroutine initialize_wall_roughness(complexExponentVectorX, complexExponentVectorZ)
@@ -25,12 +30,13 @@ contains
         call print_information_to_console()
     end subroutine
 
-    subroutine set_wall_roughness(uWallBottom, uWallTop, vWallBottom, vWallTop)
-        complex(kind=sp), intent(out) :: uWallBottom(0:,0:), uWallTop(0:,0:), vWallBottom(0:,0:), vWallTop(0:,0:)
+    subroutine set_wall_roughness( )
         uWallBottom = (0.0_sp, 0.0_sp)
         uWallTop = (0.0_sp, 0.0_sp)
         vWallBottom = (0.0_sp, 0.0_sp)
         vWallTop = (0.0_sp, 0.0_sp)
+        wWallBottom = (0.0_sp, 0.0_sp)
+        wWallTop = (0.0_sp, 0.0_sp)
         ! perturb u
         uWallBottom(idxWavenumberX, idxPosWavenumberZ) = (disturbanceU, 0.0_sp)
         uWallBottom(idxWavenumberX, idxNegWavenumberZ) = (disturbanceU, 0.0_sp)

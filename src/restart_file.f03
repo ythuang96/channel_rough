@@ -21,7 +21,6 @@ contains
     !   wk1      : [single, work variable]
     !   myid     : [int] processor ID
     subroutine read_restart_file_old(vor,phi,u00,w00,wk1,myid)
-        use boundary_planes, only: set_bc_from_restart_file
         implicit none
 
         integer istat(MPI_STATUS_SIZE),ierr
@@ -128,19 +127,6 @@ contains
                     call MPI_SEND(wk1,ntotr,MPI_REAL,iproc,iproc,MPI_COMM_WORLD,ierr)
                 enddo
             enddo
-
-            ! velocity boundary conditions: master process
-            ! allocate temporary memory to read data from restart file
-            allocate(uWallBottom(mxe,mze))
-            allocate(uWallTop(mxe,mze))
-            allocate(vWallBottom(mxe,mze))
-            allocate(vWallTop(mxe,mze))
-            allocate(wWallBottom(mxe,mze))
-            allocate(wWallTop(mxe,mze))
-            ! read values from file
-            read(iinp, rec=mye+2)((uWallBottom(i,k), uWallTop(i,k), i=1,mxe), k=1,mze)
-            read(iinp, rec=mye+3)((vWallBottom(i,k), vWallTop(i,k), i=1,mxe), k=1,mze)
-            read(iinp, rec=mye+4)((wWallBottom(i,k), wWallTop(i,k), i=1,mxe), k=1,mze)
             close(iinp)
 
         else  ! Slaves receive data from master
@@ -159,26 +145,7 @@ contains
                 call assign(wk1,vor(1,1,j),phi(1,1,j),mx,mz,mxe,mze)
             enddo
 
-            ! velocity boundary conditions: slave processes
-            ! allocate temporary memory
-            allocate(uWallBottom(mxe,mze))
-            allocate(uWallTop(mxe,mze))
-            allocate(vWallBottom(mxe,mze))
-            allocate(vWallTop(mxe,mze))
-            allocate(wWallBottom(mxe,mze))
-            allocate(wWallTop(mxe,mze))
-
         endif ! end master and slave separation if
-
-        ! all processes set velocity boundary condition
-        call set_bc_from_restart_file(uWallBottom, uWallTop,vWallBottom, vWallTop,wWallBottom, wWallTop)
-        ! and dealocate temporary buffers
-        deallocate(uWallBottom)
-        deallocate(uWallTop)
-        deallocate(vWallBottom)
-        deallocate(vWallTop)
-        deallocate(wWallBottom)
-        deallocate(wWallTop)
 
         ! so far, each processor has data in a few y planes
         ! before going any further, exchange cuts in y with cuts in z!
@@ -240,7 +207,7 @@ contains
 
     ! Write a restart file
     subroutine write_restart_file_old(write_time, phi, vor, dvordy, chwk, u00, w00, massu0, myid)
-        use boundary_planes, only: uWallBottom, uWallTop, vWallBottom, vWallTop, wWallBottom, wWallTop
+        use wall_roughness, only: uWallBottom, uWallTop, vWallBottom, vWallTop, wWallBottom, wWallTop
         implicit none
 
         real*4 Deltat,CFL,time,dtr,FixTimeStep

@@ -14,9 +14,10 @@ c/*............................................c/*
      .     dvordy,
      .     chwk,
      .     myid)
-      use boundary_planes, only: uWallBottom, uWallTop, vWallBottom,
-     &  vWallTop, wWallBottom, wWallTop
-      use wall_roughness, only: set_wall_roughness
+      use wall_roughness, only: set_wall_roughness,
+     &  uWallBottom, uWallTop,
+     &  vWallBottom, vWallTop,
+     &  wWallBottom, wWallTop
       use save_flowfield, only: collectFlowfield, write_h5,
      &  assess_whether_to_collect_flowfield_step,
      &  assess_whether_to_collect_flowfield_time
@@ -173,8 +174,7 @@ c     -----------------------------------------------------------------
            ! vWall is read from restart file, but let's set it
            ! explicitly here, just in case we want to do something
            ! else than in the restart file
-           call set_wall_roughness(uWallBottom, uWallTop, vWallBottom,
-     &       vWallTop)
+           call set_wall_roughness( )
 c     -----------------------------------------------------------------
 
 
@@ -423,8 +423,7 @@ c     -----------------------------------------------------------------
 
 c     -----------------------------------------------------------------
 c     Update boundary condition for the viscous time step
-            call set_wall_roughness(uWallBottom, uWallTop, vWallBottom,
-     &          vWallTop)
+            call set_wall_roughness( )
 c     -----------------------------------------------------------------
 
 

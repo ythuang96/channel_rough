@@ -15,7 +15,6 @@ FFLAGS = $(INCLUDEPATH) -c -w -O1
 LDFLAGS = $(INCLUDEPATH) -w -O1
 objects = modules.v7.o \
 	  types.o \
-	  boundary_planes.o \
 	  h5save.o \
 	  save_flowfield.o \
 	  wall_roughness.o \
