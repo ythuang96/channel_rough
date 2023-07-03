@@ -27,15 +27,16 @@ c/********************************************************************/
       include "mpif.h"
       include "ctes3D"
 
-      integer nbuffsize,nwkasize,j
+      integer nbuffsize,j
       real*4, allocatable:: vor(:),phi(:)
+      real*4, allocatable:: hv(:),hg(:)
+      real*4, allocatable:: phiwk(:),vorwk(:)
+      real*4, allocatable:: dvordy(:),chwk(:)
       real*8  u00(my),w00(my)
-      real*4, allocatable::  wk(:)
+      real*8  rf0u(my),rf0w(my),u00wk(my),w00wk(my)
 
       integer istat(MPI_STATUS_SIZE),ierr
       integer myid,numprocs
-      integer ihv,ihg,iphiwk,ivorwk,irf0u,irf0w,iu00wk,iw00wk,idvordy,
-     .        ichwk
 
       integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz
       common /point /jbeg(0:numerop-1),jend(0:numerop-1),
@@ -79,46 +80,46 @@ c     ! Initializes commons and things
 
 c     ! Allocates buffers
       nbuffsize = mx*max(mmy*mz,mmz*my)
-      nwkasize  = 6*nbuffsize + 2*4*my
 
       allocate(vor(nbuffsize))
       allocate(phi(nbuffsize))
-      allocate(wk(nwkasize))
-
-c     ! Read data from restart file
-      call read_restart_file_old(vor,phi,u00,w00,wk,myid)
+      allocate(hv(nbuffsize))
+      allocate(hg(nbuffsize))
+      allocate(phiwk(nbuffsize))
+      allocate(vorwk(nbuffsize))
+      allocate(dvordy(nbuffsize))
+      allocate(chwk(nbuffsize))
 
 c     ! Initialize custom modules
       call initialize_save_flowfield_module(filstt)
       call initialize_wall_roughness(xalp, xbet)
 
 
+c     ! Read data from restart file
+      call read_restart_file_old(vor,phi,u00,w00,chwk,myid,
+     .     rf0u,rf0w,u00wk,w00wk,
+     .     hv,hg,
+     .     phiwk,vorwk)
 c     ! ------------------------ Start time advancement ------------------------
-      irf0u   = 1
-      irf0w   = irf0u   + 2*my
-      iu00wk  = irf0w   + 2*my
-      iw00wk  = iu00wk  + 2*my
-      ihv     = iw00wk  + 2*my
-      ihg     = ihv     + nbuffsize
-      iphiwk  = ihg     + nbuffsize
-      ivorwk  = iphiwk  + nbuffsize
-      idvordy = ivorwk  + nbuffsize
-      ichwk   = idvordy + nbuffsize
-
       call cross1(vor,phi,u00,w00,
-     .            wk(irf0u),wk(irf0w),wk(iu00wk),wk(iw00wk),
-     .            wk(ihv),wk(ihg),
-     .            wk(iphiwk),wk(ivorwk),
-     .            wk(idvordy),wk(ichwk),myid)
-
+     .     rf0u,rf0w,u00wk,w00wk,
+     .     hv,hg,
+     .     phiwk,vorwk,dvordy,
+     .     chwk,
+     .     myid)
 
 c     ! -------------------------- Finalize procedure --------------------------
 c     ! Clean up the save_flowfield module (deallocate variables)
       call cleanup_save_flowfield_module
 
-      DEALLOCATE(vor)
-      DEALLOCATE(phi)
-      DEALLOCATE(wk)
+      DEALLOCATE(vor   )
+      DEALLOCATE(phi   )
+      DEALLOCATE(hv    )
+      DEALLOCATE(hg    )
+      DEALLOCATE(phiwk )
+      DEALLOCATE(vorwk )
+      DEALLOCATE(dvordy)
+      DEALLOCATE(chwk  )
 
 c     ! Finalize MPI
       call MPI_BARRIER(MPI_COMM_WORLD, ierr)

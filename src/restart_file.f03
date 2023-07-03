@@ -20,7 +20,7 @@ contains
     !              u and w 00 modes, variables allocated outside and filled with data from the restart file
     !   wk1      : [single, work variable]
     !   myid     : [int] processor ID
-    subroutine read_restart_file_old(vor,phi,u00,w00,wk1,myid)
+    subroutine read_restart_file_old(vor,phi,u00,w00,wk1,myid, rf0u,rf0w,u00wk,w00wk,hv,hg,phiwk,vorwk)
         implicit none
 
         integer istat(MPI_STATUS_SIZE),ierr
@@ -50,10 +50,9 @@ contains
 
         integer j,mxe,mye,mze,ntotr,iproc,mym,mmy2
 
-        real*4, allocatable :: uWallBottom(:,:), uWallTop(:,:)
-        real*4, allocatable :: vWallBottom(:,:), vWallTop(:,:)
-        real*4, allocatable :: wWallBottom(:,:), wWallTop(:,:)
-
+        real(kind=sp), dimension(0:2*my-1,0:mx1,kb:ke), intent(inout) :: &
+            hv,hg,phiwk,vorwk
+        real(kind=dp), dimension(my), intent(inout) :: rf0u,rf0w,u00wk,w00wk
 
         master = 0
 
@@ -61,15 +60,15 @@ contains
         do k=1,mz
             do j=1,mmy
                 do i=1,mx
-                    vor(i,k,j) = 0.
-                    phi(i,k,j) = 0.
+                    vor(i,k,j) = 0.0_sp
+                    phi(i,k,j) = 0.0_sp
                 enddo
             enddo
         enddo
 
         do j=1,my
-            u00(j) = 0d0
-            w00(j) = 0d0
+            u00(j) = 0.0_sp
+            w00(j) = 0.0_sp
         enddo
 
         ! the time could be read from the restart file below, but here we
@@ -151,6 +150,88 @@ contains
         ! before going any further, exchange cuts in y with cuts in z!
         call chikj2jik(vor,vor,wk1,wk1,myid)
         call chikj2jik(phi,phi,wk1,wk1,myid)
+
+        ! Organize the data, mainly solve for v from phi and compute y derivatives
+        call orgainize_data_from_restart_file(vor,phi,u00,w00,rf0u,rf0w,u00wk,w00wk,hv,hg,phiwk,vorwk)
+
+    end subroutine
+
+    subroutine orgainize_data_from_restart_file(vor,phi,u00,w00,rf0u,rf0w,u00wk,w00wk,hv,hg,phiwk,vorwk)
+        use wall_roughness, only: set_wall_roughness, &
+            uWallBottom, uWallTop, vWallBottom, vWallTop, wWallBottom, wWallTop
+        implicit none
+
+        integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz
+        common /point /jbeg(0:numerop-1),jend(0:numerop-1), &
+                       kbeg(0:numerop-1),kend(0:numerop-1), &
+                       jb,je,kb,ke,mmy,mmz
+        save   /point/
+
+        complex*8     xalp, xbet
+        real*4        alp2,bet2
+        integer       iax,icx
+        common /wave/ xalp(0:mx1),xbet(0:mz1),alp2(0:mx1),bet2(0:mz1),iax(mx),icx(0:mz1)
+        save   /wave/
+
+
+        integer i,k,j,k1
+        real*8 rk
+        complex*8 bcb,bct
+
+        real(kind=sp), dimension(0:2*my-1,0:mx1,kb:ke), intent(inout) :: &
+            vor,phi,hv,hg,phiwk,vorwk
+        real(kind=dp), dimension(my), intent(inout) :: u00,w00,rf0u,rf0w,u00wk,w00wk
+
+
+        ! Set boundary conditions, ignoring the BC from restart file
+        call set_wall_roughness( )
+
+        ! Calculate v from phi
+        do k=kb,ke
+            k1 = icx(k-1)
+            do i=0,mx1
+                rk = bet2(k1)+alp2(i)
+                ! note on indices:
+                ! kb and ke are in the range [1, mz]
+                ! the indices of the boundary planes are in the range
+                ! [0, mz1], where mz1 = mz - 1
+                ! therefore we need to subtract 1 from the loop index
+                ! k (which is defined in terms of kb, ke) when
+                ! accessing the boundary planes
+                bcb = vWallBottom(i,k-1)
+                bct = vWallTop(i,k-1)
+                ! debugging
+                if(abs(bcb) .gt. 1e-4) then
+                write(*,*) 'initial boundary conditions'
+                write(*,*) 'i = ', i
+                write(*,*) 'abs(k) = ', k1
+                write(*,*) 'vwallBottom = ', bcb
+                write(*,*) 'vWallTop = ', bct
+                endif
+                ! solve nabla^2 v = phi
+                ! phi is the  input
+                call Lapvdv(phi(0,i,k),hg(0,i,k),hv(0,i,k),rk,bcb,bct)
+                ! hg  is the output: v
+                ! hv  is the output: dv/dy
+            enddo
+        enddo
+
+        ! Compute 00 modes of omega1 and omega3
+        ! Compute y derivative of u and w
+        u00wk=u00
+        w00wk=w00
+        call deryr(u00wk,rf0u,my)
+        call deryr(w00wk,rf0w,my)
+        ! rf0u = du/dy(kx=kz=0) = - o3(kx=kz=0)
+        ! rf0w = dw/dy(kx=kz=0) = + o1(kx=kz=0)
+
+        ! Copy data to vorwk and phiwk
+        vorwk=vor
+        phiwk=phi
+        ! vorwk and phi wk are size 0:2*my-1, 0:mx1, kb:ke
+        ! the first index includes both real and imaginary part
+        ! vorwk: omega2
+        ! phiwk: phi = nabla^2 v
 
     end subroutine
 

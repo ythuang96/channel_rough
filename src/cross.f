@@ -7,11 +7,8 @@ c/*............................................c/*
      .     phi,
      .     u00,w00,
      .     rf0u,rf0w,u00wk,w00wk,
-     .     hv,
-     .     hg,
-     .     phiwk,
-     .     vorwk,
-     .     dvordy,
+     .     hv,hg,
+     .     phiwk,vorwk,dvordy,
      .     chwk,
      .     myid)
       use wall_roughness, only: set_wall_roughness,
@@ -30,7 +27,7 @@ c/*............................................c/*
       parameter(c1=  1./3. ,c2=  1./2. ,c3=  1.  )
 
       integer myid,iproc,istep
-      integer irun,rkstep,i,ii,k,kk,j,jj,i1,k1,k2,
+      integer rkstep,i,ii,k,kk,j,jj,i1,k1,k2,
      .     ipo1,ipo2,ipo3,ipo4,ipo
       real*4  r1, dtr1, du0,duL,tmp
       real*8 rk,rk2,bcbr,bctr
@@ -121,8 +118,6 @@ c/*............................................c/*
       totaltimer=0.0D0
 
       ihist    = 0
-
-      irun   = 0                ! first time step is special in tim3rkp
       icfl   = 1                ! first time step always needs a step size
 
       if(myid.eq.0) then
@@ -131,6 +126,15 @@ c/*............................................c/*
          write (*,*) fname
          open(39,file=fname,status='unknown')
       endif
+
+c     -----------------------------------------------------------------
+c     target mass flux, historical Madrid value
+      massu0 = .8987636566162d0
+      massw0 = 0d0
+      if(myid.eq.0) then
+         write (*,*) 'mass flux:',massu0,massw0
+      endif
+c     -----------------------------------------------------------------
 
 
 c/********************************************************************/
@@ -153,118 +157,6 @@ c     Assess whether it to save flow field or not
          ! call assess_whether_to_collect_flowfield_time(time)
          call assess_whether_to_collect_flowfield_step(istep)
 c     -----------------------------------------------------------------
-
-
-c/********************************************************************/
-c/*     Special treatment for first time step                        */
-c/********************************************************************/
-         if(irun.eq.0) then
-
-            irun = 1
-
-c     -----------------------------------------------------------------
-           ! all processors have explicitly set the time to zero, so
-           ! this step can be skipped
-           ! call  MPI_BCAST(time,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
-c     -----------------------------------------------------------------
-
-
-c     -----------------------------------------------------------------
-           ! first step: set boundary conditions for v
-           ! vWall is read from restart file, but let's set it
-           ! explicitly here, just in case we want to do something
-           ! else than in the restart file
-           call set_wall_roughness( )
-c     -----------------------------------------------------------------
-
-
-c     -----------------------------------------------------------------
-c     Calculate the v from phi
-            do k=kb,ke
-               k1 = icx(k-1)
-               do i=0,mx1
-                  rk = bet2(k1)+alp2(i)
-                  ! note on indices:
-                  ! kb and ke are in the range [1, mz]
-                  ! the indices of the boundary planes are in the range
-                  ! [0, mz1], where mz1 = mz - 1
-                  ! therefore we need to subtract 1 from the loop index
-                  ! k (which is defined in terms of kb, ke) when
-                  ! accessing the boundary planes
-                  bcb = vWallBottom(i,k-1)
-                  bct = vWallTop(i,k-1)
-                  ! debugging
-                  if(abs(bcb) .gt. 1e-4) then
-                    write(*,*) 'initial boundary conditions'
-                    write(*,*) 'i = ', i
-                    write(*,*) 'abs(k) = ', k1
-                    write(*,*) 'vwallBottom = ', bcb
-                    write(*,*) 'vWallTop = ', bct
-                  endif
-                  ! solve nabla^2 v = phi
-                  ! phi is the  input
-                  call Lapvdv(phi(0,i,k),hg(0,i,k),hv(0,i,k),
-     .                 rk,bcb,bct)
-                  ! hg  is the output: v
-                  ! hv  is the output: dv/dy
-               enddo
-            enddo
-c     -----------------------------------------------------------------
-
-
-c     -----------------------------------------------------------------
-c     Compute 00 modes of omega1 and omega3
-            ! Compute y derivative of u and w
-            do j=0,my1
-               u00wk(j)=u00(j)
-               w00wk(j)=w00(j)
-            enddo
-            call deryr(u00wk,rf0u,my)
-            call deryr(w00wk,rf0w,my)
-            ! rf0u = du/dy(kx=kz=0) = - o3(kx=kz=0)
-            ! rf0w = dw/dy(kx=kz=0) = + o1(kx=kz=0)
-c     -----------------------------------------------------------------
-
-
-c     -----------------------------------------------------------------
-c     Copy data to vorwk and phiwk
-            do  k=kb,ke
-               do i=0,mx1
-                  do j=0,2*my-1
-                     vorwk(j,i,k)=vor(j,i,k)
-                     phiwk(j,i,k)=phi(j,i,k)
-                  enddo
-               enddo
-            enddo
-            ! vorwk and phi wk are size 0:2*my-1, 0:mx1, kb:ke
-            ! the first index includes both real and imaginary part
-            ! vorwk: omega2
-            ! phiwk: phi = nabla^2 v
-c     -----------------------------------------------------------------
-
-
-c     -----------------------------------------------------------------
-c     compute u mass flux
-            ! Integrate the channel
-            massu0=0d0
-            massw0=0d0
-            do j=0,my1
-               massu0 = massu0 + trp2(j)*u00(j)
-            enddo
-
-            ! target mass flux, historical Madrid value
-            massu0 = .8987636566162d0
-            if(myid.eq.0) then
-               write (*,*) 'mass flux:',massu0,massw0
-            endif
-c     -----------------------------------------------------------------
-
-
-         endif
-c/********************************************************************/
-c/*     End special first step                                       */
-c/********************************************************************/
-
 
 c/********************************************************************/
 c/*     Runge-Kutta third order                                      */
