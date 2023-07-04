@@ -156,6 +156,10 @@ contains
 
     end subroutine
 
+
+    ! Subroutine to perform the special first time step in the original code,
+    ! Mainly solving for v from phi and compute y derivatives of the 00 modes.
+    ! This is only used for reading the old version restart file
     subroutine orgainize_data_from_restart_file(vor,phi,u00,w00,rf0u,rf0w,u00wk,w00wk,hv,hg,phiwk,vorwk)
         use wall_roughness, only: set_wall_roughness, &
             uWallBottom, uWallTop, vWallBottom, vWallTop, wWallBottom, wWallTop
@@ -286,7 +290,7 @@ contains
     end subroutine
 
 
-    ! Write a restart file
+    ! Write a old version restart file
     subroutine write_restart_file_old(write_time, phi, vor, dvordy, chwk, u00, w00, massu0, myid)
         use wall_roughness, only: uWallBottom, uWallTop, vWallBottom, vWallTop, wWallBottom, wWallTop
         implicit none
@@ -391,6 +395,7 @@ contains
 
 
     ! Convert a complex array to a real array with twice the size for dimension 1
+    ! Used in writing the old version restart file
     subroutine c2r_array( array_in, array_out )
         implicit none
 

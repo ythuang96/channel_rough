@@ -343,14 +343,6 @@ c     Advance phi, v, dv/dy, omega2
                   bctdv = -xalp(i)*uWallTop(i,k-1) -
      &              xbet(k-1)*wWallTop(i,k-1)
 
-                  ! temporary: no slip bc
-                  !bcbo  = (0.0, 0.0)
-                  !bcto  = (0.0, 0.0)
-                  !bcb   = (0.0, 0.0)
-                  !bct   = (0.0, 0.0)
-                  !bcbdv = (0.0, 0.0)
-                  !bctdv = (0.0, 0.0)
-
                   ! Solve for phi, v, dv/dy, omega2 at the next RK step
                   ! for each kx, kz wavenumbers
                   call lapsov(phiwk(0,i,k),hg(0,i,k),hv(0,i,k),
