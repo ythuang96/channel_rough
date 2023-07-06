@@ -531,15 +531,6 @@ c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
-c     write restart file
-         if (mod(istep,nimag) .eq. 0) then
-            call write_restart_file_old(write_time, phi, vor,
-     .         dvordy, chwk, u00, w00, massu0, myid)
-         endif
-c     -----------------------------------------------------------------
-
-
-c     -----------------------------------------------------------------
 c     Increment time
          time=time+Deltat
 c     -----------------------------------------------------------------
@@ -553,11 +544,24 @@ c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
-c     Master record run time
+c     Master write step time
          if (myid.eq.0) then
             totaltimer=totaltimer+MPI_WTIME()
+c            write(*,'(i7,3f20.5)') istep,
+c     >           MPI_WTIME()+iter_time-commtimer+comm_time,
+c     >           commtimer-comm_time,MPI_WTIME()+iter_time
             comm_time = commtimer
          end if
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
+c     write restart file
+         if (mod(istep,nimag) .eq. 0) then
+            call write_restart_file_old(write_time, phi, vor,
+     .         dvordy, chwk, u00, w00, massu0, myid)
+         endif
+c       finished writing image
 c     -----------------------------------------------------------------
 
 
