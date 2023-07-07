@@ -6,8 +6,8 @@ module h5save
     private
 
     public :: check_filename
-    public :: h5save_R, h5save_R1
-    public :: h5save_C3Partial_Init, h5save_C3Partial_SingleDim3
+    public :: h5save_R_dp, h5save_R1_dp
+    public :: h5save_C3Partial_Init_sp, h5save_C3Partial_SingleDim3_sp
 
     ! The following standard for complex variables are used:
     ! if varibale 'var' is complex, save as '/var/var_REAL' and '/var/var_IMAG'
@@ -72,7 +72,7 @@ contains
     end subroutine check_filename
 
 
-    ! subroutine h5save_R( filename, varname, scalar )
+    ! subroutine h5save_R_dp( filename, varname, scalar )
     ! save a real number to h5 file
     !
     ! DOUBLE PRECISION ONLY!
@@ -81,7 +81,7 @@ contains
     !   filename: [string, Input] h5 filename with path
     !   varname : [string, Input] variable name saved in h5
     !   scalar  : [double/single scalar, Input] data to be saved
-    subroutine h5save_R( filename, varname, scalar )
+    subroutine h5save_R_dp( filename, varname, scalar )
         character(len=*), intent(in) :: filename, varname
         real(kind=dp), intent(in) :: scalar
 
@@ -125,10 +125,10 @@ contains
         CALL h5fclose_f(file_id, error)
         ! Close FORTRAN interface
         CALL h5close_f(error)
-    end subroutine h5save_R
+    end subroutine h5save_R_dp
 
 
-    ! subroutine h5save_R1( filename, varname, vector )
+    ! subroutine h5save_R1_dp( filename, varname, vector )
     ! save a real rank 1 vector to h5 file
     !
     ! DOUBLE PRECISION ONLY!
@@ -137,7 +137,7 @@ contains
     !   filename: [string, Input] h5 filename with path
     !   varname : [string, Input] variable name (real 1d vector)
     !   vector  : [double/single 1d vector, Input] data to be saved
-    subroutine h5save_R1( filename, varname, vector )
+    subroutine h5save_R1_dp( filename, varname, vector )
         character(len=*), intent(in) :: filename, varname
         real(kind=dp), intent(in), dimension(:) :: vector
 
@@ -183,10 +183,10 @@ contains
         CALL h5fclose_f(file_id, error)
         ! Close FORTRAN interface
         CALL h5close_f(error)
-    end subroutine h5save_R1
+    end subroutine h5save_R1_dp
 
 
-    ! subroutine h5save_C3Partial_Init( filename, varname, full_data_dim )
+    ! subroutine h5save_C3Partial_Init_sp( filename, varname, full_data_dim )
     ! initialize a complex rank 3 matrix to h5 file in preparation for partial data saving
     !
     ! SINGLE PRECISION ONLY!
@@ -198,7 +198,7 @@ contains
     !
     ! Note:
     !   This function needs to be called once and only once before any partial saving is performed
-    subroutine h5save_C3Partial_Init( filename, varname, full_data_dim)
+    subroutine h5save_C3Partial_Init_sp( filename, varname, full_data_dim)
         ! Inputs
         character(len=*), intent(in) :: filename, varname
         integer, intent(in), dimension(3) :: full_data_dim
@@ -274,10 +274,10 @@ contains
         ! Close FORTRAN interface
         CALL h5close_f(error)
 
-    end subroutine h5save_C3Partial_Init
+    end subroutine h5save_C3Partial_Init_sp
 
 
-    ! subroutine h5save_C3Partial_SingleDim3( filename, varname, matrix, dim3index )
+    ! subroutine h5save_C3Partial_SingleDim3_sp( filename, varname, matrix, dim3index )
     ! save a complex rank 2 matrix to h5 file as a single plane in the complex rank 3 matrix
     !
     ! SINGLE PRECISION ONLY!
@@ -290,7 +290,7 @@ contains
     !
     ! Note:
     !   The variable in this h5 file must already be initilaized using the function h5save_C3Partial_Init
-    subroutine h5save_C3Partial_SingleDim3( filename, varname, matrix, dim3index)
+    subroutine h5save_C3Partial_SingleDim3_sp( filename, varname, matrix, dim3index)
         ! Inputs
         character(len=*), intent(in) :: filename, varname
         complex(kind=sp), intent(in), dimension(:,:) :: matrix
@@ -396,7 +396,7 @@ contains
         CALL h5close_f(error)
         ! Deallocate temp buffer
         DEALLOCATE(temp)
-    end subroutine h5save_C3Partial_SingleDim3
+    end subroutine h5save_C3Partial_SingleDim3_sp
 
 end module h5save
 
