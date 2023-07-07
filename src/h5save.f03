@@ -5,7 +5,9 @@ module h5save
     implicit none
     private
 
-    public :: h5save_R, h5save_R1, h5save_C3Partial_Init, h5save_C3Partial_SingleDim3
+    public :: check_filename
+    public :: h5save_R, h5save_R1
+    public :: h5save_C3Partial_Init, h5save_C3Partial_SingleDim3
 
     ! The following standard for complex variables are used:
     ! if varibale 'var' is complex, save as '/var/var_REAL' and '/var/var_IMAG'
@@ -20,6 +22,56 @@ module h5save
     ! be found in the DNSFortranLibraries
 
 contains
+    ! subroutine check_filename( filename, myid )
+    ! This function check if the file with filename already exist
+    ! if it exist, will append the current date and time to the filename to
+    ! to create a new filename and send to all processors
+    ! Arguments:
+    !   filename: [string, Input/Output] h5 filename with path, it is appended
+    !                                    with date and time if file already exist
+    !   myid    : [integer, Input] processor ID
+    subroutine check_filename( filename, myid )
+        character(len=*), intent(inout) :: filename
+        integer, intent(in) :: myid
+
+        logical :: file_exists
+
+        integer :: values(8)
+        character(len=10) :: current_data_and_time
+
+        integer :: loc, count
+
+        integer :: ierr
+
+
+        if ( myid .eq. 0 ) then
+            ! master checks if file exist
+            INQUIRE(FILE=filename, EXIST=file_exists)
+
+            if ( file_exists ) then
+                ! get current date and time
+                call date_and_time(VALUES=values)
+                write(current_data_and_time,"(5I2.2)") values(2), values(3), values(5), values(6), values(7)
+
+                ! append date and time to current filename if file already exist
+                loc = INDEX( filename, ".h5" )
+                filename = filename(1:loc-1) // '_' // current_data_and_time // '.h5'
+            endif
+        endif
+
+        ! send filename to all processors regardless of whether it is appended
+        ! with the date and time or not
+        count = LEN( filename )
+        call MPI_BCAST(filename, count, MPI_CHARACTER, 0, MPI_COMM_WORLD, ierr)
+
+        ! write to output file
+        if ( myid .eq. 0 ) then
+            write(*,*) "  Saving data to file: ", filename
+        endif
+
+    end subroutine check_filename
+
+
     ! subroutine h5save_R( filename, varname, scalar )
     ! save a real number to h5 file
     !
