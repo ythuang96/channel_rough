@@ -215,7 +215,7 @@ contains
     !   Only mpi master performs the data matrix initialization, but all
     !   processes should call this function to synchronize progress
     subroutine initialize_h5_file(filename)
-        use h5save, only: h5save_C3Partial_Init
+        use h5save, only: h5save_C3Partial_Init_sp
         ! filename
         character(len=*), intent(in) :: filename
         ! MPI Variables
@@ -228,13 +228,13 @@ contains
         ! Only master initialize the vairable for the h5 files
         if (mpiRank == mpiMaster) then
             ! Initialize variables in the h5 for the velocities for partial saving
-            call h5save_C3Partial_Init( filename,  'u', (/ mx/2, mz, my /) )
-            call h5save_C3Partial_Init( filename,  'v', (/ mx/2, mz, my /) )
-            call h5save_C3Partial_Init( filename,  'w', (/ mx/2, mz, my /) )
+            call h5save_C3Partial_Init_sp( filename,  'u', (/ mx/2, mz, my /) )
+            call h5save_C3Partial_Init_sp( filename,  'v', (/ mx/2, mz, my /) )
+            call h5save_C3Partial_Init_sp( filename,  'w', (/ mx/2, mz, my /) )
             ! Initialize variables in the h5 for the vorticities for partial saving
-            call h5save_C3Partial_Init( filename, 'o1', (/ mx/2, mz, my /) )
-            call h5save_C3Partial_Init( filename, 'o2', (/ mx/2, mz, my /) )
-            call h5save_C3Partial_Init( filename, 'o3', (/ mx/2, mz, my /) )
+            call h5save_C3Partial_Init_sp( filename, 'o1', (/ mx/2, mz, my /) )
+            call h5save_C3Partial_Init_sp( filename, 'o2', (/ mx/2, mz, my /) )
+            call h5save_C3Partial_Init_sp( filename, 'o3', (/ mx/2, mz, my /) )
         endif
 
         ! Ensure variables are initialized before proceding
@@ -249,7 +249,7 @@ contains
     ! Parameters:
     !   filename: [string, Input] h5 filename with path
     subroutine write_flowfields_to_h5(filename)
-        use h5save, only: h5save_C3Partial_SingleDim3
+        use h5save, only: h5save_C3Partial_SingleDim3_sp
         character(len=*), intent(in) :: filename
         integer :: ii
         integer :: mpiError
@@ -262,12 +262,12 @@ contains
             ! if this plane is part of the data the current processor has
             if ( (ii .ge. jb) .and. (ii .le. je) ) then
                 ! write data for this y plane to the file
-                call h5save_C3Partial_SingleDim3( fileName,  'u',  uBuffer(:,:,ii), ii )
-                call h5save_C3Partial_SingleDim3( fileName,  'v',  vBuffer(:,:,ii), ii )
-                call h5save_C3Partial_SingleDim3( fileName,  'w',  wBuffer(:,:,ii), ii )
-                call h5save_C3Partial_SingleDim3( fileName, 'o1', o1Buffer(:,:,ii), ii )
-                call h5save_C3Partial_SingleDim3( fileName, 'o2', o2Buffer(:,:,ii), ii )
-                call h5save_C3Partial_SingleDim3( fileName, 'o3', o3Buffer(:,:,ii), ii )
+                call h5save_C3Partial_SingleDim3_sp( fileName,  'u',  uBuffer(:,:,ii), ii )
+                call h5save_C3Partial_SingleDim3_sp( fileName,  'v',  vBuffer(:,:,ii), ii )
+                call h5save_C3Partial_SingleDim3_sp( fileName,  'w',  wBuffer(:,:,ii), ii )
+                call h5save_C3Partial_SingleDim3_sp( fileName, 'o1', o1Buffer(:,:,ii), ii )
+                call h5save_C3Partial_SingleDim3_sp( fileName, 'o2', o2Buffer(:,:,ii), ii )
+                call h5save_C3Partial_SingleDim3_sp( fileName, 'o3', o3Buffer(:,:,ii), ii )
             endif
 
             ! use MPI_BARRIER to ensure only one processor writes to the file at a single instance
@@ -302,7 +302,7 @@ contains
     !   Only mpi master performs the data matrix initialization, but all
     !   processes should call this function to synchronize progress
     subroutine write_parameters_to_h5(filename, fundamentalkx, fundamentalkz, y, kx, kz, time, Re_ref, bulkVelocity)
-        use h5save, only: h5save_R, h5save_R1
+        use h5save, only: h5save_R_dp, h5save_R1_dp
         character(len=*), intent(in) :: filename
         real(kind=sp), intent(in) :: fundamentalkx, fundamentalkz
         real(kind=sp), intent(in) :: y(:)
@@ -342,20 +342,20 @@ contains
             enddo
 
             ! Save physical space coordinates to h5 file
-            call h5save_R1( fileName, 'x', real( x, dp) )
-            call h5save_R1( fileName, 'y', real( y, dp) )
-            call h5save_R1( fileName, 'z', real( z, dp) )
+            call h5save_R1_dp( fileName, 'x', real( x, dp) )
+            call h5save_R1_dp( fileName, 'y', real( y, dp) )
+            call h5save_R1_dp( fileName, 'z', real( z, dp) )
 
             ! Save wavenumbers to h5 file
             ! the DNS code stores the wavenumbers as purely imaginary vector,
             ! so we will extract the imaginary part
-            call h5save_R1( fileName, 'kx', real( aimag(kx), dp) )
-            call h5save_R1( fileName, 'kz', real( aimag(kz), dp) )
+            call h5save_R1_dp( fileName, 'kx', real( aimag(kx), dp) )
+            call h5save_R1_dp( fileName, 'kz', real( aimag(kz), dp) )
 
             ! Save current time, reference Reynolds number and bulk velocity
-            call h5save_R( fileName, 'time', real( time, dp) )
-            call h5save_R( fileName, 'Re_ref', real( Re_ref, dp) )
-            call h5save_R( fileName, 'bulkVelocity', real( bulkVelocity, dp) )
+            call h5save_R_dp( fileName, 'time', real( time, dp) )
+            call h5save_R_dp( fileName, 'Re_ref', real( Re_ref, dp) )
+            call h5save_R_dp( fileName, 'bulkVelocity', real( bulkVelocity, dp) )
         endif
 
         ! Ensure all saving are completed before proceding
