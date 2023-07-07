@@ -13,63 +13,65 @@ contains
     ! Read the restart file in the original DNS format
     !
     ! Arguments:
+    !   myid     : [int] processor ID
     !   vor, phi : [single, size 2*my,mx1+1,kb:*, Input/Output]
     !              wall normal vorticity and phi for kx-y planes assigned to the current processor at a few kz
     !              variables are allocated outside, and filled with data from the restart file
     !   u00, w00 : [single size my, Input/Ouput]
     !              u and w 00 modes, variables allocated outside and filled with data from the restart file
-    !   wk1      : [single, work variable]
-    !   myid     : [int] processor ID
-    subroutine read_restart_file_old(vor,phi,u00,w00,wk1,myid, rf0u,rf0w,u00wk,w00wk,hv,hg,phiwk,vorwk)
+    !   rf0u,rf0w: [single size my, Input/Ouput]
+    !              y derivatives of u and w 00 modes, variables allocated outside and filled with data from the restart file
+    !   hv, hg   : [single, size(0:2*my-1,0:mx1,kb:ke), Input/Output)
+    !              v and dvdy, variables allocated outside and filled with data computed from the restart file
+    !   u00wk = u00
+    !   w00wk = w00
+    !   phiwk = phi
+    !   vorwk = vor
+    subroutine read_restart_file_old(myid, vor,phi,u00,w00,rf0u,rf0w,hv,hg,u00wk,w00wk,phiwk,vorwk)
         implicit none
-
-        integer istat(MPI_STATUS_SIZE),ierr
-
-        integer myid,master,i,pe,k
-        real*4  a0e
-
-        real*4 vor(mx,mz,*),phi(mx,mz,*),wk1(*)
-        real*8 u00(*),w00(*)
-
-        real*4  Ree,alpe,bete,ce,xx
-
+        ! -------------------------- Global variables --------------------------
+        ! For DNS time
         real*4 Deltat,CFL,time,dtr,FixTimeStep
         common /tem/ Deltat,CFL,time,dtr,FixTimeStep
         save /tem/
-
+        ! For kz and y parallel assignments
         integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz
         common /point /jbeg(0:numerop-1),jend(0:numerop-1), &
                        kbeg(0:numerop-1),kend(0:numerop-1), &
                        jb,je,kb,ke,mmy,mmz
         save /point/
-
+        ! for file name and file number
         integer iinp,iout,id22,isn,ispf
         character*100 filinp,filout,filstt
         common /ficheros/ iinp,iout,id22,isn,ispf,filinp,filout,filstt
         save /ficheros/
 
-        integer j,mxe,mye,mze,ntotr,iproc,mym,mmy2
-
+        ! ----------------------------- Arguments -----------------------------
+        real*4 vor(mx,mz,*),phi(mx,mz,*)
         real(kind=sp), dimension(0:2*my-1,0:mx1,kb:ke), intent(inout) :: &
             hv,hg,phiwk,vorwk
-        real(kind=dp), dimension(my), intent(inout) :: rf0u,rf0w,u00wk,w00wk
+        real(kind=dp), dimension(my), intent(inout) :: u00,w00,rf0u,rf0w,u00wk,w00wk
+        integer :: myid
 
-        master = 0
+        ! ------------------------------- Others -------------------------------
+        ! MPI
+        integer :: istat(MPI_STATUS_SIZE),ierr
+        ! Work variable
+        real(kind=sp), dimension(:), allocatable :: wk1
+
+        integer :: i,pe,k,j,mxe,mye,mze,ntotr,iproc,mym,mmy2,nbuffsize
+        real(kind=sp) :: a0e,Ree,alpe,bete,ce,xx
+
 
         ! zero everything
-        do k=1,mz
-            do j=1,mmy
-                do i=1,mx
-                    vor(i,k,j) = 0.0_sp
-                    phi(i,k,j) = 0.0_sp
-                enddo
-            enddo
-        enddo
+        vor(1:mx,1:mz,1:mmy) = 0.0_sp
+        phi(1:mx,1:mz,1:mmy) = 0.0_sp
+        u00(1:my) = 0.0_dp
+        w00(1:my) = 0.0_dp
 
-        do j=1,my
-            u00(j) = 0.0_sp
-            w00(j) = 0.0_sp
-        enddo
+        ! Allocate work variable
+        nbuffsize = mx*max(mmy*mz,mmz*my)
+        ALLOCATE(wk1(nbuffsize))
 
         ! the time could be read from the restart file below, but here we
         ! set it explicitly to zero, so that the final time contains
@@ -77,7 +79,7 @@ contains
         time = 0.0
 
         ! Read from restart file and distribute
-        if (myid.eq.master) then
+        if (myid.eq.0) then
             ! Master reads from the file and send data to slaves
             open(iinp,file=filinp,status='unknown',form='unformatted',access='direct',recl=8*iwd)
             write(*,*) 'infile opened'
@@ -98,10 +100,8 @@ contains
 
             ! Organize 00 modes
             mym = min(my,mye)
-            do j=1,mym
-                u00(j) = wk1(2*j-1)
-                w00(j) = wk1(2*j)
-            enddo
+            u00(1:mym) = wk1(1:2*mym:2)
+            w00(1:mym) = wk1(2:2*mym:2)
 
             ! send restart file dimensions and 00 modes to all slaves
             do iproc=1,numerop-1
@@ -130,17 +130,17 @@ contains
 
         else  ! Slaves receive data from master
             ! Receive 00 mode
-            call MPI_RECV(mxe, 1,MPI_INTEGER,master,MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(mye, 1,MPI_INTEGER,master,MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(mze, 1,MPI_INTEGER,master,MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(u00,my,MPI_REAL8  ,master,MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
-            call MPI_RECV(w00,my,MPI_REAL8  ,master,MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
+            call MPI_RECV(mxe, 1,MPI_INTEGER,0,MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
+            call MPI_RECV(mye, 1,MPI_INTEGER,0,MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
+            call MPI_RECV(mze, 1,MPI_INTEGER,0,MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
+            call MPI_RECV(u00,my,MPI_REAL8  ,0,MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
+            call MPI_RECV(w00,my,MPI_REAL8  ,0,MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
 
             ! Receive vor and phi modes and organize
             ntotr=2*mxe*mze
             mmy2 = min(je,mye)-jb+1
             do j=1,mmy2
-                call MPI_RECV(wk1,ntotr,MPI_REAL,master,MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
+                call MPI_RECV(wk1,ntotr,MPI_REAL,0,MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
                 call assign(wk1,vor(1,1,j),phi(1,1,j),mx,mz,mxe,mze)
             enddo
 
@@ -152,7 +152,9 @@ contains
         call chikj2jik(phi,phi,wk1,wk1,myid)
 
         ! Organize the data, mainly solve for v from phi and compute y derivatives
-        call orgainize_data_from_restart_file(vor,phi,u00,w00,rf0u,rf0w,u00wk,w00wk,hv,hg,phiwk,vorwk)
+        call orgainize_data_from_restart_file(vor,phi,u00,w00,rf0u,rf0w,hv,hg,u00wk,w00wk,phiwk,vorwk)
+
+        DEALLOCATE(wk1)
 
     end subroutine
 
@@ -160,31 +162,33 @@ contains
     ! Subroutine to perform the special first time step in the original code,
     ! Mainly solving for v from phi and compute y derivatives of the 00 modes.
     ! This is only used for reading the old version restart file
-    subroutine orgainize_data_from_restart_file(vor,phi,u00,w00,rf0u,rf0w,u00wk,w00wk,hv,hg,phiwk,vorwk)
+    subroutine orgainize_data_from_restart_file(vor,phi,u00,w00,rf0u,rf0w,hv,hg,u00wk,w00wk,phiwk,vorwk)
         use wall_roughness, only: set_wall_roughness, &
             uWallBottom, uWallTop, vWallBottom, vWallTop, wWallBottom, wWallTop
         implicit none
-
+        ! -------------------------- Global variables --------------------------
+        ! For kz and y parallel assignments
         integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz
         common /point /jbeg(0:numerop-1),jend(0:numerop-1), &
                        kbeg(0:numerop-1),kend(0:numerop-1), &
                        jb,je,kb,ke,mmy,mmz
         save   /point/
-
+        ! For kx and kz wavenumbers
         complex*8     xalp, xbet
         real*4        alp2,bet2
         integer       iax,icx
         common /wave/ xalp(0:mx1),xbet(0:mz1),alp2(0:mx1),bet2(0:mz1),iax(mx),icx(0:mz1)
         save   /wave/
 
-
-        integer i,k,j,k1
-        real*8 rk
-        complex*8 bcb,bct
-
+        ! ----------------------------- Arguments -----------------------------
         real(kind=sp), dimension(0:2*my-1,0:mx1,kb:ke), intent(inout) :: &
             vor,phi,hv,hg,phiwk,vorwk
         real(kind=dp), dimension(my), intent(inout) :: u00,w00,rf0u,rf0w,u00wk,w00wk
+
+        ! ------------------------------- Others -------------------------------
+        integer i,k,j,k1
+        real*8 rk
+        complex*8 bcb,bct
 
 
         ! Set boundary conditions, ignoring the BC from restart file

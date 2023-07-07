@@ -96,10 +96,9 @@ c     ! Initialize custom modules
 
 
 c     ! Read data from restart file
-      call read_restart_file_old(vor,phi,u00,w00,chwk,myid,
-     .     rf0u,rf0w,u00wk,w00wk,
-     .     hv,hg,
-     .     phiwk,vorwk)
+      call read_restart_file_old(myid, vor,phi,
+     .     u00,w00,rf0u,rf0w,hv,hg,
+     .     u00wk,w00wk, phiwk,vorwk)
 c     ! ------------------------ Start time advancement ------------------------
       call cross1(vor,phi,u00,w00,
      .     rf0u,rf0w,u00wk,w00wk,
