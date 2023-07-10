@@ -18,7 +18,7 @@ c/*............................................c/*
       use save_flowfield, only: collectFlowfield, write_h5,
      &  assess_whether_to_collect_flowfield_step,
      &  assess_whether_to_collect_flowfield_time
-      use restart_file, only: write_restart_file_old
+      use restart_file, only: write_restart_file
       implicit none
       include "mpif.h"
       include "ctes3D"
@@ -558,8 +558,8 @@ c     -----------------------------------------------------------------
 c     -----------------------------------------------------------------
 c     write restart file
          if (mod(istep,nimag) .eq. 0) then
-            call write_restart_file_old(write_time, phi, vor,
-     .         dvordy, chwk, u00, w00, massu0, myid)
+            call write_restart_file(write_time, time,
+     &      istep, phi, vor, hg, hv, u00, w00, myid)
          endif
 c       finished writing image
 c     -----------------------------------------------------------------

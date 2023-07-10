@@ -22,7 +22,8 @@ c/********************************************************************/
       use save_flowfield, only: initialize_save_flowfield_module,
      &  cleanup_save_flowfield_module
       use wall_roughness, only: initialize_wall_roughness
-      use restart_file, only: read_restart_file_old
+      use restart_file, only: read_restart_file_old,
+     &  read_restart_file_new
       implicit none
       include "mpif.h"
       include "ctes3D"
@@ -95,10 +96,19 @@ c     ! Initialize custom modules
       call initialize_wall_roughness(xalp, xbet)
 
 
-c     ! Read data from restart file
-      call read_restart_file_old(myid, vor,phi,
-     .     u00,w00,rf0u,rf0w,hv,hg,
-     .     u00wk,w00wk, phiwk,vorwk)
+c     ! --------------------- Read data from restart file ---------------------
+      if ( INDEX(filinp, ".h5 ") .eq. 0) then
+c        ! If not an h5 file (INDEX return 0 if substring is not found)
+c        ! OLD version of restart file
+         call read_restart_file_old(myid, vor,phi,
+     .        u00,w00,rf0u,rf0w,hg,hv,
+     .        u00wk,w00wk, phiwk,vorwk)
+      else
+c        ! new version of restart file
+         call read_restart_file_new(myid, vor,phi,
+     .        u00,w00,rf0u,rf0w,hg,hv,
+     .        u00wk,w00wk, phiwk,vorwk)
+      endif
 c     ! ------------------------ Start time advancement ------------------------
       call cross1(vor,phi,u00,w00,
      .     rf0u,rf0w,u00wk,w00wk,
