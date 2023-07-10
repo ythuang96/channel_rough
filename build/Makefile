@@ -16,6 +16,7 @@ LDFLAGS = $(INCLUDEPATH) -w -O1
 objects = modules.v7.o \
 	  types.o \
 	  h5save.o \
+	  h5load.o \
 	  save_flowfield.o \
 	  wall_roughness.o \
 	  cfdiff8.v7.o \
