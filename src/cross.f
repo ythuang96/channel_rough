@@ -16,8 +16,7 @@ c/*............................................c/*
      &  vWallBottom, vWallTop,
      &  wWallBottom, wWallTop
       use save_flowfield, only: collectFlowfield, write_h5,
-     &  assess_whether_to_collect_flowfield_step,
-     &  assess_whether_to_collect_flowfield_time
+     &  assess_whether_to_collect_flowfield_step
       use restart_file, only: write_restart_file
       implicit none
       include "mpif.h"
@@ -154,7 +153,6 @@ c/********************************************************************/
 
 c     -----------------------------------------------------------------
 c     Assess whether it to save flow field or not
-         ! call assess_whether_to_collect_flowfield_time(time)
          call assess_whether_to_collect_flowfield_step(istep)
 c     -----------------------------------------------------------------
 

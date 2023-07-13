@@ -23,15 +23,14 @@ module save_flowfield
     integer :: fileNumber
     character(:), allocatable :: baseFileNameWithPath
     ! Sampling Fequencies
-    integer :: samplingFrequencyInTimesteps
-    real(kind=sp) :: samplingFrequencyInTime, timeLastSample
+    integer :: SampleFreqInSteps
 
 
     ! Public Variables
     public :: collectFlowfield
     ! Public Subroutines
     public :: initialize_save_flowfield_module, cleanup_save_flowfield_module
-    public :: assess_whether_to_collect_flowfield_step, assess_whether_to_collect_flowfield_time
+    public :: assess_whether_to_collect_flowfield_step
     public :: save_plane_data_to_buffer, write_h5
 
 contains
@@ -50,13 +49,10 @@ contains
         integer, parameter :: mpiMaster = 0
 
         ! Set Sampling parameters
-        samplingFrequencyInTimesteps = 50
-        !samplingFrequencyInTime = 0.09782_sp  ! corresponds to approx tUc/h = 0.1 @ Smooth wall Retau=550
-        samplingFrequencyInTime = 0.09475_sp  ! corresponds to approx tUc/h = 0.1 @ kz = 3 Retau=550
+        SampleFreqInSteps = 50
 
         collectFlowfield = .false.
         fileNumber = 1
-        timeLastSample = 0.0_sp
         baseFileNameWithPath = trim(adjustl(runNameWithPath)) // '_flowfield.'
 
         ! Initialize Fourier Space Buffers
@@ -77,8 +73,7 @@ contains
         ! Write sampling information
         call MPI_Comm_rank(MPI_COMM_WORLD, mpiRank, mpiError)
         if (mpiRank == mpiMaster) then
-            write(*,'(a,i4)') 'sampling frequency of flowfield in timesteps: ', samplingFrequencyInTimesteps
-            write(*,'(a,f6.4)') 'sampling frequency of flowfield in time: ', samplingFrequencyInTime
+            write(*,'(a,i4)') 'sampling frequency of flowfield in timesteps: ', SampleFreqInSteps
         endif
     end subroutine
 
@@ -107,29 +102,10 @@ contains
     !   timeStepNr: [integer, Input] current time step number
     subroutine assess_whether_to_collect_flowfield_step(timeStepNr)
         integer, intent(in) :: timeStepNr
-        if ( (mod(timeStepNr  ,samplingFrequencyInTimesteps) == 0) .or.  &
-            ((mod(timeStepNr-1,samplingFrequencyInTimesteps) == 0) .and. (timeStepNr.ne.1)) ) then
+        if ( (mod(timeStepNr  ,SampleFreqInSteps) == 0) .or.  &
+            ((mod(timeStepNr-1,SampleFreqInSteps) == 0) .and. (timeStepNr.ne.1)) ) then
             ! "Double-Pulse" Case
             collectFlowfield = .true.
-        else
-            collectFlowfield = .false.
-        endif
-    end subroutine
-
-
-    ! subroutine assess_whether_to_collect_flowfield_time(time)
-    ! This funciton access whether or not to collect flowfield based on
-    ! simulation time, and set the public variable "collectFlowfield" to true or false
-    !
-    ! Parameters
-    !   time: [real, Input] current step time
-    subroutine assess_whether_to_collect_flowfield_time(time)
-        real(kind=sp), intent(in) :: time
-        real(kind=sp) :: deltaT
-        deltaT = time - timeLastSample
-        if (deltaT >= samplingFrequencyInTime) then
-            collectFlowfield = .true.
-            timeLastSample = time
         else
             collectFlowfield = .false.
         endif
