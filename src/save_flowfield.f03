@@ -191,7 +191,7 @@ contains
     !   Only mpi master performs the data matrix initialization, but all
     !   processes should call this function to synchronize progress
     subroutine initialize_h5_file(filename)
-        use h5save, only: h5save_C3Partial_Init_sp
+        use h5save, only: h5save_CPartial_Init_sp
         ! filename
         character(len=*), intent(in) :: filename
         ! MPI Variables
@@ -204,13 +204,13 @@ contains
         ! Only master initialize the vairable for the h5 files
         if (mpiRank == mpiMaster) then
             ! Initialize variables in the h5 for the velocities for partial saving
-            call h5save_C3Partial_Init_sp( filename,  'u', (/ mx/2, mz, my /) )
-            call h5save_C3Partial_Init_sp( filename,  'v', (/ mx/2, mz, my /) )
-            call h5save_C3Partial_Init_sp( filename,  'w', (/ mx/2, mz, my /) )
+            call h5save_CPartial_Init_sp( filename,  'u', (/ mx/2, mz, my /) )
+            call h5save_CPartial_Init_sp( filename,  'v', (/ mx/2, mz, my /) )
+            call h5save_CPartial_Init_sp( filename,  'w', (/ mx/2, mz, my /) )
             ! Initialize variables in the h5 for the vorticities for partial saving
-            call h5save_C3Partial_Init_sp( filename, 'o1', (/ mx/2, mz, my /) )
-            call h5save_C3Partial_Init_sp( filename, 'o2', (/ mx/2, mz, my /) )
-            call h5save_C3Partial_Init_sp( filename, 'o3', (/ mx/2, mz, my /) )
+            call h5save_CPartial_Init_sp( filename, 'o1', (/ mx/2, mz, my /) )
+            call h5save_CPartial_Init_sp( filename, 'o2', (/ mx/2, mz, my /) )
+            call h5save_CPartial_Init_sp( filename, 'o3', (/ mx/2, mz, my /) )
         endif
 
         ! Ensure variables are initialized before proceding

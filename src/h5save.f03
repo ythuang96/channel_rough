@@ -7,7 +7,7 @@ module h5save
 
     public :: check_filename
     public :: h5save_R_dp, h5save_R1_dp
-    public :: h5save_C3Partial_Init_sp, h5save_C3Partial_SingleDim3_sp
+    public :: h5save_CPartial_Init_sp, h5save_C3Partial_SingleDim3_sp
 
     ! The following standard for complex variables are used:
     ! if varibale 'var' is complex, save as '/var/var_REAL' and '/var/var_IMAG'
@@ -186,25 +186,26 @@ contains
     end subroutine h5save_R1_dp
 
 
-    ! subroutine h5save_C3Partial_Init_sp( filename, varname, full_data_dim )
-    ! initialize a complex rank 3 matrix to h5 file in preparation for partial data saving
+    ! subroutine h5save_CPartial_Init_sp( filename, varname, full_data_dim )
+    ! initialize a complex rank N matrix to h5 file in preparation for partial data saving
     !
     ! SINGLE PRECISION ONLY!
     !
     ! Arguments:
     !   filename     : [string, Input] h5 filename with path
     !   varname      : [string, Input] variable name
-    !   full_data_dim: [integer, size 3, Input] the dimension of the full data matrix
+    !   full_data_dim: [integer, size N, Input] the dimension of the full data matrix
     !
     ! Note:
     !   This function needs to be called once and only once before any partial saving is performed
-    subroutine h5save_C3Partial_Init_sp( filename, varname, full_data_dim)
+    subroutine h5save_CPartial_Init_sp( filename, varname, full_data_dim)
         ! Inputs
         character(len=*), intent(in) :: filename, varname
-        integer, intent(in), dimension(3) :: full_data_dim
+        integer, intent(in), dimension(:) :: full_data_dim
 
-        integer(HSIZE_T), dimension(3) :: full_data_dim2
+        integer(HSIZE_T), dimension(:), allocatable :: full_data_dim2
         character(len=100) :: dset_name ! dataset name
+        integer :: matrix_rank
 
         integer :: error ! error flag
         INTEGER(HID_T) :: file_id   ! file id
@@ -215,6 +216,10 @@ contains
         logical :: file_exists
 
 
+        ! Get matrix rank
+        matrix_rank = size(full_data_dim)
+        ! allocate full_data_dim2
+        ALLOCATE(full_data_dim2(matrix_rank))
         ! Integer type conversion for the full data dimension
         full_data_dim2 = INT( full_data_dim, HSIZE_T)
 
@@ -239,8 +244,8 @@ contains
         ! ----------------------------- Real part -----------------------------
         dset_name = varname // "/" // varname // "_REAL"
 
-        ! Create disk dataspace with rank 3 and size full_data_dim
-        call h5screate_simple_f(3, full_data_dim2, dspace_id, error)
+        ! Create disk dataspace with rank N and size full_data_dim
+        call h5screate_simple_f(matrix_rank, full_data_dim2, dspace_id, error)
 
         ! Create single precision dataset with path '/var/var_REAL'
         call h5dcreate_f(file_id, dset_name, H5T_IEEE_F32LE, dspace_id, dset_id, error)
@@ -255,8 +260,8 @@ contains
         ! --------------------------- Imaginary part ---------------------------
         dset_name = varname // "/" // varname // "_IMAG"
 
-        ! Create disk dataspace with rank 3 and size full_data_dim
-        call h5screate_simple_f(3, full_data_dim2, dspace_id, error)
+        ! Create disk dataspace with rank N and size full_data_dim
+        call h5screate_simple_f(matrix_rank, full_data_dim2, dspace_id, error)
 
         ! Create single precision dataset with path '/var/var_REAL' and write data
         call h5dcreate_f(file_id, dset_name, H5T_IEEE_F32LE, dspace_id, dset_id, error)
@@ -273,8 +278,10 @@ contains
         CALL h5fclose_f(file_id, error)
         ! Close FORTRAN interface
         CALL h5close_f(error)
+        ! Deallocate memory
+        DEALLOCATE(full_data_dim2)
 
-    end subroutine h5save_C3Partial_Init_sp
+    end subroutine h5save_CPartial_Init_sp
 
 
     ! subroutine h5save_C3Partial_SingleDim3_sp( filename, varname, matrix, dim3index )
