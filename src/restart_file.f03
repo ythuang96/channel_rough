@@ -298,8 +298,6 @@ contains
     ! Arguments
     !   write_time       : [double, Input/Output]
     !                      timer for data writing, gets updated here
-    !   time             : [single, Input]
-    !                      current DNS time
     !   istep            : [int, Input]
     !                      current DNS step number
     !   phi, vor, v, dvdy: [single, size (2*my,mx/2,kb:ke), Input]
@@ -308,11 +306,16 @@ contains
     !                      kx = kz = 0 mode of u and w
     !   myid             : [int, Input]
     !                      processor ID number
-    subroutine write_restart_file( write_time, time, istep, phi, vor, v, dvdy, u00, w00, myid)
+    subroutine write_restart_file( write_time, istep, phi, vor, v, dvdy, u00, w00, myid)
         use h5save, only: check_filename, h5save_R_dp, h5save_R1_dp, &
             h5save_C3Partial_Init_sp, h5save_C3Partial_SingleDim3_sp
+        use save_flowfield, only: SampleFreqInSteps
         implicit none
         ! -------------------------- Global variables --------------------------
+        ! For DNS time
+        real*4 Deltat,CFL,time,dtr,FixTimeStep
+        common /tem/ Deltat,CFL,time,dtr,FixTimeStep
+        save /tem/
         ! for file name and file number
         integer iinp,iout,id22,isn,ispf
         character*100 filinp,filout,filstt
@@ -328,8 +331,6 @@ contains
         ! ----------------------------- Arguments -----------------------------
         ! timer for file writing
         real(kind=dp), intent(inout) :: write_time
-        ! current DNS time
-        real(kind=sp), intent(in   ) :: time
         ! current step number in the time loop
         integer      , intent(in   ) :: istep
         ! phi, omega_3, v and dv/dy
@@ -380,6 +381,9 @@ contains
             call h5save_R_dp( FileOut, "mx", real(mx,dp) ) ! Note this is twice the size of kx
             call h5save_R_dp( FileOut, "my", real(my,dp) )
             call h5save_R_dp( FileOut, "mz", real(mz,dp) )
+            ! Save DNS run settings
+            call h5save_R_dp( FileOut, "FixTimeStep", real(FixTimeStep,dp) )
+            call h5save_R_dp( FileOut, "SampleFreqInSteps", real(SampleFreqInSteps,dp) )
         endif
 
         ! -------------------------- Save data to h5 --------------------------

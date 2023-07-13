@@ -27,7 +27,7 @@ module save_flowfield
 
 
     ! Public Variables
-    public :: collectFlowfield
+    public :: collectFlowfield, SampleFreqInSteps
     ! Public Subroutines
     public :: initialize_save_flowfield_module, cleanup_save_flowfield_module
     public :: assess_whether_to_collect_flowfield_step

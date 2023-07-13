@@ -556,7 +556,7 @@ c     -----------------------------------------------------------------
 c     -----------------------------------------------------------------
 c     write restart file
          if (mod(istep,nimag) .eq. 0) then
-            call write_restart_file(write_time, time,
+            call write_restart_file(write_time,
      &      istep, phi, vor, hg, hv, u00, w00, myid)
          endif
 c       finished writing image
