@@ -6,6 +6,7 @@ module h5load
     private
 
     public :: h5load_R_dp, h5load_R1_dp, h5load_C2_sp, h5load_C3_sp
+    public :: h5load_check_variable_existence
 
 
     ! Note:
@@ -322,6 +323,43 @@ contains
         DEALLOCATE( matrix_i )
 
     end function h5load_C3_sp
+
+
+    ! function output = h5load_check_variable_existence( filename, varname )
+    ! Check if a variable exist in the hdf5 file
+    ! Arguments:
+    !   filename: [string, Input] h5 filename with path
+    !   varname : [string, Input] variable name in h5 file
+    ! Output:
+    !   output:   [boolean] ture if the variable exist
+    function h5load_check_variable_existence( filename, varname ) result( existence )
+        character(len=*), intent(in) :: filename, varname
+        LOGICAL :: existence
+
+        ! h5 variables
+        INTEGER(HID_T) :: file_id ! File identifier
+        INTEGER :: error ! Error flag
+        character(len=100) :: dset_name ! dataset name
+
+        CALL h5open_f(error)
+        ! Open an existing file with read only
+        CALL h5fopen_f (filename, H5F_ACC_RDONLY_F, file_id, error)
+        if ( error .eq. -1) then
+            write(*,*) "Failed to open file: ", filename
+            write(*,*)
+            stop
+        endif
+
+        ! dset name for the variable
+        dset_name = "/" // varname
+        ! check if it exist
+        CALL h5lexists_f(file_id, dset_name, existence, error)
+
+        ! close file
+        CALL h5fclose_f(file_id, error)
+        ! close h5 interface
+        CALL h5close_f(error)
+    end function h5load_check_variable_existence
 
 
 end module h5load
