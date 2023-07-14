@@ -5,7 +5,7 @@ module h5load
     implicit none
     private
 
-    public :: h5load_R_dp, h5load_R1_dp, h5load_C2_sp, h5load_C3_sp
+    public :: h5load_R_dp, h5load_R1_dp, h5load_R2_dp, h5load_C2_sp, h5load_C3_sp
     public :: h5load_C4_partial_dp
     public :: h5load_check_variable_existence
 
@@ -144,6 +144,77 @@ contains
         ! close h5 interface
         CALL h5close_f(error)
     end function h5load_R1_dp
+
+
+    ! function ouput = h5load_R2_dp( filename, varname )
+    ! Read real rank 2 matrix from h5 file
+    ! Arguments:
+    !   filename: [string, Input]
+    !             h5 filename with path
+    !   varname : [string, Input]
+    !             variable name in h5 file, must be real numerical rank 2 matrix
+    ! Output:
+    !   output:   [dp percision real matrix]
+    function h5load_R2_dp(filename, varname ) result(matrix)
+        character(len=*), intent(in) :: filename, varname
+        real(kind=dp), dimension(:,:), allocatable :: matrix
+        real(kind=dp), dimension(:,:), allocatable :: temp
+
+        INTEGER(HID_T) :: file_id        ! File identifier
+        INTEGER(HID_T) :: dset_id        ! Dataset identifier
+        INTEGER(HID_T) :: space_id       ! Dataspace identifier
+
+        INTEGER :: error ! Error flag
+        INTEGER :: dim1, dim2 ! matrix dimensions
+
+        INTEGER(HSIZE_T), DIMENSION(2) :: data_dims
+        INTEGER(HSIZE_T), DIMENSION(2) :: max_dims
+
+
+        ! Initialize FORTRAN interface.
+        CALL h5open_f(error)
+        ! Open an existing file with read only
+        CALL h5fopen_f (filename, H5F_ACC_RDONLY_F, file_id, error)
+
+        ! ----------------------- Get Matrix Dimensions -----------------------
+        ! Open an existing dataset.
+        CALL h5dopen_f(file_id, varname, dset_id, error)
+        !Get dataspace ID
+        CALL h5dget_space_f(dset_id, space_id, error)
+        !Get dataspace dims
+        CALL h5sget_simple_extent_dims_f(space_id, data_dims, max_dims, error)
+        dim1 = data_dims(1)
+        dim2 = data_dims(2)
+        CALL h5sclose_f(space_id, error)
+        ! close dataset
+        CALL h5dclose_f(dset_id, error)
+
+        ! -------------------------- Allocate Matrix --------------------------
+        ALLOCATE( temp(dim1,dim2))
+
+        ! ----------------------------- Read Data -----------------------------
+        ! Open an existing dataset.
+        CALL h5dopen_f(file_id, varname, dset_id, error)
+        ! Get data
+        ! H5T_IEEE_F64LE (double) or H5T_IEEE_F32LE (single) has to be
+        ! consistent with the variable type of matrix
+        CALL h5dread_f(dset_id, H5T_IEEE_F64LE, temp, data_dims, error)
+        ! close dataset
+        CALL h5dclose_f(dset_id, error)
+
+        ! ------------------------- Build Real Output -------------------------
+        matrix = real( temp, dp)
+
+        ! ------------------------------ Clean Up ------------------------------
+        ! close file
+        CALL h5fclose_f(file_id, error)
+        ! close h5 interface
+        CALL h5close_f(error)
+        ! Deallocate
+        DEALLOCATE( temp )
+
+    end function h5load_R2_dp
+
 
     ! function ouput = h5load_C2_sp( filename, varname )
     ! Read complex rank 2 matrix from h5 file

@@ -6,7 +6,7 @@ module h5save
     private
 
     public :: check_filename
-    public :: h5save_R_dp, h5save_R1_dp
+    public :: h5save_R_dp, h5save_R1_dp, h5save_R2_dp
     public :: h5save_CPartial_Init
     public :: h5save_C3Partial_SingleDim3_sp, h5save_C4Partial_SingleDim3_dp
 
@@ -185,6 +185,60 @@ contains
         ! Close FORTRAN interface
         CALL h5close_f(error)
     end subroutine h5save_R1_dp
+
+
+    ! subroutine h5save_R2_dp( filename, varname, matrix )
+    ! save a real rank 2 matrix to h5 file
+    ! Arguments:
+    !   filename: [string, Input] h5 filename with path
+    !   varname : [string, Input] variable name (real 2d matrix)
+    !   matrix  : [double 2d matrix, Input] data to be saved
+    subroutine h5save_R2_dp( filename, varname, matrix )
+        character(len=*), intent(in) :: filename, varname
+        real(kind=dp), intent(in), dimension(:,:) :: matrix
+
+        character(len=100) :: dset_name ! dataset name
+        integer(HSIZE_T), dimension(2) :: data_dim ! data dimensions
+
+        integer :: error ! error flag
+        INTEGER(HID_T) :: file_id  ! file id
+        INTEGER(HID_T) :: dspace_id ! dataspace id
+        INTEGER(HID_T) :: dset_id ! dataset id
+
+        logical :: file_exists
+
+
+        ! get matrix dimensions
+        data_dim = shape(matrix)
+
+        ! Initialize hdf5 interface
+        call h5open_f(error)
+        ! Check if file exist
+        INQUIRE(FILE=filename, EXIST=file_exists)
+        if ( file_exists ) then
+            ! If file already exist, then open file with read and write access
+            call h5fopen_f(filename, H5F_ACC_RDWR_F, file_id, error)
+        else
+            ! Create new file
+            CALL h5fcreate_f(filename, H5F_ACC_EXCL_F, file_id, error)
+        endif
+
+        dset_name = varname
+        ! Create dataspace with rank 2 and size data_dim
+        CALL h5screate_simple_f(2, data_dim, dspace_id, error)
+        ! Create double precision dataset with path '/var' and write data
+        CALL h5dcreate_f(file_id, dset_name, H5T_IEEE_F64LE, dspace_id, dset_id, error)
+        CALL h5dwrite_f(dset_id, H5T_IEEE_F64LE, matrix, data_dim, error)
+        ! Close dataset
+        CALL h5dclose_f(dset_id, error)
+        ! Close dataspace
+        CALL h5sclose_f(dspace_id, error)
+
+        ! Close the file
+        CALL h5fclose_f(file_id, error)
+        ! Close FORTRAN interface
+        CALL h5close_f(error)
+    end subroutine h5save_R2_dp
 
 
     ! subroutine h5save_CPartial_Init( filename, varname, full_data_dim, precision )
