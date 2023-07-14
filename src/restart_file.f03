@@ -308,7 +308,7 @@ contains
     !                      processor ID number
     subroutine write_restart_file( write_time, istep, phi, vor, v, dvdy, u00, w00, myid)
         use h5save, only: check_filename, h5save_R_dp, h5save_R1_dp, &
-            h5save_CPartial_Init_sp, h5save_C3Partial_SingleDim3_sp
+            h5save_CPartial_Init, h5save_C3Partial_SingleDim3_sp
         use save_flowfield, only: SampleFreqInSteps
         implicit none
         ! -------------------------- Global variables --------------------------
@@ -367,10 +367,10 @@ contains
         ! -------------------------- Master Processor --------------------------
         if (myid .eq. 0) then
             ! Initialize variable for partial saving
-            call h5save_CPartial_Init_sp( FileOut, "phi" , (/ my, mx/2, mz/) )
-            call h5save_CPartial_Init_sp( FileOut, "v"   , (/ my, mx/2, mz/) )
-            call h5save_CPartial_Init_sp( FileOut, "dvdy", (/ my, mx/2, mz/) )
-            call h5save_CPartial_Init_sp( FileOut, "vor" , (/ my, mx/2, mz/) )
+            call h5save_CPartial_Init( FileOut, "phi" , (/ my, mx/2, mz/), sp )
+            call h5save_CPartial_Init( FileOut, "v"   , (/ my, mx/2, mz/), sp )
+            call h5save_CPartial_Init( FileOut, "dvdy", (/ my, mx/2, mz/), sp )
+            call h5save_CPartial_Init( FileOut, "vor" , (/ my, mx/2, mz/), sp )
             ! Save time and step number
             call h5save_R_dp( FileOut, "time" , real(time ,dp) )
             call h5save_R_dp( FileOut, "istep", real(istep,dp) )
