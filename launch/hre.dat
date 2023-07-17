@@ -15,14 +15,14 @@ CC
 CC       *         *         *             *
        Re_set_by_launchscript        0.5         1.0          0.0
 CC
-CC total steps           #steps               #step
+CC          total steps                  #steps                         #step                           #step
 CC
-CC (nstep=k*nimag+1)  (write a restart     (compute and
-CC                     file every nimag)   output cf every nhist)
-CC   nstep                 nimag               nhist
+CC       (nstep=k*nimag)            (write a restart             (compute and output             (save a snapshot file
+CC                                  file every nimag)              cf every nhist)                  every nsnapshot)
+CC           nstep                        nimag                        nhist                          nsnapshot
 CC
-CC       *         *         *
-        nstep_set_by_launchscript           nimag_set_by_launchscript        nhist_set_by_launchscript
+CC             *                            *                            *                                *
+    nstep_set_by_launchscript    nimag_set_by_launchscript    nhist_set_by_launchscript    nsnapshot_set_by_launchscript
 CC
 CC  mesh type:      mesh   (don't touch this too much!!)
 CC  0:uniform     parameter:
@@ -67,4 +67,5 @@ CC  statistics file name max 100 char.
 CC  (the code will add file types .sta, .cf and .spe +serial)
 output_filepath_set_by_launchscript
 CC
-CC
+CC  filter settings input file (an h5 file with FilterOrder and FilterCoef)
+filtersettings_filepath_set_by_launchscript

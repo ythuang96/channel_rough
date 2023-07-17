@@ -42,8 +42,8 @@ contains
         save /point/
         ! for file name and file number
         integer iinp,iout,id22,isn,ispf
-        character*100 filinp,filout,filstt
-        common /ficheros/ iinp,iout,id22,isn,ispf,filinp,filout,filstt
+        character*100 filinp,filout,filstt,filfilter
+        common /ficheros/ iinp,iout,id22,isn,ispf,filinp,filout,filstt,filfilter
         save /ficheros/
 
         ! ----------------------------- Arguments -----------------------------
@@ -318,8 +318,8 @@ contains
         save /tem/
         ! for file name and file number
         integer iinp,iout,id22,isn,ispf
-        character*100 filinp,filout,filstt
-        common /ficheros/ iinp,iout,id22,isn,ispf,filinp,filout,filstt
+        character*100 filinp,filout,filstt,filfilter
+        common /ficheros/ iinp,iout,id22,isn,ispf,filinp,filout,filstt,filfilter
         save /ficheros/
         ! For kz and y parallel assignments
         integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz
@@ -442,8 +442,8 @@ contains
         ! -------------------------- Global variables --------------------------
         ! for file name and file number
         integer iinp,iout,id22,isn,ispf
-        character*100 filinp,filout,filstt
-        common /ficheros/ iinp,iout,id22,isn,ispf,filinp,filout,filstt
+        character*100 filinp,filout,filstt,filfilter
+        common /ficheros/ iinp,iout,id22,isn,ispf,filinp,filout,filstt,filfilter
         save /ficheros/
         ! For kz and y parallel assignments
         integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz

@@ -13,14 +13,18 @@ jobDependency="none"  # jobid of run (Millikan/Richardson) for dependency condit
 mpiProcessors=96  # must be equal to nprocs in ctes3D
 
 inputFile="/home/yh/channel_rough_data/runs/kz3_7/kz3_7.001"
+# Filter settings file
+FilterFile="/home/yh/channel_code/Filter_N50_O2000.h5"
 
 # Run Paramters
 # Reynolds number
 Re=8850
 # write a restart file every nimag
 nimag=15000
-# total time steps, must be multiple of nimag + 1
+# total time steps, must be multiple of nimag
 nstep=3
+# save a snapshot every this many steps
+nsnapshot=50
 # time step to update CFL and write to .cf
 # no larger thatn 10
 nhist=5
@@ -31,7 +35,7 @@ nhist=5
 #  Constant time stepping:
 #    Set CFL to zero, and FixTimeStep to desired value
 #
-CFL=1.0 
+CFL=1.0
 FixTimeStep=0
 
 # Run Settings -----------------------------------------------------------------------------------
@@ -48,20 +52,22 @@ scratchFolder="/home/yh/channel_rough_data/runs/$runName"
 # Strings to replace in the hre.dat file that sets the input/output file path
 stringToReplace_output="output_filepath_set_by_launchscript"  # in hre.dat, the file output path
 stringToReplace_input="input_filepath_set_by_launchscript"
+stringToReplace_filter="filtersettings_filepath_set_by_launchscript"
 stringToReplace_Re="Re_set_by_launchscript"
 stringToReplace_nstep="nstep_set_by_launchscript"
 stringToReplace_nimag="nimag_set_by_launchscript"
 stringToReplace_nhist="nhist_set_by_launchscript"
+stringToReplace_nsnapshot="nsnapshot_set_by_launchscript"
 stringToReplace_CFL="CFL_set_by_launchscript"
 stringToReplace_FixTimeStep="FixTimeStep_set_by_launchscript"
 
 if [[ ! -e $runFolder ]]  # only if run name does not exist yet (avoid data loss)
 then
-  # Change to the directory this script is located 
+  # Change to the directory this script is located
   # Since all the directories below are relative paths
   SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
   cd $SCRIPT_DIR
-  
+
   # recompile script
   cd ../build/
   make
@@ -81,10 +87,12 @@ then
   # which points to the file output directory
   sed -i "s|$stringToReplace_output|$scratchFolder/$runName|g" hre.dat
   sed -i "s|$stringToReplace_input|$inputFile|g" hre.dat
+  sed -i "s|$stringToReplace_filter|$FilterFile|g" hre.dat
   sed -i "s|$stringToReplace_Re|$Re|g" hre.dat
   sed -i "s|$stringToReplace_nstep|$nstep|g" hre.dat
   sed -i "s|$stringToReplace_nimag|$nimag|g" hre.dat
   sed -i "s|$stringToReplace_nhist|$nhist|g" hre.dat
+  sed -i "s|$stringToReplace_nsnapshot|$nsnapshot|g" hre.dat
   sed -i "s|$stringToReplace_CFL|$CFL|g" hre.dat
   sed -i "s|$stringToReplace_FixTimeStep|$FixTimeStep|g" hre.dat
 

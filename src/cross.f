@@ -46,8 +46,8 @@ c/*............................................c/*
       common /tem/ Deltat,CFL,time,dtr,FixTimeStep
       save   /tem/
 
-      integer nimag,nstep,nhist,ihist,icfl
-      common /timacc/ nimag,nstep,nhist,ihist,icfl
+      integer nimag,nstep,nhist,ihist,icfl,nsnapshot
+      common /timacc/ nimag,nstep,nhist,ihist,icfl,nsnapshot
       save   /timacc/
 
       real*8  fmap,y2
@@ -62,9 +62,9 @@ c/*............................................c/*
       save   /point/
 
       integer iinp,iout,id22,isn,ispf
-      character*100 filinp,filout,filstt
+      character*100 filinp,filout,filstt,filfilter
       common /ficheros/ iinp,iout,id22,isn,ispf,
-     .     filinp,filout,filstt
+     .     filinp,filout,filstt,filfilter
       save /ficheros/
       character*104 fname
 
@@ -638,8 +638,8 @@ c/********************************************************************/
       common /fis/ Re,alp,bet,a0,y(my),hy(my),fmap(my),y2(my)
       save   /fis/
 
-      integer nimag,nstep,nhist,ihist,icfl
-      common /timacc/ nimag,nstep,nhist,ihist,icfl
+      integer nimag,nstep,nhist,ihist,icfl,nsnapshot
+      common /timacc/ nimag,nstep,nhist,ihist,icfl,nsnapshot
       save   /timacc/
 
       integer iax,icx

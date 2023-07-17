@@ -51,9 +51,9 @@ c/********************************************************************/
       save   /fis/
 
       integer iinp,iout,id22,isn,ispf
-      character*100 filinp,filout,filstt
+      character*100 filinp,filout,filstt,filfilter
       common /ficheros/ iinp,iout,id22,isn,ispf,
-     .                              filinp,filout,filstt
+     .                  filinp,filout,filstt,filfilter
       save /ficheros/
 
       integer iax, icx
@@ -165,8 +165,8 @@ c/********************************************************************/
       common /mass/ trp(my),trp2(my)
       save /mass/
 
-      integer nimag,nstep,nhist,ihist,icfl
-      common /timacc/ nimag,nstep,nhist,ihist,icfl
+      integer nimag,nstep,nhist,ihist,icfl,nsnapshot
+      common /timacc/ nimag,nstep,nhist,ihist,icfl,nsnapshot
       save   /timacc/
 
       real*8  fmap,y2
@@ -179,9 +179,9 @@ c/********************************************************************/
       save /tem/
 
       integer iinp,iout,id22,isn,ispf
-      character*100 filinp,filout,filstt
+      character*100 filinp,filout,filstt,filfilter
       common /ficheros/ iinp,iout,id22,isn,ispf,
-     .                              filinp,filout,filstt
+     .                  filinp,filout,filstt,filfilter
       save /ficheros/
 
       integer jbeg,jend,kbeg,kend,jb,je,kb,ke,mmy,mmz
@@ -231,7 +231,7 @@ c                           /* reads in data                       */
 
 966      read(19,'(a)') text
          if(text(1:2).eq.'CC') goto 966
-         read(text,*) (idat(j),j=5,7)
+         read(text,*) (idat(j),j=5,8)
 
 964      read(19,'(a)') text
          if(text(1:2).eq.'CC') goto 964
@@ -261,36 +261,26 @@ c                           /* reads in data                       */
          if(text(1:2).eq.'CC') goto 167
          read(text,'(a100)') filstt
 
+168      read(19,'(a)') text
+         if(text(1:2).eq.'CC') goto 168
+         read(text,'(a100)') filfilter
+
          close(19)
-
-         do iproc=1,numerop-1
-            call MPI_SEND(dat,12,MPI_REAL,iproc,
-     &                 iproc,MPI_COMM_WORLD,ierr)
-            call MPI_SEND(idat,19,MPI_INTEGER,iproc,
-     &                 iproc,MPI_COMM_WORLD,ierr)
-            call MPI_SEND(filout,len(filout),MPI_CHARACTER,iproc,
-     &                 iproc,MPI_COMM_WORLD,ierr)
-            call MPI_SEND(filinp,len(filinp),MPI_CHARACTER,iproc,
-     &                 iproc,MPI_COMM_WORLD,ierr)
-            call MPI_SEND(filstt,len(filstt),MPI_CHARACTER,iproc,
-     &                 iproc,MPI_COMM_WORLD,ierr)
-         enddo
-
-      else
-
-         call MPI_RECV(dat,12,MPI_REAL,0,
-     &                MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
-         call MPI_RECV(idat,19,MPI_INTEGER,0,
-     &                 MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
-         call MPI_RECV(filout,len(filout),MPI_CHARACTER,0,
-     &                 MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
-         call MPI_RECV(filinp,len(filinp),MPI_CHARACTER,0,
-     &                 MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
-         call MPI_RECV(filstt,len(filstt),MPI_CHARACTER,0,
-     &                 MPI_ANY_TAG,MPI_COMM_WORLD,istat,ierr)
-
       endif
 
+c     ! distribute data from master to all other processors
+      call MPI_BCAST(dat      ,12            ,MPI_REAL     ,
+     &               0,MPI_COMM_WORLD,ierr)
+      call MPI_BCAST(idat     ,19            ,MPI_INTEGER  ,
+     &               0,MPI_COMM_WORLD,ierr)
+      call MPI_BCAST(filout   ,len(filout)   ,MPI_CHARACTER,
+     &               0,MPI_COMM_WORLD,ierr)
+      call MPI_BCAST(filinp   ,len(filinp)   ,MPI_CHARACTER,
+     &               0,MPI_COMM_WORLD,ierr)
+      call MPI_BCAST(filstt   ,len(filstt)   ,MPI_CHARACTER,
+     &               0,MPI_COMM_WORLD,ierr)
+      call MPI_BCAST(filfilter,len(filfilter),MPI_CHARACTER,
+     &               0,MPI_COMM_WORLD,ierr)
 
       Re    = dat(1)
       alp   = dat(2)
@@ -304,13 +294,14 @@ c                           /* reads in data                       */
       vspeed= dat(11) -a0      ! To compensate the movement of the wall
       FixTimeStep = dat(12)
 
-      imesh  = idat(1)
-      mxwall = idat(2)
-      mzwall = idat(3)
-      nstep  = idat(5)
-      nimag  = idat(6)
-      nhist  = idat(7)
-      id22   = idat(12)
+      imesh     = idat(1)
+      mxwall    = idat(2)
+      mzwall    = idat(3)
+      nstep     = idat(5)
+      nimag     = idat(6)
+      nhist     = idat(7)
+      nsnapshot = idat(8)
+      id22      = idat(12)
 
       iinp=32                       !! file numbers
       ispf=35
