@@ -83,8 +83,8 @@ contains
             write(*,'(a16, f6.2)') 'x wavenumber = ', targetWavenumberX
             write(*,'(a22, f6.2)') 'z wavenumber (pos) = ', absoluteValueTargetWavenumberZ
             write(*,'(a22, f6.2)') 'z wavenumber (neg) = ', -absoluteValueTargetWavenumberZ
-            write(*,'(a12, f6.2)') '|u_wall| = ', disturbanceU
-            write(*,'(a12, f6.2)') '|v_wall| = ', disturbanceV
+            write(*,'(a12, f10.6)') '|u_wall| = ', disturbanceU
+            write(*,'(a12, f10.6)') '|v_wall| = ', disturbanceV
         endif
     end subroutine
 
