@@ -19,8 +19,9 @@ c/*                                                                  */
 c/*    This version uses CFD in y (o. flores 06)                     */
 ccccc VERSION for  MPI  !!!!                                    ccccccc
 c/********************************************************************/
-      use save_flowfield, only: initialize_save_flowfield_module,
-     &  cleanup_save_flowfield_module
+      use temporal_filter, only:
+     &  initialize_temporal_filter_moudule,
+     &  cleanup_temporal_filter_module
       use wall_roughness, only: initialize_wall_roughness
       use restart_file, only: read_restart_file_old,
      &  read_restart_file_new
@@ -92,11 +93,34 @@ c     ! Allocates buffers
       allocate(chwk(nbuffsize))
 
 c     ! Initialize custom modules
-      call initialize_save_flowfield_module(filstt)
+      if (myid .eq. 0) then
+         write(*,*)
+         write(*,'(3A)')
+     &       " ***************************** ",
+     &       "Initializing Temporal Filter",
+     &       " ***************************** "
+      endif
+      if (initialize_temporal_filter_moudule(myid) .eqv. .false.) then
+         stop
+      endif
+      if (myid .eq. 0) then
+         write(*,*)
+         write(*,'(3A)')
+     &       " ***************************** ",
+     &       "Initializing Wall Roughness",
+     &       " ***************************** "
+      endif
       call initialize_wall_roughness(xalp, xbet)
 
 
 c     ! --------------------- Read data from restart file ---------------------
+      if (myid .eq. 0) then
+         write(*,*)
+         write(*,'(3A)')
+     &       " ***************************** ",
+     &       "Reading Restart File",
+     &       " ***************************** "
+      endif
       if ( INDEX(filinp, ".h5 ") .eq. 0) then
 c        ! If not an h5 file (INDEX return 0 if substring is not found)
 c        ! OLD version of restart file
@@ -110,6 +134,13 @@ c        ! new version of restart file
      .        u00wk,w00wk, phiwk,vorwk)
       endif
 c     ! ------------------------ Start time advancement ------------------------
+      if (myid .eq. 0) then
+         write(*,*)
+         write(*,'(3A)')
+     &       " ***************************** ",
+     &       "Starting Time Loop",
+     &       " ***************************** "
+      endif
       call cross1(vor,phi,u00,w00,
      .     rf0u,rf0w,u00wk,w00wk,
      .     hv,hg,
@@ -118,8 +149,8 @@ c     ! ------------------------ Start time advancement ------------------------
      .     myid)
 
 c     ! -------------------------- Finalize procedure --------------------------
-c     ! Clean up the save_flowfield module (deallocate variables)
-      call cleanup_save_flowfield_module
+c     ! Clean up the temporal_filter module (deallocate variables)
+      call cleanup_temporal_filter_module( )
 
       DEALLOCATE(vor   )
       DEALLOCATE(phi   )

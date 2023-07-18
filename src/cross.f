@@ -15,8 +15,8 @@ c/*............................................c/*
      &  uWallBottom, uWallTop,
      &  vWallBottom, vWallTop,
      &  wWallBottom, wWallTop
-      use save_flowfield, only: collectFlowfield, write_h5,
-     &  assess_whether_to_collect_flowfield_step
+      use temporal_filter, only: update_filter,
+     &  initialize_temporal_filter_DNS_parameters
       use restart_file, only: write_restart_file
       implicit none
       include "mpif.h"
@@ -135,6 +135,14 @@ c     target mass flux, historical Madrid value
       endif
 c     -----------------------------------------------------------------
 
+c     -----------------------------------------------------------------
+c     ! intialize DNS parameters in temporal_filter module
+c     ! this allows the module to save the DNS parameters to the snapshots h5 files
+c     ! this only needs to be done once before the time loop as these
+c     ! parameters do not change
+      call initialize_temporal_filter_DNS_parameters(
+     &  alp, bet, y, xalp, xbet, Re, massu0)
+c     -----------------------------------------------------------------
 
 c/********************************************************************/
 c/*     THIS IS THE TIME LOOP                                        */
@@ -150,11 +158,6 @@ c/********************************************************************/
             ihist=1
             icfl= 1
          endif
-
-c     -----------------------------------------------------------------
-c     Assess whether it to save flow field or not
-         call assess_whether_to_collect_flowfield_step(istep)
-c     -----------------------------------------------------------------
 
 c/********************************************************************/
 c/*     Runge-Kutta third order                                      */
@@ -425,22 +428,6 @@ c/********************************************************************/
 
 
 c     -----------------------------------------------------------------
-c     Write Flowfield from buffer to h5 file
-         if (collectFlowfield) then
-           ! data collected at the previous timestep is written at the
-           ! subsequent timestep. time-Deltat corresponds to the time
-           ! at which the data was collected
-           if (myid .eq. 0) then
-326          format(a22,i5,a7,(d14.6))
-             write(*,326) '    Saving Data, Step ', istep, ', Time ',
-     &           time
-           endif
-           call write_h5(alp, bet, y, xalp, xbet, time, Re, massu0)
-         endif
-c     -----------------------------------------------------------------
-
-
-c     -----------------------------------------------------------------
 c     Copy variables for the new time step
          ! 00 modes for u and w
          do j=0,my1
@@ -535,6 +522,15 @@ c     -----------------------------------------------------------------
 
 
 c     -----------------------------------------------------------------
+c     Update the temporal filter, it also saves a snapshot if needed
+         call update_filter( hg, vor, u00, w00, istep, time )
+c     ! hg here contains the v data
+c     ! Note: filter gets updated every time step
+c     ! Note: the time variable is just incremented
+c     -----------------------------------------------------------------
+
+
+c     -----------------------------------------------------------------
 c     Reset icfl, ihist
          if(icfl.eq.1)   icfl   = 0
          if(ihist.eq.1)  ihist  = 0
@@ -617,8 +613,6 @@ c/********************************************************************/
      .     work2,myid,rkstep,
      .     u1r,u2r,u3r,o1r,o2r,o3r,
      .     u1c,u2c,u3c,o1c,o2c,o3c )
-      use save_flowfield, only: collectFlowfield,
-     &  save_plane_data_to_buffer
       implicit none
       include "ctes3D"
       include "mpif.h"
@@ -822,15 +816,6 @@ c     compute vorticity & Re stress at walls
             endif
          endif
          ! Wx0, Wz0, WxL, WzL are global variables
-c     -----------------------------------------------------------------
-
-
-c     -----------------------------------------------------------------
-c     save velocity and vorticity fields if required
-         if (collectFlowfield .and. rkstep==1) then
-            call save_plane_data_to_buffer(
-     &           u1c, u2c, u3c, o1c, o2c, o3c, j )
-         endif
 c     -----------------------------------------------------------------
 
 

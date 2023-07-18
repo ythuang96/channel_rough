@@ -309,7 +309,7 @@ contains
     subroutine write_restart_file( write_time, istep, phi, vor, v, dvdy, u00, w00, myid)
         use h5save, only: check_filename, h5save_R_dp, h5save_R1_dp, &
             h5save_CPartial_Init, h5save_C3Partial_SingleDim3_sp
-        use save_flowfield, only: SampleFreqInSteps
+        use temporal_filter, only: save_filter_restart_file
         implicit none
         ! -------------------------- Global variables --------------------------
         ! For DNS time
@@ -372,8 +372,8 @@ contains
             call h5save_CPartial_Init( FileOut, "dvdy", (/ my, mx/2, mz/), sp )
             call h5save_CPartial_Init( FileOut, "vor" , (/ my, mx/2, mz/), sp )
             ! Save time and step number
-            call h5save_R_dp( FileOut, "time" , real(time ,dp) )
-            call h5save_R_dp( FileOut, "istep", real(istep,dp) )
+            call h5save_R_dp( FileOut, "time", real(time ,dp) )
+            call h5save_R_dp( FileOut, "step", real(istep,dp) )
             ! Save 00 modes for u and w
             call h5save_R1_dp( FileOut, "u00", u00)
             call h5save_R1_dp( FileOut, "w00", w00)
@@ -383,7 +383,6 @@ contains
             call h5save_R_dp( FileOut, "mz", real(mz,dp) )
             ! Save DNS run settings
             call h5save_R_dp( FileOut, "FixTimeStep", real(FixTimeStep,dp) )
-            call h5save_R_dp( FileOut, "SampleFreqInSteps", real(SampleFreqInSteps,dp) )
         endif
 
         ! -------------------------- Save data to h5 --------------------------
@@ -399,6 +398,9 @@ contains
             endif
             call MPI_BARRIER(MPI_COMM_WORLD, ierr)
         ENDDO
+
+        ! ----------------------- Save Filter data to h5 -----------------------
+        call save_filter_restart_file( FileOut )
 
         ! ----------------------- Increment File Number -----------------------
         id22 = id22+1
@@ -477,6 +479,7 @@ contains
 
         ! Read restart file grid dimensions and distribute
         if (myid .eq. 0) then
+            write(*,"(2A)") "Reading from restart file:  ", filinp
             ! (NINT rounds real to int)
             mxr = NINT( h5load_R_dp(filinp, "mx") )
             myr = NINT( h5load_R_dp(filinp, "my") )
