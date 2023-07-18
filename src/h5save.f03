@@ -8,7 +8,7 @@ module h5save
     public :: check_filename
     public :: h5save_R_dp, h5save_R1_dp, h5save_R2_dp
     public :: h5save_CPartial_Init
-    public :: h5save_C3Partial_SingleDim3_sp, h5save_C3Partial_SingleDim2_sp,
+    public :: h5save_C3Partial_SingleDim3_sp, h5save_C3Partial_SingleDim2_sp
     public :: h5save_C4Partial_SingleDim3_dp
 
     ! The following standard for complex variables are used:
@@ -492,7 +492,7 @@ contains
         complex(kind=sp), intent(in), dimension(:,:) :: matrix
         integer, intent(in) :: dim2index
 
-        real(kind=cp), dimension(:,:,:), allocatable :: temp
+        real(kind=sp), dimension(:,:,:), allocatable :: temp
 
         character(len=100) :: dset_name ! dataset name
 
