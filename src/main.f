@@ -230,11 +230,6 @@ c/********************************************************************/
       common /mesh/ gamma,imesh
       save /mesh/
 
-      real*4 uampl,vampl,wampl,vspeed
-      integer mxwall,mzwall
-      common /boundary/ uampl,vampl,wampl,vspeed,mxwall,mzwall
-      save /boundary/
-
       real*4  Wx0,Wz0,WxL,WzL,uv0,uvL
       common /diag/ Wx0,Wz0,WxL,WzL,uv0,uvL
       save   /diag/
@@ -276,10 +271,6 @@ c                           /* reads in data                       */
          if(text(1:2).eq.'CC') goto 968
          read(text,*) idat(12)
 
-969      read(19,'(a)') text
-         if(text(1:2).eq.'CC') goto 969
-         read(text,*) idat(2),idat(3),dat(8),dat(9),dat(10),dat(11)
-
 65       read(19,'(a)') text
          if(text(1:2).eq.'CC') goto 65
          read(text,'(a100)') filout
@@ -319,15 +310,9 @@ c     ! distribute data from master to all other processors
       a0    = dat(4)
       cfl   = dat(6)
       gamma = dat(7)
-      uampl = dat(8)
-      vampl = dat(9)
-      wampl = dat(10)
-      vspeed= dat(11) -a0      ! To compensate the movement of the wall
       FixTimeStep = dat(12)
 
       imesh     = idat(1)
-      mxwall    = idat(2)
-      mzwall    = idat(3)
       nstep     = idat(5)
       nimag     = idat(6)
       nhist     = idat(7)
@@ -481,15 +466,6 @@ c --------------  write header for output -------------
      &         'Incorrect CFL or FixTimeStep Input. Exiting.'
             stop
          endif
-
-         write(*,*)
-         write(*,'(a6,3f8.3,a7,f8.3)')
-     .   'vwall',uampl,vampl,wampl,'vspeed',vspeed+a0
-         write(*,'(a7,i4,a7,i4)') 'mxwall',mxwall,'mzwall',mzwall
-         write(*,*)
-         write(*,'(a,a)') 'reading from:  ',filinp
-         write(*,*)
-         write(*,'(a,a)') '  write in :  ',filout
       endif
 
       end

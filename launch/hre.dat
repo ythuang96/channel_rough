@@ -46,12 +46,6 @@ CC  number
 CC       *
         1
 CC
-CC  Boundary parameters
-CC
-CC  mx  mz  uampl    vampl   wampl    phase speed
-CC
-    72   72  0     0.   0.        0.
-CC
 CC-----------------------------------------------------------------------
 CC 3)FILE NAMES used in the code
 CC-----------------------------------------------------------------------
