@@ -294,7 +294,9 @@ contains
                     SuppressSavingNum = SuppressSavingNum - 1
                     ! and the snapshot file number increases by 1
                     FileNumber = FileNumber + 1
-                    write(*,"(A,I5,A,(D14.6))") "    Suppressing Data Saving, Step ", istep, ", Time ", time
+                    if (myid .eq. 0) then
+                        write(*,"(A,I5,A,(D14.6))") "    Suppressing Data Saving, Step ", istep, ", Time ", time
+                    endif
                 endif
 
                 ! Clear the buffers at this index
