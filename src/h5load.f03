@@ -117,6 +117,17 @@ contains
             CALL h5close_f(error)
             stop 2
         endif
+        ! Check the dimensions, if it is not a vector or column vector, then throw an error
+        if ( dim2 .gt. 1) then
+            write(*,*) "Error: variable is not a vector or a column vector. h5load_R1 failed."
+            ! close dataset
+            CALL h5dclose_f(dset_id, error)
+            ! close file
+            CALL h5fclose_f(file_id, error)
+            ! close h5 interface
+            CALL h5close_f(error)
+            stop 2
+        endif
 
         ! Allocate dimensions to dset_data for reading
         if (dim2 .eq. 0) then

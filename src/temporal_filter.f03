@@ -7,6 +7,9 @@ module temporal_filter
     include 'ctes3D'
 
     ! NOTE:
+    !   FilterCoef in the filter setting file has to be a columns vector (NX1)!!!!!
+
+    ! NOTE:
     !   The results read from the restart file will be designated as step 0 and time 0
     !   Loop ii will take results from step (ii-1), time (ii-1)DT and propagate it to step ii, time ii*DT
     !   The filtered result at step ii depends on the unfiltered result at step (ii-FilterOrder):ii,
